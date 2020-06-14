@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1440</width>
+    <width>1508</width>
     <height>830</height>
    </rect>
   </property>
@@ -35,7 +35,7 @@
             </sizepolicy>
            </property>
            <property name="text">
-            <string>Syringe_size</string>
+            <string>Syringe</string>
            </property>
           </widget>
          </item>
@@ -80,7 +80,7 @@
             </sizepolicy>
            </property>
            <property name="text">
-            <string>Waste_Bottle_size</string>
+            <string>Waste_Bottle</string>
            </property>
           </widget>
          </item>
@@ -125,7 +125,7 @@
             </sizepolicy>
            </property>
            <property name="text">
-            <string>Resevoir_Bottle_size</string>
+            <string>Resevoir_Bottle</string>
            </property>
           </widget>
          </item>
@@ -898,7 +898,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1440</width>
+     <width>1508</width>
      <height>22</height>
     </rect>
    </property>

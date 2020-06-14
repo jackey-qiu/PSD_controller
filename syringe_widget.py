@@ -354,14 +354,15 @@ class syringe_widget(QWidget):
         qp.drawRect(*(rec6_pos+rec6_dim))
         qp.setBrush(QColor(250, 250, 250))
         # qp.drawRect(*(rec10_pos+rec10_dim))
-        qp.setPen(QPen(QColor(0, 0, 0), 1, Qt.SolidLine, Qt.FlatCap, Qt.MiterJoin))
+        qp.setPen(QPen(QColor(100, 100, 100), 1, Qt.SolidLine, Qt.FlatCap, Qt.MiterJoin))
         qp.drawText(rec6_pos[0],rec6_pos[1]+rec6_dim[1]+60,"{}:{:6.2f} ml".format(label,volume/bottom_height_total*fill_height))
         rects = []
         for i in range(1,6):
             rect_pos = eval('rec{}_pos'.format(i))
             rect_dim = eval('rec{}_dim'.format(i))
             rects.append(rect_pos+rect_dim)
-        self.draw_markers(qp,rec5_pos+[bottom_width,bottom_height_total],'left',250,[50,100,150,200],False)
+        qp.setPen(QPen(QColor(10, 10, 10), 1, Qt.SolidLine, Qt.FlatCap, Qt.MiterJoin))
+        self.draw_markers(qp,rec5_pos+[bottom_width,bottom_height_total],'left',volume,[50,100,150,200],False)
         return rects
 
     def draw_valve(self,qp, dim, connect_port = 'left'):
@@ -392,7 +393,6 @@ class syringe_widget(QWidget):
                 marker_pos_in_pix.append([rect[0],(each/total_volume_in_ml)*rect[3]+rect[1],rect[0]+marker_length,(each/total_volume_in_ml)*rect[3]+rect[1]])
             else:
                 marker_pos_in_pix.append([rect[0],((total_volume_in_ml - each)/total_volume_in_ml)*rect[3]+rect[1],rect[0]+marker_length,((total_volume_in_ml - each)/total_volume_in_ml)*rect[3]+rect[1]])
-
         for each in marker_pos_in_pix:
             qp.drawLine(*each)
             qp.drawText(each[2],each[3],"{} ml".format(marker_pos_in_ml[marker_pos_in_pix.index(each)]))
@@ -448,17 +448,18 @@ class syringe_widget(QWidget):
         qp.drawRect(*(rec9_pos+rec9_dim))
         # qp.drawRect(*(rec10_pos+rec10_dim))
         qp.setFont(QFont("Arial", 15, QFont.Bold))
-        qp.setPen(QPen(QColor(0, 0, 0), 1, Qt.SolidLine, Qt.FlatCap, Qt.MiterJoin))
+        qp.setPen(QPen(QColor(250, 250, 250), 1, Qt.SolidLine, Qt.FlatCap, Qt.MiterJoin))
         qp.drawText(rec8_pos[0],rec9_pos[1]+60,"{}:{:6.2f} ml".format(label,getattr(self,vol_tag)))
         rects = []
         for i in range(1,10):
             rect_pos = eval('rec{}_pos'.format(i))
             rect_dim = eval('rec{}_dim'.format(i))
             rects.append(rect_pos+rect_dim)
+        qp.setPen(QPen(QColor(0, 0, 0), 1, Qt.SolidLine, Qt.FlatCap, Qt.MiterJoin))
+        qp.setFont(QFont("Arial", 12))
         self.draw_markers(qp,rec_tube)
-        
+        qp.setFont(QFont("Arial", 15, QFont.Bold))
         return rects
-
 
     def drawRectangles(self, qp):
         col = QColor(0, 0, 0)

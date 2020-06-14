@@ -5,6 +5,7 @@ from PyQt5.QtGui import QTransform, QFont, QBrush, QColor, QIcon
 from pyqtgraph.Qt import QtGui
 from PyQt5.QtWidgets import QApplication, QMainWindow, QFileDialog, QMessageBox
 from PyQt5 import uic, QtWidgets
+import qdarkstyle
 import sys
 
 class MyMainWindow(QMainWindow):
@@ -315,6 +316,6 @@ if __name__ == "__main__":
     screen = app.screens()[0]
     dpi = screen.physicalDotsPerInch()
     myWin = MyMainWindow()
-    # app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
+    app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
     myWin.show()
     sys.exit(app.exec_())
