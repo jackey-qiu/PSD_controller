@@ -50,10 +50,10 @@ class syringe_widget(QWidget):
         qp.begin(self)
         # self.draw_syringe(qp)
         line_styles = [Qt.DashDotDotLine,Qt.DashLine]
-        rects_1 = self.draw_syringe(qp,'volume',[11,5],[250,0,0],label ='S1',volume = self.syringe_size)
-        rects_2 = self.draw_syringe(qp,'volume2',[23,5],[100,100,0],label = 'S2', volume = self.syringe_size)
-        rects_3 = self.draw_syringe(qp,'volume3',[35,5],[0,200,0], label = 'S3', volume = self.syringe_size)
-        rects_4 = self.draw_syringe(qp,'volume4',[47,5],[0,100,250],label='S4',volume = self.syringe_size)
+        rects_1 = self.draw_syringe(qp,'volume',[11-3-1-1,5],[250,0,0],label ='S1',volume = self.syringe_size)
+        rects_2 = self.draw_syringe(qp,'volume2',[23-9-1-1,5],[100,100,0],label = 'S2', volume = self.syringe_size)
+        rects_3 = self.draw_syringe(qp,'volume3',[35-15+1-1,5],[0,200,0], label = 'S3', volume = self.syringe_size)
+        rects_4 = self.draw_syringe(qp,'volume4',[47-21+1-1,5],[0,100,250],label='S4',volume = self.syringe_size)
         if self.operation_mode == 'auto_refilling':
             self.draw_valve(qp,rects_1[1],connect_port=['left','right'][int(not self.filling)])
             self.connect_valve_port[1] = ['left','right'][int(not self.filling)]
@@ -91,9 +91,9 @@ class syringe_widget(QWidget):
         self.draw_radio_signal(qp,[rects_2[8][0]-6,rects_2[8][1]+90],color=['red','blue'][int(self.connect_status[2]=='connected')])
         self.draw_radio_signal(qp,[rects_3[8][0]-6,rects_3[8][1]+90],color=['red','blue'][int(self.connect_status[3]=='connected')])
         self.draw_radio_signal(qp,[rects_4[8][0]-6,rects_4[8][1]+90],color=['red','blue'][int(self.connect_status[4]=='connected')])
-        self.draw_cell(qp,offset=[32.5*self.ref_unit,1.8*self.ref_unit])
-        rects_resevoir = self.draw_bottle(qp, fill_height = self.resevoir_volumn/250*200, offset = [3,8],volume=self.resevoir_volumn_total,label = 'Resevoir')
-        rects_waste = self.draw_bottle(qp, fill_height = self.waste_volumn/250*200, offset = [61,8], volume = self.waste_volumn_total,label = 'Waste')
+        self.draw_cell(qp,offset=[(32.5-12-1)*self.ref_unit,(1.8-0.5)*self.ref_unit])
+        rects_resevoir = self.draw_bottle(qp, fill_height = self.resevoir_volumn/250*200, offset = [3-1-1,8],volume=self.resevoir_volumn_total,label = 'Resevoir')
+        rects_waste = self.draw_bottle(qp, fill_height = self.waste_volumn/250*200, offset = [61-24-1,8], volume = self.waste_volumn_total,label = 'Waste')
         pen = QPen([Qt.red,Qt.blue][0], 2, line_styles[int(self.line_style==1)])
         qp.setPen(pen)
         if self.operation_mode=='auto_refilling':
@@ -448,7 +448,7 @@ class syringe_widget(QWidget):
         qp.drawRect(*(rec9_pos+rec9_dim))
         # qp.drawRect(*(rec10_pos+rec10_dim))
         qp.setFont(QFont("Arial", 15, QFont.Bold))
-        qp.setPen(QPen(QColor(250, 250, 250), 1, Qt.SolidLine, Qt.FlatCap, Qt.MiterJoin))
+        qp.setPen(QPen(QColor(50, 50, 50), 1, Qt.SolidLine, Qt.FlatCap, Qt.MiterJoin))
         qp.drawText(rec8_pos[0],rec9_pos[1]+60,"{}:{:6.2f} ml".format(label,getattr(self,vol_tag)))
         rects = []
         for i in range(1,10):

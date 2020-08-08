@@ -1,22 +1,59 @@
 from PyQt5 import QtCore
 from PyQt5.QtWidgets import QCheckBox, QRadioButton, QTableWidgetItem, QHeaderView, QAbstractItemView, QInputDialog
 from PyQt5.QtCore import Qt, QTimer
-from PyQt5.QtGui import QTransform, QFont, QBrush, QColor, QIcon
+from PyQt5.QtGui import QTransform, QFont, QBrush, QColor, QIcon, QImage, QPixmap
 from pyqtgraph.Qt import QtGui
 from PyQt5.QtWidgets import QApplication, QMainWindow, QFileDialog, QMessageBox
 from PyQt5 import uic, QtWidgets
 import qdarkstyle
 import sys
+import cv2
+import logging
+
+#redirect the error stream to qt widget
+class QTextEditLogger(logging.Handler):
+    def __init__(self, textbrowser_widget):
+        super().__init__()
+        self.textBrowser_error_msg = textbrowser_widget
+        # self.widget.setReadOnly(True)
+
+    def emit(self, record):
+        error_msg = self.format(record)
+        separator = '-' * 80
+        notice = \
+        """An unhandled exception occurred. Please report the problem\n"""\
+        """using the error reporting dialog or via email to <%s>.\n"""%\
+        ("crqiu2@gmail.com")
+        self.textBrowser_error_msg.clear()
+        cursor = self.textBrowser_error_msg.textCursor()
+        cursor.insertHtml('''<p><span style="color: red;">{} <br></span>'''.format(" "))
+        self.textBrowser_error_msg.setText(notice + '\n' +separator+'\n'+error_msg)
 
 class MyMainWindow(QMainWindow):
+    start_exchange = QtCore.pyqtSignal()
     def __init__(self, parent = None):
         super(MyMainWindow, self).__init__(parent)
         #pyqtgraph preference setting
         #load GUI ui file made by qt designer
-        uic.loadUi('/Users/cqiu/app/PSD_controller/psd_gui.ui',self)
+        uic.loadUi('/Users/canrong/apps/PSD_controller/psd_gui_beta.ui',self)
+        self.psd_server = 'psd server'
+
+        self.widget_terminal.update_name_space('psd_widget',self.widget_psd)
+        self.widget_terminal.update_name_space('main_gui',self)
+        self.widget_terminal.update_name_space('psd_server',self.psd_server)
+
+        #set redirection of error message to embeted text browser widget
+        logTextBox = QTextEditLogger(self.textBrowser_error_msg)
+        # You can format what is printed to text box
+        logTextBox.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
+        logging.getLogger().addHandler(logTextBox)
+        # You can control the logging level
+        logging.getLogger().setLevel(logging.DEBUG)
+
         # print(self.widget)
-        self.pushButton_start.clicked.connect(self.start)
+        self.pushButton_start.clicked.connect(self.init_start)
         self.pushButton_stop.clicked.connect(self.stop)
+        self.start_exchange.connect(self.start)
         self.pushButton_reset_exchange.clicked.connect(self.reset_exchange)
         self.pushButton_fill.clicked.connect(self.fill)
         self.pushButton_dispense.clicked.connect(self.dispense)
@@ -29,28 +66,81 @@ class MyMainWindow(QMainWindow):
         self.doubleSpinBox.valueChanged.connect(self.update_speed)
         self.update_speed()
         self.update_basic_settings()
+        self.label_cam.setScaledContents(True)
+
+        self.pushButton_start_webcam.clicked.connect(self.start_webcam)
+        self.pushButton_stop_webcam.clicked.connect(self.stop_webcam)
+
+        self.timer_webcam = QTimer(self)
+        self.timer_webcam.timeout.connect(self.viewCam)
 
         # self.initUI()
         self.timer_update = QTimer(self)
         self.timer_update.timeout.connect(self.update_volume)
         self.timer_update.timeout.connect(self.update_volume_waste_reservoir)
-        self.timer_update.timeout.connect(self.widget.update)
+        self.timer_update.timeout.connect(self.widget_psd.update)
 
         self.timer_update_normal_mode = QTimer(self)
         self.timer_update_normal_mode.timeout.connect(self.update_volume_normal_mode)
         self.timer_update_normal_mode.timeout.connect(self.update_volume_waste_reservoir_normal_mode)
-        self.timer_update_normal_mode.timeout.connect(self.widget.update)
+        self.timer_update_normal_mode.timeout.connect(self.widget_psd.update)
 
         self.timer_update_empty_all_mode = QTimer(self)
         self.timer_update_empty_all_mode.timeout.connect(self.update_volume_empty_all_mode)
-        self.timer_update_empty_all_mode.timeout.connect(self.widget.update)
+        self.timer_update_empty_all_mode.timeout.connect(self.widget_psd.update)
         # self.timer_update.start(1)
 
         self.timer_update_fill_all_mode = QTimer(self)
         self.timer_update_fill_all_mode.timeout.connect(self.update_volume_fill_all_mode)
-        self.timer_update_fill_all_mode.timeout.connect(self.widget.update)
+        self.timer_update_fill_all_mode.timeout.connect(self.widget_psd.update)
 
-        self.timers = [self.timer_update_fill_all_mode,self.timer_update,self.timer_update_empty_all_mode,self.timer_update_normal_mode]
+        self.timer_update_fill_half_mode = QTimer(self)
+        self.timer_update_fill_half_mode.timeout.connect(self.update_volume_fill_half_mode)
+        self.timer_update_fill_half_mode.timeout.connect(self.widget_psd.update)
+
+        self.timers = [self.timer_update_fill_half_mode, self.timer_update_fill_all_mode, self.timer_update,self.timer_update_empty_all_mode,self.timer_update_normal_mode]
+
+    def init_start(self):
+        #half fill the associated syringes first
+        self.timer_update_fill_half_mode.start(100)
+
+    # view camera
+    def viewCam(self):
+        # read image in BGR format
+        ret, image = self.cap.read()
+        # convert image to RGB format
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        # dim =(int(image.shape[1] * 0.5),int(image.shape[0] * 0.5))
+        # image = cv2.resize(image, dim, interpolation = cv2.INTER_AREA)
+        # get image infos
+        height, width, channel = image.shape
+        step = channel * width
+        # create QImage from image
+        qImg = QImage(image.data, width, height, step, QImage.Format_RGB888)
+        # show image in img_label
+        self.label_cam.setPixmap(QPixmap.fromImage(qImg))
+        # self.label_cam.setScaledContents(True)
+
+    # start/stop webcam
+    def start_webcam(self):
+        self.cap = cv2.VideoCapture(int(self.lineEdit_camera_index.text()))
+        if not self.cap.isOpened():
+            logging.getLogger().exception('\nOpenCV: camera failed to properly initialize! \nOpenCV: out device of bound: {}'.format(int(self.lineEdit_camera_index.text())))
+            self.tabWidget.setCurrentIndex(2) 
+        else:
+            self.tabWidget.setCurrentIndex(0) 
+            self.timer_webcam.start(20)
+
+    def stop_webcam(self):
+        if self.timer_webcam.isActive():
+            # stop timer
+            self.timer_webcam.stop()
+            # release video capture
+            self.cap.release()
+            # update control_bt text
+            #self.ui.control_bt.setText("Start")
+        else:
+            pass
 
     def stop_all_motion(self):
         for each in self.timers:
@@ -60,13 +150,13 @@ class MyMainWindow(QMainWindow):
                 pass
 
     def update_mode_1(self):
-        self.widget.operation_mode = 'auto_refilling'
+        self.widget_psd.operation_mode = 'auto_refilling'
 
     def update_mode_3(self):
-        self.widget.operation_mode = 'normal_mode'
+        self.widget_psd.operation_mode = 'normal_mode'
         
     def update_mode_empty_all(self):
-        self.widget.operation_mode = 'empty_all_mode'
+        self.widget_psd.operation_mode = 'empty_all_mode'
         try:
             self.timer_update_normal_mode.stop()
         except:
@@ -82,7 +172,7 @@ class MyMainWindow(QMainWindow):
         self.timer_update_empty_all_mode.start(100)
 
     def update_mode_refill_all(self):
-        self.widget.operation_mode = 'fill_all_mode'
+        self.widget_psd.operation_mode = 'fill_all_mode'
         try:
             self.timer_update_normal_mode.stop()
         except:
@@ -98,21 +188,21 @@ class MyMainWindow(QMainWindow):
         self.timer_update_fill_all_mode.start(100)
 
     def update_basic_settings(self):
-        self.widget.syringe_size = float(self.lineEdit_syringe_size.text())
-        self.widget.waste_volumn_total = float(self.lineEdit_waste_bottle_size.text())
-        self.widget.resevoir_volumn_total = float(self.lineEdit_resevoir_bottle_size.text())
-        self.widget.speed_by_default = self.doubleSpinBox_default_speed.value()
-        self.widget.update()
+        self.widget_psd.syringe_size = float(self.lineEdit_syringe_size.text())
+        self.widget_psd.waste_volumn_total = float(self.lineEdit_waste_bottle_size.text())
+        self.widget_psd.resevoir_volumn_total = float(self.lineEdit_resevoir_bottle_size.text())
+        self.widget_psd.speed_by_default = self.doubleSpinBox_default_speed.value()
+        self.widget_psd.update()
 
     def fill(self):
         # self.widget.operation_mode = 'normal_mode'
         self.radioButton_3.setChecked(True)
         self.update_mode_3()
-        self.widget.actived_syringe_normal_mode=int(self.comboBox_syringe_number.currentText())
-        self.widget.actived_syringe_motion_normal_mode = 'fill'
-        self.widget.connect_valve_port[self.widget.actived_syringe_normal_mode] = self.comboBox_valve_port.currentText()
-        self.widget.speed_normal_mode = self.doubleSpinBox_speed_normal_mode.value()
-        self.widget.volume_normal_mode = self.widget.syringe_size*self.doubleSpinBox_stroke_factor.value()
+        self.widget_psd.actived_syringe_normal_mode=int(self.comboBox_syringe_number.currentText())
+        self.widget_psd.actived_syringe_motion_normal_mode = 'fill'
+        self.widget_psd.connect_valve_port[self.widget_psd.actived_syringe_normal_mode] = self.comboBox_valve_port.currentText()
+        self.widget_psd.speed_normal_mode = self.doubleSpinBox_speed_normal_mode.value()
+        self.widget_psd.volume_normal_mode = self.widget_psd.syringe_size*self.doubleSpinBox_stroke_factor.value()
         try:
             self.timer_update.stop()
         except:
@@ -130,17 +220,17 @@ class MyMainWindow(QMainWindow):
     def dispense(self):
         self.radioButton_3.setChecked(True)
         self.update_mode_3()
-        self.widget.actived_syringe_normal_mode=int(self.comboBox_syringe_number.currentText())
-        self.widget.actived_syringe_motion_normal_mode = 'dispense'
-        self.widget.connect_valve_port[self.widget.actived_syringe_normal_mode] = self.comboBox_valve_port.currentText()
-        self.widget.speed_normal_mode = self.doubleSpinBox_speed_normal_mode.value()
-        self.widget.volume_normal_mode = self.widget.syringe_size*self.doubleSpinBox_stroke_factor.value()
+        self.widget_psd.actived_syringe_normal_mode=int(self.comboBox_syringe_number.currentText())
+        self.widget_psd.actived_syringe_motion_normal_mode = 'dispense'
+        self.widget_psd.connect_valve_port[self.widget_psd.actived_syringe_normal_mode] = self.comboBox_valve_port.currentText()
+        self.widget_psd.speed_normal_mode = self.doubleSpinBox_speed_normal_mode.value()
+        self.widget_psd.volume_normal_mode = self.widget_psd.syringe_size*self.doubleSpinBox_stroke_factor.value()
         self.timer_update_normal_mode.start(100)
 
     def reset_exchange(self):
-        self.widget.waste_volumn = 0
-        self.widget.resevoir_volumn = self.widget.resevoir_volumn_total
-        self.widget.update()
+        self.widget_psd.waste_volumn = 0
+        self.widget_psd.resevoir_volumn = self.widget_psd.resevoir_volumn_total
+        self.widget_psd.update()
 
     def start(self):
         try:
@@ -155,12 +245,12 @@ class MyMainWindow(QMainWindow):
             self.timer_update_fill_all_mode.stop()
         except:
             pass
-        # self.widget.operation_mode = 'auto_refilling'
-        self.widget.connect_valve_port = {1:'left',2:'right',3:'left',4:'up'}
-        self.widget.filling = True
-        self.widget.filling2 = False
-        self.widget.filling3 = True
-        self.widget.filling4 = False
+        # self.widget_psd.operation_mode = 'auto_refilling'
+        self.widget_psd.connect_valve_port = {1:'left',2:'right',3:'left',4:'up'}
+        self.widget_psd.filling = True
+        self.widget_psd.filling2 = False
+        self.widget_psd.filling3 = True
+        self.widget_psd.filling4 = False
         self.radioButton_1.setChecked(True)
         self.update_mode_1()
         self.timer_update.start(100)
@@ -169,119 +259,154 @@ class MyMainWindow(QMainWindow):
         self.timer_update.stop()
 
     def update_volume_waste_reservoir(self):
-        waste_volumn = self.widget.waste_volumn + self.widget.speed/10
-        resevoir_volumn = self.widget.resevoir_volumn - self.widget.speed/10
+        waste_volumn = self.widget_psd.waste_volumn + self.widget_psd.speed/10
+        resevoir_volumn = self.widget_psd.resevoir_volumn - self.widget_psd.speed/10
         if waste_volumn > 250:
             self.timer_update.stop()
         else:
-            self.widget.waste_volumn = waste_volumn
-            self.widget.resevoir_volumn = resevoir_volumn
+            self.widget_psd.waste_volumn = waste_volumn
+            self.widget_psd.resevoir_volumn = resevoir_volumn
 
     def update_volume_waste_reservoir_normal_mode(self):
-        if self.widget.actived_syringe_motion_normal_mode=='fill':
-            resevoir_volumn = self.widget.resevoir_volumn - self.widget.speed_normal_mode/10
+        if self.widget_psd.actived_syringe_motion_normal_mode=='fill':
+            resevoir_volumn = self.widget_psd.resevoir_volumn - self.widget_psd.speed_normal_mode/10
             if resevoir_volumn<=0:
-                self.widget.resevoir_volumn = 0
+                self.widget_psd.resevoir_volumn = 0
             else:
-                self.widget.resevoir_volumn = resevoir_volumn
-        elif self.widget.actived_syringe_motion_normal_mode=='dispense':
-            waste_volumn = self.widget.waste_volumn + self.widget.speed_normal_mode/10
-            if waste_volumn>self.widget.waste_volumn_total:
-                self.widget.waste_volumn = self.widget.waste_volumn_total
+                self.widget_psd.resevoir_volumn = resevoir_volumn
+        elif self.widget_psd.actived_syringe_motion_normal_mode=='dispense':
+            waste_volumn = self.widget_psd.waste_volumn + self.widget_psd.speed_normal_mode/10
+            if waste_volumn>self.widget_psd.waste_volumn_total:
+                self.widget_psd.waste_volumn = self.widget_psd.waste_volumn_total
             else:
-                self.widget.waste_volumn = waste_volumn
+                self.widget_psd.waste_volumn = waste_volumn
 
     def update_volume_normal_mode(self):
-        self.widget.volume_normal_mode = self.widget.volume_normal_mode - self.widget.speed_normal_mode/10
-        if self.widget.actived_syringe_normal_mode==1:
-            self.widget.volume = self.widget.volume + self.widget.speed_normal_mode/10*[-1,1][int(self.widget.actived_syringe_motion_normal_mode=='fill')]
-            if self.widget.volume>12.5:
-                self.widget.volume = 12.5
+        self.widget_psd.volume_normal_mode = self.widget_psd.volume_normal_mode - self.widget_psd.speed_normal_mode/10
+        if self.widget_psd.actived_syringe_normal_mode==1:
+            self.widget_psd.volume = self.widget_psd.volume + self.widget_psd.speed_normal_mode/10*[-1,1][int(self.widget_psd.actived_syringe_motion_normal_mode=='fill')]
+            if self.widget_psd.volume>12.5:
+                self.widget_psd.volume = 12.5
                 self.timer_update_normal_mode.stop()
-            if self.widget.volume<0:
-                self.widget.volume = 0
+            if self.widget_psd.volume<0:
+                self.widget_psd.volume = 0
                 self.timer_update_normal_mode.stop()
-            if self.widget.volume_normal_mode<=0:
-                self.widget.volume_normal_mode = 0
+            if self.widget_psd.volume_normal_mode<=0:
+                self.widget_psd.volume_normal_mode = 0
                 self.timer_update_normal_mode.stop()
-        elif self.widget.actived_syringe_normal_mode==2:
-            self.widget.volume2 = self.widget.volume2 + self.widget.speed_normal_mode/10*[-1,1][int(self.widget.actived_syringe_motion_normal_mode=='fill')]
-            if self.widget.volume2>12.5:
-                self.widget.volume2 = 12.5
+        elif self.widget_psd.actived_syringe_normal_mode==2:
+            self.widget_psd.volume2 = self.widget_psd.volume2 + self.widget_psd.speed_normal_mode/10*[-1,1][int(self.widget_psd.actived_syringe_motion_normal_mode=='fill')]
+            if self.widget_psd.volume2>12.5:
+                self.widget_psd.volume2 = 12.5
                 self.timer_update_normal_mode.stop()
-            if self.widget.volume2<0:
-                self.widget.volume2 = 0
+            if self.widget_psd.volume2<0:
+                self.widget_psd.volume2 = 0
                 self.timer_update_normal_mode.stop()
-            if self.widget.volume_normal_mode<=0:
-                self.widget.volume_normal_mode = 0
+            if self.widget_psd.volume_normal_mode<=0:
+                self.widget_psd.volume_normal_mode = 0
                 self.timer_update_normal_mode.stop()
-        elif self.widget.actived_syringe_normal_mode==3:
-            self.widget.volume3 = self.widget.volume3 + self.widget.speed_normal_mode/10*[-1,1][int(self.widget.actived_syringe_motion_normal_mode=='fill')]
-            if self.widget.volume3>12.5:
-                self.widget.volume3 = 12.5
+        elif self.widget_psd.actived_syringe_normal_mode==3:
+            self.widget_psd.volume3 = self.widget_psd.volume3 + self.widget_psd.speed_normal_mode/10*[-1,1][int(self.widget_psd.actived_syringe_motion_normal_mode=='fill')]
+            if self.widget_psd.volume3>12.5:
+                self.widget_psd.volume3 = 12.5
                 self.timer_update_normal_mode.stop()
-            if self.widget.volume3<0:
-                self.widget.volume3 = 0
+            if self.widget_psd.volume3<0:
+                self.widget_psd.volume3 = 0
                 self.timer_update_normal_mode.stop()
-            if self.widget.volume_normal_mode<=0:
-                self.widget.volume_normal_mode = 0
+            if self.widget_psd.volume_normal_mode<=0:
+                self.widget_psd.volume_normal_mode = 0
                 self.timer_update_normal_mode.stop()
-        elif self.widget.actived_syringe_normal_mode==4:
-            self.widget.volume4 = self.widget.volume4 + self.widget.speed_normal_mode/10*[-1,1][int(self.widget.actived_syringe_motion_normal_mode=='fill')]
-            if self.widget.volume4>12.5:
-                self.widget.volume4 = 12.5
+        elif self.widget_psd.actived_syringe_normal_mode==4:
+            self.widget_psd.volume4 = self.widget_psd.volume4 + self.widget_psd.speed_normal_mode/10*[-1,1][int(self.widget_psd.actived_syringe_motion_normal_mode=='fill')]
+            if self.widget_psd.volume4>12.5:
+                self.widget_psd.volume4 = 12.5
                 self.timer_update_normal_mode.stop()
-            if self.widget.volume4<0:
-                self.widget.volume4 = 0
+            if self.widget_psd.volume4<0:
+                self.widget_psd.volume4 = 0
                 self.timer_update_normal_mode.stop()
-            if self.widget.volume_normal_mode<=0:
-                self.widget.volume_normal_mode = 0
+            if self.widget_psd.volume_normal_mode<=0:
+                self.widget_psd.volume_normal_mode = 0
                 self.timer_update_normal_mode.stop()
 
     def update_volume_empty_all_mode(self):
-        waste_volumn = self.widget.waste_volumn + self.widget.speed_by_default/10*4
-        if waste_volumn>self.widget.waste_volumn_total:
+        waste_volumn = self.widget_psd.waste_volumn + self.widget_psd.speed_by_default/10*4
+        if waste_volumn>self.widget_psd.waste_volumn_total:
             self.timer_update_empty_all_mode.stop()
             return
         else:
-            self.widget.waste_volumn = waste_volumn
-        self.widget.volume = self.widget.volume - self.widget.speed_by_default/10
-        if self.widget.volume<0:
-            self.widget.volume = 0
-        self.widget.volume2 = self.widget.volume2 - self.widget.speed_by_default/10
-        if self.widget.volume2<0:
-            self.widget.volume2 = 0
-        self.widget.volume3 = self.widget.volume3 - self.widget.speed_by_default/10
-        if self.widget.volume3<0:
-            self.widget.volume3 = 0
-        self.widget.volume4 = self.widget.volume4 - self.widget.speed_by_default/10
-        if self.widget.volume4<0:
-            self.widget.volume4 = 0
-        if (self.widget.volume+self.widget.volume2+self.widget.volume3+self.widget.volume4)==0:
+            self.widget_psd.waste_volumn = waste_volumn
+        self.widget_psd.volume = self.widget_psd.volume - self.widget_psd.speed_by_default/10
+        if self.widget_psd.volume<0:
+            self.widget_psd.volume = 0
+        self.widget_psd.volume2 = self.widget_psd.volume2 - self.widget_psd.speed_by_default/10
+        if self.widget_psd.volume2<0:
+            self.widget_psd.volume2 = 0
+        self.widget_psd.volume3 = self.widget_psd.volume3 - self.widget_psd.speed_by_default/10
+        if self.widget_psd.volume3<0:
+            self.widget_psd.volume3 = 0
+        self.widget_psd.volume4 = self.widget_psd.volume4 - self.widget_psd.speed_by_default/10
+        if self.widget_psd.volume4<0:
+            self.widget_psd.volume4 = 0
+        if (self.widget_psd.volume+self.widget_psd.volume2+self.widget_psd.volume3+self.widget_psd.volume4)==0:
            self.timer_update_empty_all_mode.stop()
 
     def update_volume_fill_all_mode(self):
-        resevoir_volumn = self.widget.resevoir_volumn - self.widget.speed_by_default/10*4
+        resevoir_volumn = self.widget_psd.resevoir_volumn - self.widget_psd.speed_by_default/10*4
         if resevoir_volumn<0:
             self.timer_update_fill_all_mode.stop()
             return
         else:
-            self.widget.resevoir_volumn = resevoir_volumn
-        self.widget.volume = self.widget.volume + self.widget.speed_by_default/10
-        if self.widget.volume>self.widget.syringe_size:
-            self.widget.volume = self.widget.syringe_size
-        self.widget.volume2 = self.widget.volume2 + self.widget.speed_by_default/10
-        if self.widget.volume2>self.widget.syringe_size:
-            self.widget.volume2 = self.widget.syringe_size
-        self.widget.volume3 = self.widget.volume3 + self.widget.speed_by_default/10
-        if self.widget.volume3>self.widget.syringe_size:
-            self.widget.volume3 = self.widget.syringe_size
-        self.widget.volume4 = self.widget.volume4 + self.widget.speed_by_default/10
-        if self.widget.volume4>self.widget.syringe_size:
-            self.widget.volume4 = self.widget.syringe_size
+            self.widget_psd.resevoir_volumn = resevoir_volumn
+        self.widget_psd.volume = self.widget_psd.volume + self.widget_psd.speed_by_default/10
+        if self.widget_psd.volume>self.widget_psd.syringe_size:
+            self.widget_psd.volume = self.widget_psd.syringe_size
+        self.widget_psd.volume2 = self.widget_psd.volume2 + self.widget_psd.speed_by_default/10
+        if self.widget_psd.volume2>self.widget_psd.syringe_size:
+            self.widget_psd.volume2 = self.widget_psd.syringe_size
+        self.widget_psd.volume3 = self.widget_psd.volume3 + self.widget_psd.speed_by_default/10
+        if self.widget_psd.volume3>self.widget_psd.syringe_size:
+            self.widget_psd.volume3 = self.widget_psd.syringe_size
+        self.widget_psd.volume4 = self.widget_psd.volume4 + self.widget_psd.speed_by_default/10
+        if self.widget_psd.volume4>self.widget_psd.syringe_size:
+            self.widget_psd.volume4 = self.widget_psd.syringe_size
 
-        if (self.widget.volume+self.widget.volume2+self.widget.volume3+self.widget.volume4)==self.widget.syringe_size*4:
+        if (self.widget_psd.volume+self.widget_psd.volume2+self.widget_psd.volume3+self.widget_psd.volume4)==self.widget_psd.syringe_size*4:
            self.timer_update_fill_all_mode.stop()
+
+    def update_volume_fill_half_mode(self):
+        resevoir_volumn = self.widget_psd.resevoir_volumn - self.widget_psd.speed_by_default/10*4
+        if resevoir_volumn<0:
+            self.timer_update_fill_half_mode.stop()
+            return
+        else:
+            self.widget_psd.resevoir_volumn = resevoir_volumn
+        def _update_volume(full_volume,original_volume, add_volume):
+            if original_volume == full_volume/2:
+                return original_volume
+            elif original_volume > full_volume/2:
+                return original_volume - add_volume
+            elif original_volume < full_volume/2:
+                return original_volume + add_volume
+
+        self.widget_psd.volume = _update_volume(self.widget_psd.syringe_size, self.widget_psd.volume, self.widget_psd.speed_by_default/10)
+        if abs(self.widget_psd.volume-self.widget_psd.syringe_size/2)<self.widget_psd.speed_by_default/10:
+            self.widget_psd.volume = self.widget_psd.syringe_size/2
+        #self.widget_psd.volume2 = self.widget_psd.volume2 + self.widget_psd.speed_by_default/10
+        self.widget_psd.volume2 = _update_volume(self.widget_psd.syringe_size, self.widget_psd.volume2, self.widget_psd.speed_by_default/10)
+        if abs(self.widget_psd.volume2-self.widget_psd.syringe_size/2)<self.widget_psd.speed_by_default/10:
+            self.widget_psd.volume2 = self.widget_psd.syringe_size/2
+        #self.widget_psd.volume3 = self.widget_psd.volume3 + self.widget_psd.speed_by_default/10
+        self.widget_psd.volume3 = _update_volume(self.widget_psd.syringe_size, self.widget_psd.volume3, self.widget_psd.speed_by_default/10)
+        if abs(self.widget_psd.volume3-self.widget_psd.syringe_size/2)<self.widget_psd.speed_by_default/10:
+            self.widget_psd.volume3 = self.widget_psd.syringe_size/2
+        #self.widget_psd.volume4 = self.widget_psd.volume4 + self.widget_psd.speed_by_default/10
+        self.widget_psd.volume4 = _update_volume(self.widget_psd.syringe_size, self.widget_psd.volume4, self.widget_psd.speed_by_default/10)
+        if abs(self.widget_psd.volume4-self.widget_psd.syringe_size/2)<self.widget_psd.speed_by_default/10:
+            self.widget_psd.volume4 = self.widget_psd.syringe_size/2
+
+        if (self.widget_psd.volume+self.widget_psd.volume2+self.widget_psd.volume3+self.widget_psd.volume4)==self.widget_psd.syringe_size*2:
+           self.timer_update_fill_half_mode.stop()
+           self.start_exchange.emit()
 
     def update_volume(self):
         vol_tags = ['volume','volume2','volume3','volume4']
@@ -290,32 +415,32 @@ class MyMainWindow(QMainWindow):
         # if self.counts%10==0:
         for vol_tag, fill_tag in zip(vol_tags,fill_tags):
             self._update_volume(vol_tag,fill_tag)
-        self.lcdNumber_exchange_volume.display(self.widget.waste_volumn)
+        self.lcdNumber_exchange_volume.display(self.widget_psd.waste_volumn)
 
     def _update_volume(self,vol_tag='volume',fill_tag='filling'):
-        if (12.5-getattr(self.widget,vol_tag))<=0:
-            setattr(self.widget,vol_tag,12.5)
-            setattr(self.widget,fill_tag, False)
-        elif getattr(self.widget,vol_tag)<=0:
-            setattr(self.widget,vol_tag, 0)
-            setattr(self.widget,fill_tag, True)
+        if (12.5-getattr(self.widget_psd,vol_tag))<=0:
+            setattr(self.widget_psd,vol_tag,12.5)
+            setattr(self.widget_psd,fill_tag, False)
+        elif getattr(self.widget_psd,vol_tag)<=0:
+            setattr(self.widget_psd,vol_tag, 0)
+            setattr(self.widget_psd,fill_tag, True)
         else:
             pass
-        if getattr(self.widget,fill_tag):
-            setattr(self.widget,vol_tag, getattr(self.widget,vol_tag)+self.widget.speed/10)
+        if getattr(self.widget_psd,fill_tag):
+            setattr(self.widget_psd,vol_tag, getattr(self.widget_psd,vol_tag)+self.widget_psd.speed/10)
         else:
-            setattr(self.widget,vol_tag, getattr(self.widget,vol_tag)-self.widget.speed/10)
+            setattr(self.widget_psd,vol_tag, getattr(self.widget_psd,vol_tag)-self.widget_psd.speed/10)
 
     def update_speed(self):
-        self.widget.speed = float(self.doubleSpinBox.value())
+        self.widget_psd.speed = float(self.doubleSpinBox.value())
 
 if __name__ == "__main__":
-    QApplication.setStyle("windows")
+    QApplication.setStyle("fusion")
     app = QApplication(sys.argv)
     #get dpi info: dots per inch
     screen = app.screens()[0]
     dpi = screen.physicalDotsPerInch()
     myWin = MyMainWindow()
-    app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
+    # app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
     myWin.show()
     sys.exit(app.exec_())
