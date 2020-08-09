@@ -10,10 +10,10 @@ class syringe_widget(QWidget):
     def __init__(self,parent=None):
         super().__init__(parent)
         self.parent = parent
-        self.volume = 12.5/2
-        self.volume2 = 12.5/2
-        self.volume3 = 12.5/2
-        self.volume4 = 12.5/2
+        self.volume = 0
+        self.volume2 = 0
+        self.volume3 = 0
+        self.volume4 = 0
         self.filling = True
         self.filling2 = False
         self.filling3 = True
@@ -39,6 +39,12 @@ class syringe_widget(QWidget):
         self.connect_status = {1:'connected',2:'connected',3:'error',4:'error'}
         self.actived_syringe_normal_mode = 1
         self.actived_syringe_motion_normal_mode = 'fill'
+        self.actived_pulling_syringe_init_mode = 3
+        self.actived_pushing_syringe_init_mode = 2
+        self.actived_syringe_motion_init_mode = 'fill'
+        self.speed_init_mode = 0
+        self.volume_init_mode = 0
+        self.volume_of_electrolyte_in_cell = 0
 
     def initUI(self):
         self.setGeometry(300, 300, 350, 400)
@@ -63,7 +69,21 @@ class syringe_widget(QWidget):
             self.connect_valve_port[3] = ['left','right'][int(not self.filling3)]
             self.draw_valve(qp,rects_4[1],connect_port=['left','up'][int(not self.filling4)])
             self.connect_valve_port[4] = ['left','right'][int(not self.filling4)]
+        elif self.operation_mode == 'pre_auto_refilling':
+            self.draw_valve(qp,rects_1[1],connect_port=['up','left'][int(self.filling)])
+            self.connect_valve_port[1] = ['up','left'][int(self.filling)]
+            self.draw_valve(qp,rects_2[1],connect_port=['up','left'][int(self.filling2)])
+            self.connect_valve_port[2] = ['up','left'][int(self.filling2)]
+            self.draw_valve(qp,rects_3[1],connect_port=['up','left'][int(self.filling3)])
+            self.connect_valve_port[3] = ['up','left'][int(self.filling3)]
+            self.draw_valve(qp,rects_4[1],connect_port=['up','left'][int(self.filling4)])
+            self.connect_valve_port[4] = ['up','left'][int(self.filling4)]        
         elif self.operation_mode == 'normal_mode':
+            self.draw_valve(qp,rects_1[1],connect_port=self.connect_valve_port[1])
+            self.draw_valve(qp,rects_2[1],connect_port=self.connect_valve_port[2])
+            self.draw_valve(qp,rects_3[1],connect_port=self.connect_valve_port[3])
+            self.draw_valve(qp,rects_4[1],connect_port=self.connect_valve_port[4])
+        elif self.operation_mode == 'init_mode':
             self.draw_valve(qp,rects_1[1],connect_port=self.connect_valve_port[1])
             self.draw_valve(qp,rects_2[1],connect_port=self.connect_valve_port[2])
             self.draw_valve(qp,rects_3[1],connect_port=self.connect_valve_port[3])
@@ -91,7 +111,8 @@ class syringe_widget(QWidget):
         self.draw_radio_signal(qp,[rects_2[8][0]-6,rects_2[8][1]+90],color=['red','blue'][int(self.connect_status[2]=='connected')])
         self.draw_radio_signal(qp,[rects_3[8][0]-6,rects_3[8][1]+90],color=['red','blue'][int(self.connect_status[3]=='connected')])
         self.draw_radio_signal(qp,[rects_4[8][0]-6,rects_4[8][1]+90],color=['red','blue'][int(self.connect_status[4]=='connected')])
-        self.draw_cell(qp,offset=[(32.5-12-1)*self.ref_unit,(1.8-0.5)*self.ref_unit])
+        if self.operation_mode in ['auto_refilling','init_mode']:
+            self.draw_cell(qp,offset=[(32.5-12-1)*self.ref_unit,(1.8-0.5)*self.ref_unit])
         rects_resevoir = self.draw_bottle(qp, fill_height = self.resevoir_volumn/250*200, offset = [3-1-1,8],volume=self.resevoir_volumn_total,label = 'Resevoir')
         rects_waste = self.draw_bottle(qp, fill_height = self.waste_volumn/250*200, offset = [61-24-1,8], volume = self.waste_volumn_total,label = 'Waste')
         pen = QPen([Qt.red,Qt.blue][0], 2, line_styles[int(self.line_style==1)])
@@ -119,6 +140,19 @@ class syringe_widget(QWidget):
                         qp.drawLine(*(each_line[ii]+each_line[ii+1]))
                 else:
                     pass
+        elif self.operation_mode=='init_mode':
+            rects_map_table = {1:rects_1,2:rects_2,3:rects_3,4:rects_4}
+            rects_push = rects_map_table[self.actived_pushing_syringe_init_mode]
+            rects_pull = rects_map_table[self.actived_pulling_syringe_init_mode]
+            lines1 = self.cal_line_coords(rects_push[3],self.cell_rect,'right','left',5,5,0)
+            lines2 = self.cal_line_coords(rects_pull[2],self.cell_rect,'left','right',5,5,0)
+            lines = [lines1,lines2]
+            for i in range(len(lines)):
+                each_line = lines[i]
+                pen = QPen([Qt.red,Qt.blue][0], 2, line_styles[int(self.line_style==1)])
+                qp.setPen(pen)
+                for ii in range(len(each_line)-1):
+                    qp.drawLine(*(each_line[ii]+each_line[ii+1]))
         elif self.operation_mode == 'normal_mode':
             rects_actived_syringe = eval('rects_{}'.format(self.actived_syringe_normal_mode))
             if self.actived_syringe_motion_normal_mode == 'fill':
@@ -131,6 +165,30 @@ class syringe_widget(QWidget):
             qp.setPen(pen)
             for ii in range(len(lines)-1):
                 qp.drawLine(*(lines[ii]+lines[ii+1]))
+        elif self.operation_mode == 'pre_auto_refilling':
+            if self.filling:
+                lines1 = self.cal_line_coords(rects_1[2],rects_resevoir[0],'left','up',5,0,140)
+            else:
+                lines1 = self.cal_line_coords(rects_1[0],rects_waste[0],'up','up',0,0,110)
+            if self.filling2:
+                lines2 = self.cal_line_coords(rects_2[2],rects_resevoir[0],'left','up',5,0,140)
+            else:
+                lines2 = self.cal_line_coords(rects_2[0],rects_waste[0],'up','up',0,0,110)
+            if self.filling3:
+                lines3 = self.cal_line_coords(rects_3[2],rects_resevoir[0],'left','up',5,0,140)
+            else:
+                lines3 = self.cal_line_coords(rects_3[0],rects_waste[0],'up','up',0,0,110)
+            if self.filling4:
+                lines4 = self.cal_line_coords(rects_4[2],rects_resevoir[0],'left','up',5,0,140)
+            else:
+                lines4 = self.cal_line_coords(rects_4[0],rects_waste[0],'up','up',0,0,110)
+            lines = [lines1,lines2,lines3,lines4]
+            for i in range(len(lines)):
+                each_line = lines[i]
+                pen = QPen([Qt.red,Qt.blue][0], 2, line_styles[int(self.line_style==1)])
+                qp.setPen(pen)
+                for ii in range(len(each_line)-1):
+                    qp.drawLine(*(each_line[ii]+each_line[ii+1]))
         elif self.operation_mode == 'empty_all_mode':
             lines1 = self.cal_line_coords(rects_1[0],rects_waste[0],'up','up',0,0,100)
             lines2 = self.cal_line_coords(rects_2[0],rects_waste[0],'up','up',0,0,100)
@@ -309,7 +367,7 @@ class syringe_widget(QWidget):
         qp.setBrush(QColor(122, 163, 39))
         qp.drawPath(path)
         self.cell_rect = [x+l1-(l1-l2)/2-l2,y+(l1-l2)/2,l2,l2]
-        qp.drawText(self.cell_rect[0]-2,self.cell_rect[1]+40,"cell")
+        qp.drawText(self.cell_rect[0]-15-18,self.cell_rect[1]-40,"cell vol:{} ml".format(round(self.volume_of_electrolyte_in_cell,3)))
         return [x+l1-(l1-l2)/2-l2,y+(l1-l2)/2,l2,l2]
 
     def draw_radio_signal(self,qp,pos,dim=[40,40],start_angle=50,num_arcs = 4,vertical_spacing =10, color='red'):
