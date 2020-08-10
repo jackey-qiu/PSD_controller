@@ -10,6 +10,11 @@ import sys,os
 import cv2
 import logging
 import time
+try:
+    from . import locate_path
+except:
+    import locate_path
+script_path = locate_path.module_path_locator()
 
 #redirect the error stream to qt widget
 class QTextEditLogger(logging.Handler):
@@ -36,7 +41,8 @@ class MyMainWindow(QMainWindow):
         super(MyMainWindow, self).__init__(parent)
         #pyqtgraph preference setting
         #load GUI ui file made by qt designer
-        uic.loadUi('/Users/canrong/apps/PSD_controller/psd_gui_beta.ui',self)
+        ui_path = os.path.join(script_path,'psd_gui_beta.ui')
+        uic.loadUi(ui_path,self)
         self.psd_server = 'psd server'
 
         self.widget_terminal.update_name_space('psd_widget',self.widget_psd)
