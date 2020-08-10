@@ -4,46 +4,62 @@ from PyQt5.QtCore import Qt, QTimer
 import sys
 import time
 
-
 class syringe_widget(QWidget):
-
     def __init__(self,parent=None):
         super().__init__(parent)
         self.parent = parent
+        #volume of solution in each syringe
         self.volume = 0
         self.volume2 = 0
         self.volume3 = 0
         self.volume4 = 0
+        #motion type for each syringe
+        #True: pushing; False: Pulling
         self.filling = True
         self.filling2 = False
         self.filling3 = True
         self.filling4 = False
+        #size of syringe
         self.syringe_size = 12.5
-        self.cell_inlet_pos = []
-        self.cell_outlet_pos = []
-        self.waste_pos = []
-        self.resevoir_pos = []
+        #leftover volumn in resevoir
         self.resevoir_volumn = 250 #in mL
+        #volumn size of resevoir bottle
         self.resevoir_volumn_total = 250 #in ml
+        #volumn size of waste bottle
         self.waste_volumn_total = 250 #in ml
+        #current volumn in the waste bottle
         self.waste_volumn = 0 # in mL
-        self.speed = 1 # in mL/s
-        self.speed_normal_mode = 1
-        self.volume_normal_mode = 12.5
-        self.speed_by_default = 0.5
+        #speed for auto_refilling mode
+        self.speed = 0 # in mL/s
+        #speed for single_mode
+        self.speed_normal_mode = 0
+        #volume for single mode
+        self.volume_normal_mode = 0
+        #default speed for fill_all and empty_all mode
+        self.speed_by_default = 0.
+        #ref length for drawing syringe
         self.ref_unit = 20
         self.line_style = 1
-        self.counts = 0
-        self.operation_mode = 'auto_refilling'
+        #either init_mode, auto_refilling mode or normal_mode
+        self.operation_mode = 'init_mode'
+        #3-channel T valve position (either left, right or up)
         self.connect_valve_port = {1:'left',2:'right',3:'up',4:'up'}
-        self.connect_status = {1:'connected',2:'connected',3:'error',4:'error'}
+        #connected status
+        self.connect_status = {1:'connected',2:'connected',3:'connected',4:'connected'}
+        #the actived syringe index(only one) for operating in normal mode
         self.actived_syringe_normal_mode = 1
+        #status: fill or dispense
         self.actived_syringe_motion_normal_mode = 'fill'
+        #the actived syringe index (two) for operating in init_mode
         self.actived_pulling_syringe_init_mode = 3
         self.actived_pushing_syringe_init_mode = 2
+        #status: fill or dispense
         self.actived_syringe_motion_init_mode = 'fill'
+        #speed set for motion in init_mode
         self.speed_init_mode = 0
+        #volume left to be fill(or)dispense
         self.volume_init_mode = 0
+        #volume of solution in cell
         self.volume_of_electrolyte_in_cell = 0
 
     def initUI(self):
@@ -56,10 +72,10 @@ class syringe_widget(QWidget):
         qp.begin(self)
         # self.draw_syringe(qp)
         line_styles = [Qt.DashDotDotLine,Qt.DashLine]
-        rects_1 = self.draw_syringe(qp,'volume',[11-3-1-1,5],[250,0,0],label ='S1',volume = self.syringe_size)
-        rects_2 = self.draw_syringe(qp,'volume2',[23-9-1-1,5],[100,100,0],label = 'S2', volume = self.syringe_size)
-        rects_3 = self.draw_syringe(qp,'volume3',[35-15+1-1,5],[0,200,0], label = 'S3', volume = self.syringe_size)
-        rects_4 = self.draw_syringe(qp,'volume4',[47-21+1-1,5],[0,100,250],label='S4',volume = self.syringe_size)
+        rects_1 = self.draw_syringe(qp,'volume',[6,5],[250,0,0],label ='S1',volume = self.syringe_size)
+        rects_2 = self.draw_syringe(qp,'volume2',[12,5],[100,100,0],label = 'S2', volume = self.syringe_size)
+        rects_3 = self.draw_syringe(qp,'volume3',[20,5],[0,200,0], label = 'S3', volume = self.syringe_size)
+        rects_4 = self.draw_syringe(qp,'volume4',[26,5],[0,100,250],label='S4',volume = self.syringe_size)
         if self.operation_mode == 'auto_refilling':
             self.draw_valve(qp,rects_1[1],connect_port=['left','right'][int(not self.filling)])
             self.connect_valve_port[1] = ['left','right'][int(not self.filling)]
@@ -112,9 +128,9 @@ class syringe_widget(QWidget):
         self.draw_radio_signal(qp,[rects_3[8][0]-6,rects_3[8][1]+90],color=['red','blue'][int(self.connect_status[3]=='connected')])
         self.draw_radio_signal(qp,[rects_4[8][0]-6,rects_4[8][1]+90],color=['red','blue'][int(self.connect_status[4]=='connected')])
         if self.operation_mode in ['auto_refilling','init_mode']:
-            self.draw_cell(qp,offset=[(32.5-12-1)*self.ref_unit,(1.8-0.5)*self.ref_unit])
-        rects_resevoir = self.draw_bottle(qp, fill_height = self.resevoir_volumn/250*200, offset = [3-1-1,8],volume=self.resevoir_volumn_total,label = 'Resevoir')
-        rects_waste = self.draw_bottle(qp, fill_height = self.waste_volumn/250*200, offset = [61-24-1,8], volume = self.waste_volumn_total,label = 'Waste')
+            self.draw_cell(qp,offset=[(19.5)*self.ref_unit,(1.3)*self.ref_unit])
+        rects_resevoir = self.draw_bottle(qp, fill_height = self.resevoir_volumn/250*200, offset = [1,8],volume=self.resevoir_volumn_total,label = 'Resevoir')
+        rects_waste = self.draw_bottle(qp, fill_height = self.waste_volumn/250*200, offset = [36,8], volume = self.waste_volumn_total,label = 'Waste')
         pen = QPen([Qt.red,Qt.blue][0], 2, line_styles[int(self.line_style==1)])
         qp.setPen(pen)
         if self.operation_mode=='auto_refilling':
@@ -402,6 +418,8 @@ class syringe_widget(QWidget):
         rec5_pos = self.cal_ref_pos(rec5_dim[0],rec5_dim[1],rec4_pos[0],rec4_pos[1],rec4_dim[0],rec4_dim[1],'down',0)
         rec6_pos = self.cal_ref_pos(rec6_dim[0],rec6_dim[1],rec5_pos[0],rec5_pos[1],rec5_dim[0],rec5_dim[1],'down',0)
 
+        qp.setBrush(QColor(250, 250, 250))
+        qp.setPen(QPen(QColor(100, 100, 100), 1, Qt.SolidLine, Qt.FlatCap, Qt.MiterJoin))
         qp.drawRect(*(rec1_pos+rec1_dim))
         qp.drawRect(*(rec2_pos+rec2_dim))
         qp.drawRect(*(rec3_pos+rec3_dim))

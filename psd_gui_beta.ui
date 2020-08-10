@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1608</width>
-    <height>1056</height>
+    <width>1920</width>
+    <height>1052</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -19,7 +19,7 @@
   <property name="maximumSize">
    <size>
     <width>16777215</width>
-    <height>1056</height>
+    <height>10560</height>
    </size>
   </property>
   <property name="windowTitle">
@@ -30,7 +30,7 @@
     <item>
      <widget class="QFrame" name="frame_2">
       <property name="sizePolicy">
-       <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+       <sizepolicy hsizetype="Expanding" vsizetype="MinimumExpanding">
         <horstretch>0</horstretch>
         <verstretch>0</verstretch>
        </sizepolicy>
@@ -44,6 +44,9 @@
       <layout class="QVBoxLayout" name="verticalLayout_3">
        <item>
         <layout class="QHBoxLayout" name="horizontalLayout">
+         <property name="sizeConstraint">
+          <enum>QLayout::SetMinimumSize</enum>
+         </property>
          <item>
           <widget class="QLabel" name="label_3">
            <property name="sizePolicy">
@@ -234,14 +237,7 @@
          <item>
           <widget class="QPushButton" name="pushButton_reset_exchange">
            <property name="text">
-            <string>Reset</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="Line" name="line_38">
-           <property name="orientation">
-            <enum>Qt::Vertical</enum>
+            <string>Reset resovoir waste vol</string>
            </property>
           </widget>
          </item>
@@ -301,6 +297,12 @@
        </item>
        <item>
         <widget class="QGroupBox" name="groupBox">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
          <property name="font">
           <font>
            <weight>75</weight>
@@ -325,14 +327,14 @@
             <property name="horizontalSpacing">
              <number>-1</number>
             </property>
-            <item row="1" column="2">
+            <item row="3" column="2">
              <widget class="Line" name="line_4">
               <property name="orientation">
                <enum>Qt::Horizontal</enum>
               </property>
              </widget>
             </item>
-            <item row="2" column="1">
+            <item row="4" column="1">
              <widget class="QLabel" name="label_17">
               <property name="sizePolicy">
                <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
@@ -345,7 +347,7 @@
               </property>
              </widget>
             </item>
-            <item row="2" column="2">
+            <item row="4" column="2">
              <widget class="QComboBox" name="comboBox_syringe_number">
               <property name="sizePolicy">
                <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
@@ -375,42 +377,42 @@
               </item>
              </widget>
             </item>
-            <item row="2" column="8">
+            <item row="4" column="8">
              <widget class="QPushButton" name="pushButton_fill">
               <property name="text">
                <string>Fill</string>
               </property>
              </widget>
             </item>
-            <item row="1" column="10">
+            <item row="3" column="10">
              <widget class="Line" name="line_12">
               <property name="orientation">
                <enum>Qt::Horizontal</enum>
               </property>
              </widget>
             </item>
-            <item row="2" column="6">
+            <item row="4" column="6">
              <widget class="QLabel" name="label_18">
               <property name="text">
                <string>Valve port</string>
               </property>
              </widget>
             </item>
-            <item row="1" column="5">
+            <item row="3" column="5">
              <widget class="Line" name="line_7">
               <property name="orientation">
                <enum>Qt::Horizontal</enum>
               </property>
              </widget>
             </item>
-            <item row="1" column="11">
+            <item row="3" column="11">
              <widget class="Line" name="line_13">
               <property name="orientation">
                <enum>Qt::Horizontal</enum>
               </property>
              </widget>
             </item>
-            <item row="0" column="0">
+            <item row="2" column="0">
              <widget class="QRadioButton" name="radioButton_exchange_mode">
               <property name="sizePolicy">
                <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
@@ -422,11 +424,11 @@
                <string>Exchange_mode</string>
               </property>
               <property name="checked">
-               <bool>true</bool>
+               <bool>false</bool>
               </property>
              </widget>
             </item>
-            <item row="2" column="7">
+            <item row="4" column="7">
              <widget class="QComboBox" name="comboBox_valve_port">
               <item>
                <property name="text">
@@ -445,56 +447,49 @@
               </item>
              </widget>
             </item>
-            <item row="2" column="5">
+            <item row="4" column="5">
              <widget class="QLabel" name="label_20">
               <property name="text">
                <string>ml/s</string>
               </property>
              </widget>
             </item>
-            <item row="1" column="3">
+            <item row="3" column="3">
              <widget class="Line" name="line_5">
               <property name="orientation">
                <enum>Qt::Horizontal</enum>
               </property>
              </widget>
             </item>
-            <item row="1" column="7">
+            <item row="3" column="7">
              <widget class="Line" name="line_9">
               <property name="orientation">
                <enum>Qt::Horizontal</enum>
               </property>
              </widget>
             </item>
-            <item row="1" column="6">
+            <item row="3" column="6">
              <widget class="Line" name="line_8">
               <property name="orientation">
                <enum>Qt::Horizontal</enum>
               </property>
              </widget>
             </item>
-            <item row="1" column="4">
+            <item row="3" column="4">
              <widget class="Line" name="line_6">
               <property name="orientation">
                <enum>Qt::Horizontal</enum>
               </property>
              </widget>
             </item>
-            <item row="4" column="0">
-             <widget class="QRadioButton" name="radioButton_init_mode">
-              <property name="text">
-               <string>Init_mode</string>
-              </property>
-             </widget>
-            </item>
-            <item row="1" column="8">
+            <item row="3" column="8">
              <widget class="Line" name="line_10">
               <property name="orientation">
                <enum>Qt::Horizontal</enum>
               </property>
              </widget>
             </item>
-            <item row="2" column="4">
+            <item row="4" column="4">
              <widget class="QDoubleSpinBox" name="doubleSpinBox_speed_normal_mode">
               <property name="decimals">
                <number>3</number>
@@ -504,99 +499,35 @@
               </property>
              </widget>
             </item>
-            <item row="4" column="9">
-             <widget class="QSpinBox" name="spinBox_volume_init_mode">
-              <property name="maximum">
-               <number>10000</number>
-              </property>
-              <property name="value">
-               <number>5</number>
-              </property>
-             </widget>
-            </item>
-            <item row="4" column="2">
-             <widget class="QComboBox" name="comboBox_pushing_syringe_init_mode">
-              <property name="sizePolicy">
-               <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                <horstretch>0</horstretch>
-                <verstretch>0</verstretch>
-               </sizepolicy>
-              </property>
-              <property name="maximumSize">
-               <size>
-                <width>90</width>
-                <height>16777215</height>
-               </size>
-              </property>
-              <item>
-               <property name="text">
-                <string>1</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string>2</string>
-               </property>
-              </item>
-             </widget>
-            </item>
-            <item row="4" column="10">
-             <widget class="QPushButton" name="pushButton_fill_init_mode">
-              <property name="text">
-               <string>Fill</string>
-              </property>
-             </widget>
-            </item>
-            <item row="1" column="9">
+            <item row="3" column="9">
              <widget class="Line" name="line_11">
               <property name="orientation">
                <enum>Qt::Horizontal</enum>
               </property>
              </widget>
             </item>
-            <item row="1" column="1">
+            <item row="3" column="1">
              <widget class="Line" name="line_3">
               <property name="orientation">
                <enum>Qt::Horizontal</enum>
               </property>
              </widget>
             </item>
-            <item row="2" column="0">
+            <item row="4" column="0">
              <widget class="QRadioButton" name="radioButton_single_mode">
               <property name="text">
                <string>Single_mode</string>
               </property>
              </widget>
             </item>
-            <item row="3" column="3">
-             <widget class="Line" name="line_28">
-              <property name="orientation">
-               <enum>Qt::Horizontal</enum>
-              </property>
-             </widget>
-            </item>
-            <item row="3" column="1">
-             <widget class="Line" name="line_26">
-              <property name="orientation">
-               <enum>Qt::Horizontal</enum>
-              </property>
-             </widget>
-            </item>
-            <item row="3" column="2">
-             <widget class="Line" name="line_27">
-              <property name="orientation">
-               <enum>Qt::Horizontal</enum>
-              </property>
-             </widget>
-            </item>
-            <item row="2" column="9">
+            <item row="4" column="9">
              <widget class="QPushButton" name="pushButton_dispense">
               <property name="text">
                <string>Dispense</string>
               </property>
              </widget>
             </item>
-            <item row="2" column="10">
+            <item row="4" column="10">
              <widget class="QDoubleSpinBox" name="doubleSpinBox_stroke_factor">
               <property name="maximum">
                <double>1.000000000000000</double>
@@ -609,77 +540,21 @@
               </property>
              </widget>
             </item>
-            <item row="3" column="0">
-             <widget class="Line" name="line">
-              <property name="orientation">
-               <enum>Qt::Horizontal</enum>
-              </property>
-             </widget>
-            </item>
-            <item row="3" column="4">
-             <widget class="Line" name="line_29">
-              <property name="orientation">
-               <enum>Qt::Horizontal</enum>
-              </property>
-             </widget>
-            </item>
-            <item row="2" column="11">
+            <item row="4" column="11">
              <widget class="QLabel" name="label_22">
               <property name="text">
                <string>Stroke</string>
               </property>
              </widget>
             </item>
-            <item row="3" column="10">
-             <widget class="Line" name="line_35">
-              <property name="orientation">
-               <enum>Qt::Horizontal</enum>
+            <item row="0" column="1">
+             <widget class="QLabel" name="label_21">
+              <property name="text">
+               <string>Fill_syringe</string>
               </property>
              </widget>
             </item>
-            <item row="3" column="7">
-             <widget class="Line" name="line_32">
-              <property name="orientation">
-               <enum>Qt::Horizontal</enum>
-              </property>
-             </widget>
-            </item>
-            <item row="3" column="9">
-             <widget class="Line" name="line_34">
-              <property name="orientation">
-               <enum>Qt::Horizontal</enum>
-              </property>
-             </widget>
-            </item>
-            <item row="3" column="11">
-             <widget class="Line" name="line_36">
-              <property name="orientation">
-               <enum>Qt::Horizontal</enum>
-              </property>
-             </widget>
-            </item>
-            <item row="3" column="5">
-             <widget class="Line" name="line_30">
-              <property name="orientation">
-               <enum>Qt::Horizontal</enum>
-              </property>
-             </widget>
-            </item>
-            <item row="3" column="8">
-             <widget class="Line" name="line_33">
-              <property name="orientation">
-               <enum>Qt::Horizontal</enum>
-              </property>
-             </widget>
-            </item>
-            <item row="3" column="6">
-             <widget class="Line" name="line_31">
-              <property name="orientation">
-               <enum>Qt::Horizontal</enum>
-              </property>
-             </widget>
-            </item>
-            <item row="0" column="11">
+            <item row="2" column="11">
              <widget class="QLabel" name="label_34">
               <property name="sizePolicy">
                <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
@@ -692,7 +567,7 @@
               </property>
              </widget>
             </item>
-            <item row="0" column="9">
+            <item row="2" column="9">
              <widget class="QLabel" name="label_33">
               <property name="sizePolicy">
                <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
@@ -705,35 +580,14 @@
               </property>
              </widget>
             </item>
-            <item row="4" column="3">
-             <widget class="QLabel" name="label_25">
-              <property name="text">
-               <string>Pull_syringe</string>
-              </property>
-             </widget>
-            </item>
-            <item row="4" column="7">
-             <widget class="QLabel" name="label_27">
-              <property name="text">
-               <string>uL/s</string>
-              </property>
-             </widget>
-            </item>
-            <item row="0" column="1">
+            <item row="2" column="1">
              <widget class="QPushButton" name="pushButton_start">
               <property name="text">
                <string>Start</string>
               </property>
              </widget>
             </item>
-            <item row="4" column="11">
-             <widget class="QPushButton" name="pushButton_dispense_init_mode">
-              <property name="text">
-               <string>Dispense</string>
-              </property>
-             </widget>
-            </item>
-            <item row="0" column="3">
+            <item row="2" column="3">
              <widget class="QLabel" name="label">
               <property name="sizePolicy">
                <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
@@ -746,7 +600,7 @@
               </property>
              </widget>
             </item>
-            <item row="0" column="4">
+            <item row="2" column="4">
              <widget class="QDoubleSpinBox" name="doubleSpinBox">
               <property name="sizePolicy">
                <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
@@ -755,20 +609,20 @@
                </sizepolicy>
               </property>
               <property name="decimals">
-               <number>3</number>
+               <number>4</number>
               </property>
               <property name="maximum">
                <double>100.000000000000000</double>
               </property>
               <property name="singleStep">
-               <double>0.050000000000000</double>
+               <double>0.001000000000000</double>
               </property>
               <property name="value">
-               <double>0.100000000000000</double>
+               <double>0.005000000000000</double>
               </property>
              </widget>
             </item>
-            <item row="0" column="7">
+            <item row="2" column="7">
              <widget class="QLCDNumber" name="lcdNumber_exchange_volume">
               <property name="sizePolicy">
                <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
@@ -781,14 +635,7 @@
               </property>
              </widget>
             </item>
-            <item row="4" column="1">
-             <widget class="QLabel" name="label_21">
-              <property name="text">
-               <string>Fill_syringe</string>
-              </property>
-             </widget>
-            </item>
-            <item row="0" column="8">
+            <item row="2" column="8">
              <widget class="QLabel" name="label_10">
               <property name="sizePolicy">
                <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
@@ -801,14 +648,64 @@
               </property>
              </widget>
             </item>
-            <item row="4" column="8">
-             <widget class="QLabel" name="label_28">
+            <item row="2" column="6">
+             <widget class="QLabel" name="label_9">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
               <property name="text">
-               <string>Vol (uL)</string>
+               <string>Exchange volume</string>
               </property>
              </widget>
             </item>
-            <item row="4" column="4">
+            <item row="2" column="2">
+             <widget class="QPushButton" name="pushButton_stop">
+              <property name="text">
+               <string>Stop</string>
+              </property>
+             </widget>
+            </item>
+            <item row="4" column="3">
+             <widget class="QLabel" name="label_19">
+              <property name="text">
+               <string>Speed</string>
+              </property>
+             </widget>
+            </item>
+            <item row="2" column="5">
+             <widget class="QLabel" name="label_2">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="text">
+               <string>ml/s</string>
+              </property>
+             </widget>
+            </item>
+            <item row="3" column="0">
+             <widget class="Line" name="line_2">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="6">
+             <widget class="QSpinBox" name="spinBox_speed_init_mode">
+              <property name="maximum">
+               <number>1000</number>
+              </property>
+              <property name="value">
+               <number>2</number>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="4">
              <widget class="QComboBox" name="comboBox_pulling_syringe_init_mode">
               <item>
                <property name="text">
@@ -822,71 +719,88 @@
               </item>
              </widget>
             </item>
-            <item row="0" column="6">
-             <widget class="QLabel" name="label_9">
-              <property name="sizePolicy">
-               <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
-                <horstretch>0</horstretch>
-                <verstretch>0</verstretch>
-               </sizepolicy>
+            <item row="0" column="9">
+             <widget class="QSpinBox" name="spinBox_volume_init_mode">
+              <property name="maximum">
+               <number>10000</number>
               </property>
-              <property name="text">
-               <string>Exchange volume</string>
+              <property name="value">
+               <number>5</number>
               </property>
              </widget>
             </item>
-            <item row="0" column="2">
-             <widget class="QPushButton" name="pushButton_stop">
+            <item row="0" column="8">
+             <widget class="QLabel" name="label_28">
               <property name="text">
-               <string>Stop</string>
+               <string>Vol (uL)</string>
               </property>
              </widget>
             </item>
-            <item row="2" column="3">
-             <widget class="QLabel" name="label_19">
+            <item row="0" column="3">
+             <widget class="QLabel" name="label_25">
               <property name="text">
-               <string>Speed</string>
+               <string>Pull_syringe</string>
               </property>
              </widget>
             </item>
             <item row="0" column="5">
-             <widget class="QLabel" name="label_2">
-              <property name="sizePolicy">
-               <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
-                <horstretch>0</horstretch>
-                <verstretch>0</verstretch>
-               </sizepolicy>
-              </property>
-              <property name="text">
-               <string>ml/s</string>
-              </property>
-             </widget>
-            </item>
-            <item row="4" column="6">
-             <widget class="QSpinBox" name="spinBox_speed_init_mode">
-              <property name="maximum">
-               <number>1000</number>
-              </property>
-              <property name="value">
-               <number>2</number>
-              </property>
-             </widget>
-            </item>
-            <item row="4" column="5">
              <widget class="QLabel" name="label_26">
               <property name="text">
                <string>Speed</string>
               </property>
              </widget>
             </item>
-            <item row="1" column="0">
-             <widget class="Line" name="line_2">
-              <property name="orientation">
-               <enum>Qt::Horizontal</enum>
+            <item row="0" column="10">
+             <widget class="QPushButton" name="pushButton_fill_init_mode">
+              <property name="text">
+               <string>Fill</string>
               </property>
              </widget>
             </item>
-            <item row="0" column="10">
+            <item row="0" column="11">
+             <widget class="QPushButton" name="pushButton_dispense_init_mode">
+              <property name="text">
+               <string>Dispense</string>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="2">
+             <widget class="QComboBox" name="comboBox_pushing_syringe_init_mode">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>90</width>
+                <height>16777215</height>
+               </size>
+              </property>
+              <property name="currentText">
+               <string>2</string>
+              </property>
+              <item>
+               <property name="text">
+                <string>1</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>2</string>
+               </property>
+              </item>
+             </widget>
+            </item>
+            <item row="0" column="7">
+             <widget class="QLabel" name="label_27">
+              <property name="text">
+               <string>uL/s</string>
+              </property>
+             </widget>
+            </item>
+            <item row="2" column="10">
              <widget class="QLCDNumber" name="lcdNumber_time">
               <property name="sizePolicy">
                <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
@@ -936,6 +850,100 @@
               </property>
              </widget>
             </item>
+            <item row="0" column="0">
+             <widget class="QRadioButton" name="radioButton_init_mode">
+              <property name="text">
+               <string>Init_mode</string>
+              </property>
+              <property name="checked">
+               <bool>true</bool>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="0">
+             <widget class="Line" name="line">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="1">
+             <widget class="Line" name="line_26">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="2">
+             <widget class="Line" name="line_27">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="3">
+             <widget class="Line" name="line_28">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="4">
+             <widget class="Line" name="line_29">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="5">
+             <widget class="Line" name="line_30">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="6">
+             <widget class="Line" name="line_31">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="7">
+             <widget class="Line" name="line_32">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="8">
+             <widget class="Line" name="line_33">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="9">
+             <widget class="Line" name="line_34">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="10">
+             <widget class="Line" name="line_35">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="11">
+             <widget class="Line" name="line_36">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+             </widget>
+            </item>
            </layout>
           </item>
          </layout>
@@ -944,7 +952,7 @@
        <item>
         <widget class="QGroupBox" name="groupBox_2">
          <property name="sizePolicy">
-          <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+          <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
            <horstretch>0</horstretch>
            <verstretch>0</verstretch>
           </sizepolicy>
@@ -961,6 +969,12 @@
          <layout class="QHBoxLayout" name="horizontalLayout_4">
           <item>
            <widget class="QLabel" name="label_30">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
             <property name="text">
              <string>Camera index</string>
             </property>
@@ -1002,6 +1016,24 @@
           </item>
           <item>
            <widget class="Line" name="line_37">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>20</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>16777215</width>
+              <height>25</height>
+             </size>
+            </property>
             <property name="orientation">
              <enum>Qt::Vertical</enum>
             </property>
@@ -1016,6 +1048,12 @@
           </item>
           <item>
            <widget class="QLabel" name="label_29">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
             <property name="text">
              <string>Frame_path</string>
             </property>
@@ -1033,6 +1071,12 @@
           </item>
           <item>
            <widget class="QLabel" name="label_31">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
             <property name="text">
              <string>Frame_name</string>
             </property>
@@ -1048,13 +1092,26 @@
          </layout>
         </widget>
        </item>
+       <item>
+        <spacer name="verticalSpacer">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>40</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
       </layout>
      </widget>
     </item>
     <item>
      <widget class="QFrame" name="frame">
       <property name="sizePolicy">
-       <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+       <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
         <horstretch>0</horstretch>
         <verstretch>0</verstretch>
        </sizepolicy>
@@ -1062,7 +1119,7 @@
       <property name="maximumSize">
        <size>
         <width>16777215</width>
-        <height>700</height>
+        <height>700000</height>
        </size>
       </property>
       <property name="frameShape">
@@ -1075,15 +1132,15 @@
        <item>
         <widget class="QFrame" name="frame_3">
          <property name="sizePolicy">
-          <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+          <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
            <horstretch>0</horstretch>
            <verstretch>0</verstretch>
           </sizepolicy>
          </property>
          <property name="minimumSize">
           <size>
-           <width>800</width>
-           <height>520</height>
+           <width>900</width>
+           <height>550</height>
           </size>
          </property>
          <property name="maximumSize">
@@ -1102,7 +1159,7 @@
           <item>
            <widget class="syringe_widget" name="widget_psd" native="true">
             <property name="sizePolicy">
-             <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+             <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
               <horstretch>0</horstretch>
               <verstretch>0</verstretch>
              </sizepolicy>
@@ -1121,21 +1178,21 @@
        <item>
         <widget class="QFrame" name="frame_4">
          <property name="sizePolicy">
-          <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+          <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
            <horstretch>0</horstretch>
            <verstretch>0</verstretch>
           </sizepolicy>
          </property>
          <property name="minimumSize">
           <size>
-           <width>300</width>
-           <height>300</height>
+           <width>100</width>
+           <height>100</height>
           </size>
          </property>
          <property name="maximumSize">
           <size>
-           <width>600</width>
-           <height>550</height>
+           <width>900</width>
+           <height>900</height>
           </size>
          </property>
          <property name="frameShape">
@@ -1154,7 +1211,7 @@
              </size>
             </property>
             <property name="currentIndex">
-             <number>1</number>
+             <number>0</number>
             </property>
             <widget class="QWidget" name="tab">
              <attribute name="title">
@@ -1163,6 +1220,12 @@
              <layout class="QHBoxLayout" name="horizontalLayout_6">
               <item>
                <widget class="QLabel" name="label_cam">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
                 <property name="text">
                  <string>webcam</string>
                 </property>
@@ -1176,7 +1239,14 @@
              </attribute>
              <layout class="QHBoxLayout" name="horizontalLayout_7">
               <item>
-               <widget class="TerminalWidget" name="widget_terminal" native="true"/>
+               <widget class="TerminalWidget" name="widget_terminal" native="true">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+               </widget>
               </item>
              </layout>
             </widget>
@@ -1205,7 +1275,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1608</width>
+     <width>1920</width>
      <height>22</height>
     </rect>
    </property>
