@@ -75,32 +75,6 @@
           </widget>
          </item>
          <item>
-          <widget class="QPushButton" name="pushButton_empty_all">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="text">
-            <string>Empty all syringes</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QPushButton" name="pushButton_refill_all">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="text">
-            <string>Refill all syringes</string>
-           </property>
-          </widget>
-         </item>
-         <item>
           <widget class="QPushButton" name="pushButton_stop_all">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
@@ -419,7 +393,7 @@
                    </property>
                   </widget>
                  </item>
-                 <item row="1" column="0">
+                 <item row="2" column="0">
                   <widget class="QLabel" name="label_9">
                    <property name="sizePolicy">
                     <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
@@ -432,7 +406,7 @@
                    </property>
                   </widget>
                  </item>
-                 <item row="1" column="1">
+                 <item row="2" column="1">
                   <widget class="QLCDNumber" name="lcdNumber_exchange_volume">
                    <property name="sizePolicy">
                     <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
@@ -457,7 +431,7 @@
                    </property>
                   </widget>
                  </item>
-                 <item row="2" column="0">
+                 <item row="3" column="0">
                   <widget class="QLabel" name="label_33">
                    <property name="sizePolicy">
                     <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
@@ -470,7 +444,7 @@
                    </property>
                   </widget>
                  </item>
-                 <item row="2" column="1">
+                 <item row="3" column="1">
                   <widget class="QLCDNumber" name="lcdNumber_time">
                    <property name="sizePolicy">
                     <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
@@ -526,7 +500,7 @@
                    </property>
                   </widget>
                  </item>
-                 <item row="3" column="0">
+                 <item row="4" column="0">
                   <widget class="QPushButton" name="pushButton_start">
                    <property name="sizePolicy">
                     <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
@@ -551,7 +525,7 @@
                    </property>
                   </widget>
                  </item>
-                 <item row="3" column="1">
+                 <item row="4" column="1">
                   <widget class="QPushButton" name="pushButton_stop">
                    <property name="sizePolicy">
                     <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
@@ -573,6 +547,38 @@
                    </property>
                    <property name="text">
                     <string>Stop</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="1" column="0">
+                  <widget class="QLabel" name="label_43">
+                   <property name="text">
+                    <string>Premotion (ml/s)</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="1" column="1">
+                  <widget class="QDoubleSpinBox" name="doubleSpinBox_premotion_speed">
+                   <property name="sizePolicy">
+                    <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                     <horstretch>0</horstretch>
+                     <verstretch>0</verstretch>
+                    </sizepolicy>
+                   </property>
+                   <property name="minimumSize">
+                    <size>
+                     <width>80</width>
+                     <height>0</height>
+                    </size>
+                   </property>
+                   <property name="maximum">
+                    <double>1.000000000000000</double>
+                   </property>
+                   <property name="singleStep">
+                    <double>0.100000000000000</double>
+                   </property>
+                   <property name="value">
+                    <double>0.500000000000000</double>
                    </property>
                   </widget>
                  </item>
@@ -670,7 +676,7 @@
                  <item row="2" column="0">
                   <widget class="QLabel" name="label_17">
                    <property name="text">
-                    <string>Exchange_speed (uL/s)</string>
+                    <string>Exchange_speed (mL/s)</string>
                    </property>
                   </widget>
                  </item>
@@ -682,8 +688,17 @@
                      <height>0</height>
                     </size>
                    </property>
+                   <property name="decimals">
+                    <number>3</number>
+                   </property>
                    <property name="maximum">
-                    <double>1000.000000000000000</double>
+                    <double>10.000000000000000</double>
+                   </property>
+                   <property name="singleStep">
+                    <double>0.010000000000000</double>
+                   </property>
+                   <property name="value">
+                    <double>0.100000000000000</double>
                    </property>
                   </widget>
                  </item>
@@ -716,7 +731,7 @@
                  <item row="3" column="0">
                   <widget class="QLabel" name="label_42">
                    <property name="text">
-                    <string>Refilling_speed (uL/s)</string>
+                    <string>Refilling_speed (mL/s)</string>
                    </property>
                   </widget>
                  </item>
@@ -727,6 +742,15 @@
                      <width>100</width>
                      <height>0</height>
                     </size>
+                   </property>
+                   <property name="maximum">
+                    <double>10.000000000000000</double>
+                   </property>
+                   <property name="singleStep">
+                    <double>0.100000000000000</double>
+                   </property>
+                   <property name="value">
+                    <double>1.000000000000000</double>
                    </property>
                   </widget>
                  </item>
@@ -1710,6 +1734,20 @@
                 </property>
                </widget>
               </item>
+              <item>
+               <widget class="QLabel" name="label_44">
+                <property name="text">
+                 <string>Max cell volume (ml)</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QSpinBox" name="spinBox_cell_volume">
+                <property name="value">
+                 <number>5</number>
+                </property>
+               </widget>
+              </item>
              </layout>
             </widget>
            </item>
@@ -2684,7 +2722,7 @@
          </property>
          <layout class="QHBoxLayout" name="horizontalLayout_2">
           <item>
-           <widget class="syringe_widget_beta" name="widget_psd" native="true">
+           <widget class="syringe_widget" name="widget_psd" native="true">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
               <horstretch>0</horstretch>
@@ -2738,7 +2776,7 @@
              </size>
             </property>
             <property name="currentIndex">
-             <number>0</number>
+             <number>2</number>
             </property>
             <widget class="QWidget" name="tab">
              <attribute name="title">
@@ -2817,9 +2855,9 @@
    <container>1</container>
   </customwidget>
   <customwidget>
-   <class>syringe_widget_beta</class>
+   <class>syringe_widget</class>
    <extends>QWidget</extends>
-   <header>syringe_widget_beta.h</header>
+   <header>syringe_widget.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

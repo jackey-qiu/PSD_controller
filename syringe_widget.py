@@ -2,11 +2,18 @@ from PyQt5.QtWidgets import QWidget, QApplication
 from PyQt5.QtGui import QPainter, QPainterPath, QColor, QBrush, QFont, QPen
 from PyQt5.QtCore import Qt, QTimer
 import sys
+import numpy as np
 import time
 
 class syringe_widget(QWidget):
     def __init__(self,parent=None):
         super().__init__(parent)
+        #number of total channels in MVP
+        self.number_of_channel_mvp = 5
+        #mvp valve position, integer larger than 1
+        self.mvp_channel = 1
+        #mvp connected valve: S1_right
+        self.mvp_connected_valve = 'S1_right'
         #volume of solution in each syringe
         self.volume_syringe_1 = 0
         self.volume_syringe_2 = 0
@@ -35,20 +42,22 @@ class syringe_widget(QWidget):
         #volume for single mode
         self.volume_normal_mode = 0
         #default speed for fill_all and empty_all mode
-        self.speed_by_default = 0.
+        self.speed_by_default = 1
         #ref length for drawing syringe
         self.ref_unit = 20
         self.line_style = 1
         #either init_mode, auto_refilling mode or normal_mode
-        self.operation_mode = 'init_mode'
+        self.operation_mode = 'not_ready_mode'
         #3-channel T valve position (either left, right or up)
         self.connect_valve_port = {1:'left',2:'right',3:'up',4:'up'}
         #connected status
         self.connect_status = {1:'connected',2:'connected',3:'connected',4:'connected'}
         #the actived syringe index(only one) for operating in normal mode
         self.actived_syringe_normal_mode = 1
-        #status: fill or dispense
+        #status in normal mode: fill or dispense
         self.actived_syringe_motion_normal_mode = 'fill'
+        #valve connection in normal mode: cell_inlet(outlet) or resevoir or waste or not_used
+        self.actived_syringe_valve_connection = 'not_used'
         #the actived syringe index (two) for operating in init_mode
         self.actived_pulling_syringe_init_mode = 3
         self.actived_pushing_syringe_init_mode = 2
@@ -58,13 +67,25 @@ class syringe_widget(QWidget):
         self.speed_init_mode = 0
         #volume left to be fill(or)dispense
         self.volume_init_mode = 0
+        #the actived syringe index (two) for operating in simple_mode
+        self.actived_left_syringe_simple_exchange_mode = 3
+        self.actived_right_syringe_simple_exchange_mode = 2
         #volume of solution in cell
         self.volume_of_electrolyte_in_cell = 0
+        #max vol in cell
+        self.cell_volume_in_total = 5
 
     def initUI(self):
         self.setGeometry(300, 300, 350, 400)
         self.setWindowTitle('Colours')
         self.show()
+
+    def _get_directions(self, part = 'cell_inlet'):
+        mapping = {'cell_inlet': 'left',
+                   'cell_outlet': 'right',
+                   'resevoir': 'up',
+                   'waste': 'up'}
+        return mapping[part]
 
     def paintEvent(self, e):
         qp = QPainter()
@@ -75,160 +96,70 @@ class syringe_widget(QWidget):
         rects_2 = self.draw_syringe(qp,'volume_syringe_2',[12,5],[100,100,0],label = 'S2', volume = self.syringe_size)
         rects_3 = self.draw_syringe(qp,'volume_syringe_3',[20,5],[0,200,0], label = 'S3', volume = self.syringe_size)
         rects_4 = self.draw_syringe(qp,'volume_syringe_4',[26,5],[0,100,250],label='S4',volume = self.syringe_size)
-        if self.operation_mode == 'auto_refilling':
-            self.draw_valve(qp,rects_1[1],connect_port=['left','right'][int(not self.filling_status_syringe_1)])
-            self.connect_valve_port[1] = ['left','right'][int(not self.filling_status_syringe_1)]
-            self.draw_valve(qp,rects_2[1],connect_port=['left','right'][int(not self.filling_status_syringe_2)])
-            self.connect_valve_port[2] = ['left','right'][int(not self.filling_status_syringe_2)]
-            self.draw_valve(qp,rects_3[1],connect_port=['left','up'][int(not self.filling_status_syringe_3)])
-            self.connect_valve_port[3] = ['left','right'][int(not self.filling_status_syringe_3)]
-            self.draw_valve(qp,rects_4[1],connect_port=['left','up'][int(not self.filling_status_syringe_4)])
-            self.connect_valve_port[4] = ['left','right'][int(not self.filling_status_syringe_4)]
-        elif self.operation_mode == 'pre_auto_refilling':
-            self.draw_valve(qp,rects_1[1],connect_port=['up','left'][int(self.filling_status_syringe_1)])
-            self.connect_valve_port[1] = ['up','left'][int(self.filling_status_syringe_1)]
-            self.draw_valve(qp,rects_2[1],connect_port=['up','left'][int(self.filling_status_syringe_2)])
-            self.connect_valve_port[2] = ['up','left'][int(self.filling_status_syringe_2)]
-            self.draw_valve(qp,rects_3[1],connect_port=['up','left'][int(self.filling_status_syringe_3)])
-            self.connect_valve_port[3] = ['up','left'][int(self.filling_status_syringe_3)]
-            self.draw_valve(qp,rects_4[1],connect_port=['up','left'][int(self.filling_status_syringe_4)])
-            self.connect_valve_port[4] = ['up','left'][int(self.filling_status_syringe_4)]        
-        elif self.operation_mode == 'normal_mode':
-            self.draw_valve(qp,rects_1[1],connect_port=self.connect_valve_port[1])
-            self.draw_valve(qp,rects_2[1],connect_port=self.connect_valve_port[2])
-            self.draw_valve(qp,rects_3[1],connect_port=self.connect_valve_port[3])
-            self.draw_valve(qp,rects_4[1],connect_port=self.connect_valve_port[4])
-        elif self.operation_mode == 'init_mode':
-            self.draw_valve(qp,rects_1[1],connect_port=self.connect_valve_port[1])
-            self.draw_valve(qp,rects_2[1],connect_port=self.connect_valve_port[2])
-            self.draw_valve(qp,rects_3[1],connect_port=self.connect_valve_port[3])
-            self.draw_valve(qp,rects_4[1],connect_port=self.connect_valve_port[4])
-        elif self.operation_mode == 'empty_all_mode':
-            self.draw_valve(qp,rects_1[1],connect_port='up')
-            self.connect_valve_port[1] = 'up'
-            self.draw_valve(qp,rects_2[1],connect_port='up')
-            self.connect_valve_port[2] = 'up'
-            self.draw_valve(qp,rects_3[1],connect_port='up')
-            self.connect_valve_port[3] = 'up'
-            self.draw_valve(qp,rects_4[1],connect_port='up')
-            self.connect_valve_port[4] = 'up'
-        elif self.operation_mode == 'fill_all_mode':
-            self.draw_valve(qp,rects_1[1],connect_port='left')
-            self.connect_valve_port[1] = 'left'
-            self.draw_valve(qp,rects_2[1],connect_port='left')
-            self.connect_valve_port[2] = 'left'
-            self.draw_valve(qp,rects_3[1],connect_port='left')
-            self.connect_valve_port[3] = 'left'
-            self.draw_valve(qp,rects_4[1],connect_port='left')
-            self.connect_valve_port[4] = 'left'
+
+        self.draw_valve(qp,rects_1[1],connect_port=self.connect_valve_port[1])
+        self.draw_valve(qp,rects_2[1],connect_port=self.connect_valve_port[2])
+        self.draw_valve(qp,rects_3[1],connect_port=self.connect_valve_port[3])
+        self.draw_valve(qp,rects_4[1],connect_port=self.connect_valve_port[4])
 
         self.draw_radio_signal(qp,[rects_1[8][0]-6,rects_1[8][1]+90],color=['red','blue'][int(self.connect_status[1]=='connected')])
         self.draw_radio_signal(qp,[rects_2[8][0]-6,rects_2[8][1]+90],color=['red','blue'][int(self.connect_status[2]=='connected')])
         self.draw_radio_signal(qp,[rects_3[8][0]-6,rects_3[8][1]+90],color=['red','blue'][int(self.connect_status[3]=='connected')])
         self.draw_radio_signal(qp,[rects_4[8][0]-6,rects_4[8][1]+90],color=['red','blue'][int(self.connect_status[4]=='connected')])
-        if self.operation_mode in ['auto_refilling','init_mode']:
-            self.draw_cell(qp,offset=[(19.5)*self.ref_unit,(1.3)*self.ref_unit])
+        # if self.operation_mode in ['auto_refilling','init_mode']:
+        self.draw_cell(qp,offset=[(19.5)*self.ref_unit,(1.3)*self.ref_unit])
         rects_resevoir = self.draw_bottle(qp, fill_height = self.resevoir_volumn/250*200, offset = [1,8],volume=self.resevoir_volumn_total,label = 'Resevoir')
         rects_waste = self.draw_bottle(qp, fill_height = self.waste_volumn/250*200, offset = [36,8], volume = self.waste_volumn_total,label = 'Waste')
+        self.draw_mvp_valve(qp,[rects_waste[0][0]+150, rects_waste[0][1]-150, 50, 50],connected_channel = self.mvp_channel)
         pen = QPen([Qt.red,Qt.blue][0], 2, line_styles[int(self.line_style==1)])
         qp.setPen(pen)
-        if self.operation_mode=='auto_refilling':
-            lines1 = self.cal_line_coords(rects_1[2],rects_resevoir[0],'left','up',5,0,110)
-            lines2 = self.cal_line_coords(rects_1[0],rects_waste[0],'up','up',0,0,80)
-            lines3 = self.cal_line_coords(rects_1[3],self.cell_rect,'right','left',5,5,0)
-            lines4 = self.cal_line_coords(rects_2[3],self.cell_rect,'right','left',5,5,0)
-            lines5 = self.cal_line_coords(self.cell_rect,rects_4[2],'right','left',5,5,0)
-            lines6 = self.cal_line_coords(self.cell_rect,rects_3[2],'right','left',5,5,0)
-            lines7 = self.cal_line_coords(rects_2[0],rects_waste[0],'up','up',0,0,80)
-            lines8 = self.cal_line_coords(rects_3[0],rects_waste[0],'up','up',0,0,80)
-            lines9 = self.cal_line_coords(rects_4[0],rects_waste[0],'up','up',0,0,80)
-            lines10 = self.cal_line_coords(rects_2[2],rects_resevoir[0],'left','up',5,0,120)
-            lines = [lines1,lines2,lines3,lines4,lines5,lines6,lines7,lines8,lines9,lines10]
-            operations = [self.filling_status_syringe_1,False,not self.filling_status_syringe_1,not self.filling_status_syringe_2,self.filling_status_syringe_4,self.filling_status_syringe_3,False,not self.filling_status_syringe_3,not self.filling_status_syringe_4,self.filling_status_syringe_2]
-            for i in range(len(lines)):
-                each_line = lines[i]
-                operation = operations[i]
-                if operation:
-                    pen = QPen([Qt.red,Qt.blue][0], 2, line_styles[int(self.line_style==1)])
-                    qp.setPen(pen)
-                    for ii in range(len(each_line)-1):
-                        qp.drawLine(*(each_line[ii]+each_line[ii+1]))
-                else:
-                    pass
-        elif self.operation_mode=='init_mode':
-            rects_map_table = {1:rects_1,2:rects_2,3:rects_3,4:rects_4}
-            rects_push = rects_map_table[self.actived_pushing_syringe_init_mode]
-            rects_pull = rects_map_table[self.actived_pulling_syringe_init_mode]
-            lines1 = self.cal_line_coords(rects_push[3],self.cell_rect,'right','left',5,5,0)
-            lines2 = self.cal_line_coords(rects_pull[2],self.cell_rect,'left','right',5,5,0)
-            lines = [lines1,lines2]
-            for i in range(len(lines)):
-                each_line = lines[i]
-                pen = QPen([Qt.red,Qt.blue][0], 2, line_styles[int(self.line_style==1)])
-                qp.setPen(pen)
-                for ii in range(len(each_line)-1):
-                    qp.drawLine(*(each_line[ii]+each_line[ii+1]))
-        elif self.operation_mode == 'normal_mode':
-            rects_actived_syringe = eval('rects_{}'.format(self.actived_syringe_normal_mode))
-            if self.actived_syringe_motion_normal_mode == 'fill':
-                rect_connected = rects_resevoir[0]
-            elif self.actived_syringe_motion_normal_mode == 'dispense':
-                rect_connected = rects_waste[0]
-            rect_index = {'left':2,'right':3,'up':0}[self.connect_valve_port[self.actived_syringe_normal_mode]]
-            lines = self.cal_line_coords(rects_actived_syringe[rect_index],rect_connected,self.connect_valve_port[self.actived_syringe_normal_mode],'up',5,5,110)
-            pen = QPen([Qt.red,Qt.blue][0], 2, line_styles[int(self.line_style==1)])
-            qp.setPen(pen)
-            for ii in range(len(lines)-1):
-                qp.drawLine(*(lines[ii]+lines[ii+1]))
-        elif self.operation_mode == 'pre_auto_refilling':
-            if self.filling_status_syringe_1:
-                lines1 = self.cal_line_coords(rects_1[2],rects_resevoir[0],'left','up',5,0,140)
-            else:
-                lines1 = self.cal_line_coords(rects_1[0],rects_waste[0],'up','up',0,0,110)
-            if self.filling_status_syringe_2:
-                lines2 = self.cal_line_coords(rects_2[2],rects_resevoir[0],'left','up',5,0,140)
-            else:
-                lines2 = self.cal_line_coords(rects_2[0],rects_waste[0],'up','up',0,0,110)
-            if self.filling_status_syringe_3:
-                lines3 = self.cal_line_coords(rects_3[2],rects_resevoir[0],'left','up',5,0,140)
-            else:
-                lines3 = self.cal_line_coords(rects_3[0],rects_waste[0],'up','up',0,0,110)
-            if self.filling_status_syringe_4:
-                lines4 = self.cal_line_coords(rects_4[2],rects_resevoir[0],'left','up',5,0,140)
-            else:
-                lines4 = self.cal_line_coords(rects_4[0],rects_waste[0],'up','up',0,0,110)
-            lines = [lines1,lines2,lines3,lines4]
-            for i in range(len(lines)):
-                each_line = lines[i]
-                pen = QPen([Qt.red,Qt.blue][0], 2, line_styles[int(self.line_style==1)])
-                qp.setPen(pen)
-                for ii in range(len(each_line)-1):
-                    qp.drawLine(*(each_line[ii]+each_line[ii+1]))
-        elif self.operation_mode == 'empty_all_mode':
-            lines1 = self.cal_line_coords(rects_1[0],rects_waste[0],'up','up',0,0,100)
-            lines2 = self.cal_line_coords(rects_2[0],rects_waste[0],'up','up',0,0,100)
-            lines3 = self.cal_line_coords(rects_3[0],rects_waste[0],'up','up',0,0,100)
-            lines4 = self.cal_line_coords(rects_4[0],rects_waste[0],'up','up',0,0,100)
-            lines = [lines1,lines2,lines3,lines4]
-            for i in range(len(lines)):
-                each_line = lines[i]
-                pen = QPen([Qt.red,Qt.blue][0], 2, line_styles[int(self.line_style==1)])
-                qp.setPen(pen)
-                for ii in range(len(each_line)-1):
-                    qp.drawLine(*(each_line[ii]+each_line[ii+1]))
-        elif self.operation_mode == 'fill_all_mode':
-            lines1 = self.cal_line_coords(rects_1[2],rects_resevoir[0],'left','up',5,0,140)
-            lines2 = self.cal_line_coords(rects_2[2],rects_resevoir[0],'left','up',5,0,140)
-            lines3 = self.cal_line_coords(rects_3[2],rects_resevoir[0],'left','up',5,0,140)
-            lines4 = self.cal_line_coords(rects_4[2],rects_resevoir[0],'left','up',5,0,140)
-            lines = [lines1,lines2,lines3,lines4]
-            for i in range(len(lines)):
-                each_line = lines[i]
-                pen = QPen([Qt.red,Qt.blue][0], 2, line_styles[int(self.line_style==1)])
-                qp.setPen(pen)
-                for ii in range(len(each_line)-1):
-                    qp.drawLine(*(each_line[ii]+each_line[ii+1]))
+        #rects map
+        rects_map = {'cell_inlet':self.cell_rect,
+                     'cell_outlet':self.cell_rect,
+                     'resevoir':rects_resevoir[0],
+                     'waste':rects_waste[0],
+                     'left':2,
+                     'up':0,
+                     'right':3}
 
+        height_map = {'waste':80,
+                      'resevoir':120,
+                      'cell_inlet':0,
+                      'cell_outlet':0}
+
+        extension_map = {'left':5,
+                         'right':5,
+                         'up':0}
+
+        lines = []
+        line_index = [1,2,3,4]
+        if self.operation_mode == 'simple_exchange_mode':
+            line_index = [self.actived_left_syringe_simple_exchange_mode,self.actived_right_syringe_simple_exchange_mode]
+        elif self.operation_mode == 'init_mode':
+            line_index = [self.actived_pulling_syringe_init_mode,self.actived_pushing_syringe_init_mode]
+        elif self.operation_mode == 'normal_mode':
+            line_index = [self.actived_syringe_normal_mode]
+        for i in line_index:
+            valve_pos = self.connect_valve_port[i]
+            key = 'S{}_{}'.format(i, valve_pos)
+            connection = self.pump_settings[key]
+            if connection in ['resevoir', 'waste', 'cell_inlet', 'cell_outlet']:
+                connection_direction = self._get_directions(connection)
+                connection_rect = rects_map[connection]
+                rect = eval('rects_{}[{}]'.format(i,rects_map[valve_pos]))
+                rect_direction = valve_pos
+                height = height_map[connection]
+                if self.operation_mode == 'normal_mode' and connection == 'waste':
+                    height = 40
+                ext1 = extension_map[rect_direction]
+                ext2 = extension_map[connection_direction]
+                lines.append(self.cal_line_coords(rect, connection_rect,rect_direction, connection_direction, ext1, ext2, height))
+        pen = QPen([Qt.red,Qt.blue][0], 2, line_styles[int(self.line_style==1)])
+        qp.setPen(pen)
+        for i in range(len(lines)):
+            each_line = lines[i]
+            for ii in range(len(each_line)-1):
+                qp.drawLine(*(each_line[ii]+each_line[ii+1]))
         self.line_style=self.line_style*-1
         
         qp.end()
@@ -456,6 +387,26 @@ class syringe_widget(QWidget):
         elif connect_port == 'up':
             qp.drawLine(*(coord_top+coord_center))
         qp.drawLine(*(coord_bottom+coord_center))
+
+    def draw_mvp_valve(self,qp, dim, connected_channel = 3):
+        coord_center = [dim[0]+dim[2]/2,dim[1]+dim[3]/2]
+        qp.setPen(QPen(Qt.blue,  2, Qt.SolidLine))
+        # qp.drawRect(*dim)
+        qp.drawEllipse(*dim)
+        qp.setPen(QPen(Qt.blue,  1, Qt.SolidLine))
+        qp.drawEllipse(*(coord_center+[2,2]))
+        qp.setPen(QPen(Qt.blue,  4, Qt.SolidLine))
+        for i in range(self.number_of_channel_mvp):
+            if i in [0, connected_channel]:
+                qp.setPen(QPen(Qt.red, 2, Qt.SolidLine))
+            else:
+                qp.setPen(QPen(Qt.black, 2, Qt.DotLine))
+            rot_ang = np.pi*2/self.number_of_channel_mvp*i
+            coord_tmp = list(np.array(coord_center) - np.array([dim[2]/2*np.sin(rot_ang),dim[2]/2*np.cos(rot_ang)]))
+            qp.drawLine(*(coord_tmp+coord_center))
+        qp.setFont(QFont('Decorative', 12))
+        qp.drawText(dim[0]-50,dim[1]+80,"{}-->MVP-->cell".format(self.mvp_connected_valve))
+        
 
     def draw_markers(self,qp,rect,which_side = 'left',total_volume_in_ml = 12.5, marker_pos_in_ml = [2,4,6,8,10,12], inverse = True):
         if which_side in ['left','right']:

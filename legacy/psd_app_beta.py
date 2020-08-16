@@ -14,6 +14,7 @@ try:
     from . import locate_path
 except:
     import locate_path
+from operationmode.operations import initOperationMode, normalOperationMode, advancedRefillingOperationMode
 script_path = locate_path.module_path_locator()
 
 #redirect the error stream to qt widge_syiit
@@ -48,6 +49,7 @@ class MyMainWindow(QMainWindow):
 
         self.pump_settings = {}
         self.pushButton_apply_settings.clicked.connect(self.apply_pump_settings)
+        self.apply_pump_settings()
 
         self.lineEdit_frame_path.setText(os.path.join(script_path,'images'))
 
@@ -151,9 +153,8 @@ class MyMainWindow(QMainWindow):
 
         #auto_refilling_mode
         self.timer_update = QTimer(self)
-        self.timer_update.timeout.connect(self.update_volume)
-        # self.timer_update.timeout.connect(self.update_volume_waste_reservoir)
-        self.timer_update.timeout.connect(self.widget_psd.update)
+        # self.timer_update.timeout.connect(self.update_volume)
+        # self.timer_update.timeout.connect(self.widget_psd.update)
 
         #simple mode of auto_refilling
         self.timer_update_simple = QTimer(self)
@@ -167,14 +168,14 @@ class MyMainWindow(QMainWindow):
 
         #single_mode, operating on one specific syringe
         self.timer_update_normal_mode = QTimer(self)
-        self.timer_update_normal_mode.timeout.connect(self.update_volume_normal_mode)
+        # self.timer_update_normal_mode.timeout.connect(self.update_volume_normal_mode)
         # self.timer_update_normal_mode.timeout.connect(self.update_volume_waste_reservoir_cell_normal_mode)
-        self.timer_update_normal_mode.timeout.connect(self.widget_psd.update)
+        # self.timer_update_normal_mode.timeout.connect(self.widget_psd.update)
 
         #action done before auto_refilling, serve purpose to fill the cell first
         self.timer_update_init_mode = QTimer(self)
-        self.timer_update_init_mode.timeout.connect(self.update_volume_init_mode)
-        self.timer_update_init_mode.timeout.connect(self.widget_psd.update)
+        # self.timer_update_init_mode.timeout.connect(self.update_volume_init_mode)
+        # self.timer_update_init_mode.timeout.connect(self.widget_psd.update)
 
         # in this mode, all syringes will be empty
         self.timer_update_empty_all_mode = QTimer(self)
@@ -188,10 +189,55 @@ class MyMainWindow(QMainWindow):
 
         # in this mode, all syringes will be half-filled (internally actived before auto_refilling mode)
         self.timer_update_fill_half_mode = QTimer(self)
-        self.timer_update_fill_half_mode.timeout.connect(self.update_volume_fill_half_mode)
-        self.timer_update_fill_half_mode.timeout.connect(self.widget_psd.update)
+        # self.timer_update_fill_half_mode.timeout.connect(self.update_volume_fill_half_mode)
+        # self.timer_update_fill_half_mode.timeout.connect(self.widget_psd.update)
 
         self.timers = [self.timer_update_fill_half_mode, self.timer_update_fill_all_mode, self.timer_update,self.timer_update_empty_all_mode,self.timer_update_normal_mode, self.timer_update_init_mode]
+
+        self.init_operation = initOperationMode(self.widget_psd,self.textBrowser_error_msg, None, self.timer_update_init_mode, 100, self.pump_settings, \
+                                                settings = {'pull_syringe_handle':self.comboBox_pulling_syringe_init_mode.currentText,
+                                                            'push_syringe_handle':self.comboBox_pushing_syringe_init_mode.currentText,
+                                                            'vol_handle':self.spinBox_volume_init_mode.value,
+                                                            'speed_handle':self.spinBox_speed_init_mode.value})
+
+        self.normal_operation = normalOperationMode(self.widget_psd,self.textBrowser_error_msg, None, self.timer_update_normal_mode, 100, self.pump_settings, \
+                                                settings = {'syringe_handle':self.get_syringe_index_handle_normal_mode,
+                                                            'valve_position_handle':self.get_valve_position_handle_normal_mode,
+                                                            'valve_connection_handle':self.get_valve_connection_handle_normal_mode,
+                                                            'vol_handle':self.get_vol_handle_normal_mode,
+                                                            'speed_handle':self.get_speed_handle_normal_mode})
+
+        self.advanced_exchange_operation = advancedRefillingOperationMode(self.widget_psd, self.textBrowser_error_msg, self.timer_update_fill_half_mode, self.timer_update, 100, self.pump_settings, \
+                                                settings = {'premotion_speed_handle':self.doubleSpinBox_premotion_speed.value,
+                                                            'exchange_speed_handle':self.doubleSpinBox.value})
+
+
+    def get_syringe_index_handle_normal_mode(self):
+        radioButtons = [getattr(self, 'radioButton_syringe_{}'.format(i)) for i in range(1,16) if hasattr(self, 'radioButton_syringe_{}'.format(i))]
+        for i in range(0,len(radioButtons)):
+            if radioButtons[i].isChecked():
+                return int(i+1)
+        logging.getLogger().exception('No radioButton has been clicked! Click one button to activate normal mode!')
+
+    def get_valve_position_handle_normal_mode(self):
+        index = self.get_syringe_index_handle_normal_mode()
+        if isinstance(index, int):
+            return eval('self.comboBox_valve_port_{}.currentText()'.format(index))
+
+    def get_valve_connection_handle_normal_mode(self):
+        index = self.get_syringe_index_handle_normal_mode()
+        if isinstance(index, int):
+            return eval('self.comboBox_valve_connection_{}.currentText()'.format(index))
+
+    def get_speed_handle_normal_mode(self):
+        index = self.get_syringe_index_handle_normal_mode()
+        if isinstance(index, int):
+            return eval('self.doubleSpinBox_speed_normal_mode_{}.value()'.format(index))
+
+    def get_vol_handle_normal_mode(self):
+        index = self.get_syringe_index_handle_normal_mode()
+        if isinstance(index, int):
+            return eval('self.doubleSpinBox_stroke_factor_{}.value()'.format(index))
 
     def apply_pump_settings(self):
         i = 1
@@ -256,13 +302,18 @@ class MyMainWindow(QMainWindow):
             if timer.isActive():
                 timer.stop()
 
-    def init_start(self):
+    def _init_start(self):
         #half fill the associated syringes first
         if self.check_connection_for_advanced_auto_refilling():
             self.widget_psd.operation_mode = 'pre_auto_refilling'
             self.timer_update_fill_half_mode.start(100)
         else:
             pass
+
+    def init_start(self):
+        if self.check_connection_for_advanced_auto_refilling():
+            self.advanced_exchange_operation.start_premotion_timer()
+            # self.timer_update_fill_half_mode.start(100)
 
     def init_start_simple(self):
         self.update_to_pre_simple_refilling_mode()
@@ -409,15 +460,6 @@ class MyMainWindow(QMainWindow):
         self.stop_all_timers()
         self.timer_update_fill_all_mode.start(100)
 
-    '''
-    #update the volume of resevoir bottle/waste bottle and syringe size and default speed
-    def update_basic_settings(self):
-        self.widget_psd.syringe_size = float(self.lineEdit_syringe_size.text())
-        self.widget_psd.waste_volumn_total = float(self.lineEdit_waste_bottle_size.text())
-        self.widget_psd.resevoir_volumn_total = float(self.lineEdit_resevoir_bottle_size.text())
-        self.widget_psd.speed_by_default = self.doubleSpinBox_default_speed.value()
-        self.widget_psd.update()
-    '''
     def add_solution_to_cell(self, amount):
         self.spinBox_speed_init_mode.setValue(int(self.spinBox_speed.value()))
         self.spinBox_volume_init_mode.setValue(int(amount))
@@ -429,57 +471,36 @@ class MyMainWindow(QMainWindow):
         self.dispense_init_mode()
 
     def fill_init_mode(self):
-        # self.radioButton_init_mode.setChecked(True)
-        self.update_to_init_mode()
-        #which one is the syringe to pull electrolyte from cell
-        self.widget_psd.actived_pulling_syringe_init_mode = int(self.comboBox_pulling_syringe_init_mode.currentText())
-        #which one is the syringe to push electrolyte to cell
-        self.widget_psd.actived_pushing_syringe_init_mode = int(self.comboBox_pushing_syringe_init_mode.currentText())
         self.widget_psd.actived_syringe_motion_init_mode = 'fill'
-        self.widget_psd.connect_valve_port[self.widget_psd.actived_pulling_syringe_init_mode] = 'left'
-        self.widget_psd.connect_valve_port[self.widget_psd.actived_pushing_syringe_init_mode] = 'right'
-        self.widget_psd.speed_init_mode = float(self.spinBox_speed_init_mode.value())/1000#in uL on GUI, so change to unit of ml
-        self.widget_psd.volume_init_mode = float(self.spinBox_volume_init_mode.value())/1000#in uL on GUI, so change to unit of ml
+        # self.init_operation.init_motion()
         self.stop_all_timers()
-        self.timer_update_init_mode.start(100)
+        self.init_operation.start_exchange_timer()
+        #self.timer_update_init_mode.start(100)
 
     def dispense_init_mode(self):
-        # self.radioButton_init_mode.setChecked(True)
-        self.update_to_init_mode()
-        self.widget_psd.actived_pulling_syringe_init_mode = int(self.comboBox_pulling_syringe_init_mode.currentText())
-        self.widget_psd.actived_pushing_syringe_init_mode = int(self.comboBox_pushing_syringe_init_mode.currentText())
         self.widget_psd.actived_syringe_motion_init_mode = 'dispense'
-        self.widget_psd.connect_valve_port[self.widget_psd.actived_pulling_syringe_init_mode] = 'left'
-        self.widget_psd.connect_valve_port[self.widget_psd.actived_pushing_syringe_init_mode] = 'right'
-        self.widget_psd.speed_init_mode = float(self.spinBox_speed_init_mode.value())/1000
-        self.widget_psd.volume_init_mode = float(self.spinBox_volume_init_mode.value())/1000
+        #self.init_operation.init_motion()
         self.stop_all_timers()
-        self.timer_update_init_mode.start(100)
+        self.init_operation.start_exchange_timer()
+        #self.timer_update_init_mode.start(100)
 
     def fill_syringe(self,radioButton_widget,syringe_no):
-        radioButton_widget.setChecked(True)
-        self.update_to_normal_mode(syringe_no)
-        #self.widget_psd.actived_syringe_normal_mode=int(self.comboBox_syringe_number.currentText())
         self.widget_psd.actived_syringe_motion_normal_mode = 'fill'
-        self.widget_psd.connect_valve_port[self.widget_psd.actived_syringe_normal_mode] = eval('self.comboBox_valve_port_{}.currentText()'.format(syringe_no))
-        self.widget_psd.speed_normal_mode = eval('self.doubleSpinBox_speed_normal_mode_{}.value()'.format(syringe_no))
-        self.widget_psd.volume_normal_mode = self.widget_psd.syringe_size*eval('self.doubleSpinBox_stroke_factor_{}.value()'.format(syringe_no))
+        exec('self.widget_psd.filling_status_syringe_{} = True'.format(syringe_no))
+        radioButton_widget.setChecked(True)
+        # self.normal_operation.init_motion()
         self.stop_all_timers()
-        self.timer_update_normal_mode.start(100)
+        #self.timer_update_normal_mode.start(100)
+        self.normal_operation.start_timer_motion()
 
     def dispense_syringe(self,radioButton_widget,syringe_no):
-        radioButton_widget.setChecked(True)
-        self.update_to_normal_mode(syringe_no)
-        #self.widget_psd.actived_syringe_normal_mode=int(self.comboBox_syringe_number.currentText())
         self.widget_psd.actived_syringe_motion_normal_mode = 'dispense'
-        self.widget_psd.connect_valve_port[self.widget_psd.actived_syringe_normal_mode] = eval('self.comboBox_valve_port_{}.currentText()'.format(syringe_no))
-        self.widget_psd.speed_normal_mode = eval('self.doubleSpinBox_speed_normal_mode_{}.value()'.format(syringe_no))
-        self.widget_psd.volume_normal_mode = self.widget_psd.syringe_size*eval('self.doubleSpinBox_stroke_factor_{}.value()'.format(syringe_no))
-        # self.widget_psd.connect_valve_port[self.widget_psd.actived_syringe_normal_mode] = self.comboBox_valve_port.currentText()
-        # self.widget_psd.speed_normal_mode = self.doubleSpinBox_speed_normal_mode.value()
-        # self.widget_psd.volume_normal_mode = self.widget_psd.syringe_size*self.doubleSpinBox_stroke_factor.value()
+        exec('self.widget_psd.filling_status_syringe_{} = False'.format(syringe_no))
+        radioButton_widget.setChecked(True)
+        #self.normal_operation.init_motion()
         self.stop_all_timers()
-        self.timer_update_normal_mode.start(100)
+        #self.timer_update_normal_mode.start(100)
+        self.normal_operation.start_timer_motion()
 
     #reset the volume of resevoir and waste bottom
     def reset_exchange(self):
@@ -539,11 +560,17 @@ class MyMainWindow(QMainWindow):
                 cell_volumn = self.widget_psd.volume_of_electrolyte_in_cell + self.widget_psd.speed_normal_mode/10
                 self.widget_psd.volume_of_electrolyte_in_cell = cell_volumn
 
-    def update_volume_init_mode(self):
+    def update_volume_init_mode_(self):
         if self.widget_psd.actived_syringe_motion_init_mode == 'fill':
             self.update_volume_filling_init_mode()
         else:
             self.update_volume_dispense_init_mode()
+
+    def update_volume_init_mode(self):
+        if self.widget_psd.actived_syringe_motion_init_mode == 'fill':
+            self.init_operation.exchange_motion(self.widget_psd.actived_pushing_syringe_init_mode)
+        elif self.widget_psd.actived_syringe_motion_init_mode == 'dispense':
+            self.init_operation.exchange_motion(self.widget_psd.actived_pulling_syringe_init_mode)
 
     def update_volume_filling_init_mode(self):
         syringe_index_map_tab = {1:'volume_syringe_1', 2:'volume_syringe_2', 3:'volume_syringe_3',4:'volume_syringe_4'}
@@ -591,6 +618,32 @@ class MyMainWindow(QMainWindow):
                 self.widget_psd.volume_of_electrolyte_in_cell = self.widget_psd.volume_of_electrolyte_in_cell - syringe_vol_change
 
     def update_volume_normal_mode(self):
+        #let us prevent two disaster situations first
+        if self.widget_psd.actived_syringe_motion_normal_mode=='fill':
+            if self.widget_psd.actived_syringe_valve_connection == 'waste':
+                logging.getLogger().exception('Operation be prohibited: you are not allow to withdraw solution from waste!!!')
+                self.tabWidget.setCurrentIndex(2) 
+                self.timer_update_normal_mode.stop()
+                return
+            elif self.widget_psd.actived_syringe_valve_connection == 'cell_inlet':
+                logging.getLogger().exception('Operation be prohibited: you are not allow to withdraw solution from inlet of cell!!!')
+                self.tabWidget.setCurrentIndex(2) 
+                self.timer_update_normal_mode.stop()
+                return
+        elif self.widget_psd.actived_syringe_motion_normal_mode=='dispense':
+            if self.widget_psd.actived_syringe_valve_connection == 'resevoir':
+                logging.getLogger().exception('Operation be prohibited: you are not allow to dispense solution to resevoir!!!')
+                self.tabWidget.setCurrentIndex(2) 
+                self.timer_update_normal_mode.stop()
+                return
+            elif self.widget_psd.actived_syringe_valve_connection == 'cell_outlet':
+                logging.getLogger().exception('Operation be prohibited: you are not allow to dispense solution from outlet of cell!!!')
+                self.tabWidget.setCurrentIndex(2) 
+                self.timer_update_normal_mode.stop()
+                return
+        self.normal_operation.start_motion()
+
+    def _update_volume_normal_mode(self):
         #let us prevent two disaster situations first
         if self.widget_psd.actived_syringe_motion_normal_mode=='fill':
             if self.widget_psd.actived_syringe_valve_connection == 'waste':
@@ -716,6 +769,9 @@ class MyMainWindow(QMainWindow):
            self.timer_update_fill_all_mode.stop()
 
     def update_volume_fill_half_mode(self):
+        self.advanced_exchange_operation.premotion()
+
+    def _update_volume_fill_half_mode(self):
         def _update_resevoir_waste_volume(add_volume_syringe):
             if add_volume_syringe>0:#syringe pickup solution
                 if (self.widget_psd.resevoir_volumn - add_volume_syringe) >= 0:
