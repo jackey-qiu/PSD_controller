@@ -51,7 +51,7 @@ class syringe_widget(QWidget):
         #3-channel T valve position (either left, right or up)
         self.connect_valve_port = {1:'left',2:'right',3:'up',4:'up'}
         #connected status
-        self.connect_status = {1:'connected',2:'connected',3:'connected',4:'connected'}
+        self.connect_status = {1:'connected',2:'connected',3:'connected',4:'connected', 'mvp': 'connected'}
         #the actived syringe index(only one) for operating in normal mode
         self.actived_syringe_normal_mode = 1
         #status in normal mode: fill or dispense
@@ -92,20 +92,20 @@ class syringe_widget(QWidget):
         qp.begin(self)
         # self.draw_syringe(qp)
         line_styles = [Qt.DashDotDotLine,Qt.DashLine]
-        rects_1 = self.draw_syringe(qp,'volume_syringe_1',[6,5],[250,0,0],label ='S1',volume = self.syringe_size)
-        rects_2 = self.draw_syringe(qp,'volume_syringe_2',[12,5],[100,100,0],label = 'S2', volume = self.syringe_size)
-        rects_3 = self.draw_syringe(qp,'volume_syringe_3',[20,5],[0,200,0], label = 'S3', volume = self.syringe_size)
-        rects_4 = self.draw_syringe(qp,'volume_syringe_4',[26,5],[0,100,250],label='S4',volume = self.syringe_size)
+        rects_1 = self.draw_syringe(qp,'volume_syringe_1',[6,5],[250,0,0],label =['S1', self.pump_settings['S1_solution']],volume = self.syringe_size)
+        rects_2 = self.draw_syringe(qp,'volume_syringe_2',[12,5],[100,100,0],label = ['S2', self.pump_settings['S2_solution']], volume = self.syringe_size)
+        rects_3 = self.draw_syringe(qp,'volume_syringe_3',[20,5],[0,200,0], label = ['S3', self.pump_settings['S3_solution']], volume = self.syringe_size)
+        rects_4 = self.draw_syringe(qp,'volume_syringe_4',[26,5],[0,100,250],label=['S4', self.pump_settings['S4_solution']],volume = self.syringe_size)
 
         self.draw_valve(qp,rects_1[1],connect_port=self.connect_valve_port[1])
         self.draw_valve(qp,rects_2[1],connect_port=self.connect_valve_port[2])
         self.draw_valve(qp,rects_3[1],connect_port=self.connect_valve_port[3])
         self.draw_valve(qp,rects_4[1],connect_port=self.connect_valve_port[4])
 
-        self.draw_radio_signal(qp,[rects_1[8][0]-6,rects_1[8][1]+90],color=['red','blue'][int(self.connect_status[1]=='connected')])
-        self.draw_radio_signal(qp,[rects_2[8][0]-6,rects_2[8][1]+90],color=['red','blue'][int(self.connect_status[2]=='connected')])
-        self.draw_radio_signal(qp,[rects_3[8][0]-6,rects_3[8][1]+90],color=['red','blue'][int(self.connect_status[3]=='connected')])
-        self.draw_radio_signal(qp,[rects_4[8][0]-6,rects_4[8][1]+90],color=['red','blue'][int(self.connect_status[4]=='connected')])
+        self.draw_radio_signal(qp,[rects_1[8][0]-6,rects_1[8][1]+90],msg=self.connect_status[1])
+        self.draw_radio_signal(qp,[rects_2[8][0]-6,rects_2[8][1]+90],msg=self.connect_status[2])
+        self.draw_radio_signal(qp,[rects_3[8][0]-6,rects_3[8][1]+90],msg=self.connect_status[3])
+        self.draw_radio_signal(qp,[rects_4[8][0]-6,rects_4[8][1]+90],msg=self.connect_status[4])
         # if self.operation_mode in ['auto_refilling','init_mode']:
         self.draw_cell(qp,offset=[(19.5)*self.ref_unit,(1.3)*self.ref_unit])
         rects_resevoir = self.draw_bottle(qp, fill_height = self.resevoir_volumn/250*200, offset = [1,8],volume=self.resevoir_volumn_total,label = 'Resevoir')
@@ -316,7 +316,10 @@ class syringe_widget(QWidget):
         qp.drawText(self.cell_rect[0]-15-18,self.cell_rect[1]-40,"cell vol:{} ml".format(round(self.volume_of_electrolyte_in_cell,3)))
         return [x+l1-(l1-l2)/2-l2,y+(l1-l2)/2,l2,l2]
 
-    def draw_radio_signal(self,qp,pos,dim=[40,40],start_angle=50,num_arcs = 4,vertical_spacing =10, color='red'):
+    def draw_radio_signal(self,qp,pos,dim=[40,40],start_angle=50,num_arcs = 4,vertical_spacing =10, msg='error'):
+        color = 'blue'
+        if msg == 'error':
+            color = 'red'
         qp.setPen(QPen(getattr(Qt,color), 2, Qt.SolidLine))
         for i in range(num_arcs):
             current_pos = [pos[0]+i*vertical_spacing/2,pos[1]+i*vertical_spacing/2]
@@ -331,8 +334,9 @@ class syringe_widget(QWidget):
                 qp.drawEllipse(current_pos[0],current_pos[1],current_dim[0],current_dim[1])
             else:
                 qp.drawArc(current_pos[0],current_pos[1],current_dim[0],current_dim[1],30*16,120*16)
-        offset = [-15,2][int(color=='red')]
-        qp.drawText(pos[0]+offset,pos[1]+vertical_spacing*num_arcs+8,['connected','error'][int(color=='red')])
+
+        offset = [-15,2][int(msg=='error')]
+        qp.drawText(pos[0]+offset,pos[1]+vertical_spacing*num_arcs+8,msg)
 
     def draw_bottle(self,qp,top_width = 100,top_height = 4, bottom_width = 120, bottom_height_total = 200, fill_height =20, offset = [0,0],color = [0,0,250],label='resevoir',volume=250):
         rec1_pos = [self.ref_unit*offset[0],self.ref_unit*offset[1]]
@@ -473,9 +477,10 @@ class syringe_widget(QWidget):
         qp.setBrush(QColor(50, 50, 50))
         qp.drawRect(*(rec9_pos+rec9_dim))
         # qp.drawRect(*(rec10_pos+rec10_dim))
-        qp.setFont(QFont("Arial", 15, QFont.Bold))
+        qp.setFont(QFont("Arial", 12))
         qp.setPen(QPen(QColor(50, 50, 50), 1, Qt.SolidLine, Qt.FlatCap, Qt.MiterJoin))
-        qp.drawText(rec8_pos[0],rec9_pos[1]+60,"{}:{:6.2f} ml".format(label,getattr(self,vol_tag)))
+        qp.drawText(rec8_pos[0],rec9_pos[1]+40,label[1])
+        qp.drawText(rec8_pos[0],rec9_pos[1]+60,"{}:{:6.2f} ml".format(label[0],getattr(self,vol_tag)))
         rects = []
         for i in range(1,10):
             rect_pos = eval('rec{}_pos'.format(i))

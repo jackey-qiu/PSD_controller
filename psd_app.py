@@ -145,13 +145,9 @@ class MyMainWindow(QMainWindow):
 
         #simple mode of auto_refilling
         self.timer_update_simple = QTimer(self)
-        #self.timer_update_simple.timeout.connect(self.update_volume_simple_exchange)
-        #self.timer_update_simple.timeout.connect(self.widget_psd.update)
 
         #premotion before simple mode of auto_refilling
         self.timer_update_simple_pre = QTimer(self)
-        #self.timer_update_simple_pre.timeout.connect(self.update_volume_pre_motion_simple_exchange)
-        #self.timer_update_simple_pre.timeout.connect(self.widget_psd.update)
 
         #single_mode, operating on one specific syringe
         self.timer_update_normal_mode = QTimer(self)
@@ -159,20 +155,10 @@ class MyMainWindow(QMainWindow):
         #action done before auto_refilling, serve purpose to fill the cell first
         self.timer_update_init_mode = QTimer(self)
 
-        # in this mode, all syringes will be empty
-        self.timer_update_empty_all_mode = QTimer(self)
-        self.timer_update_empty_all_mode.timeout.connect(self.update_volume_empty_all_mode)
-        self.timer_update_empty_all_mode.timeout.connect(self.widget_psd.update)
-
-        # in this mode, all syringes will be filled
-        self.timer_update_fill_all_mode = QTimer(self)
-        self.timer_update_fill_all_mode.timeout.connect(self.update_volume_fill_all_mode)
-        self.timer_update_fill_all_mode.timeout.connect(self.widget_psd.update)
-
         # in this mode, all syringes will be half-filled (internally actived before auto_refilling mode)
         self.timer_update_fill_half_mode = QTimer(self)
 
-        self.timers = [self.timer_update_simple, self.timer_update_simple_pre, self.timer_update_fill_half_mode, self.timer_update_fill_all_mode, self.timer_update,self.timer_update_empty_all_mode,self.timer_update_normal_mode, self.timer_update_init_mode]
+        self.timers = [self.timer_update_simple, self.timer_update_simple_pre, self.timer_update_fill_half_mode,  self.timer_update,self.timer_update_normal_mode, self.timer_update_init_mode]
 
         #instances of operation modes
         self.init_operation = initOperationMode(self.widget_psd,self.textBrowser_error_msg, None, self.timer_update_init_mode, 100, self.pump_settings, \
@@ -237,6 +223,7 @@ class MyMainWindow(QMainWindow):
                 items = ['left','right','up','mvp']
                 for each in items:
                     self.pump_settings['S{}_{}'.format(i,each)] = getattr(self,'comboBox_S{}_{}'.format(i, each)).currentText()
+                self.pump_settings['S{}_solution'.format(i)] = getattr(self, 'lineEdit_sol_{}'.format(i)).text()
                 i += 1
             except:
                 break
@@ -295,11 +282,20 @@ class MyMainWindow(QMainWindow):
                 timer.stop()
 
     def init_start(self):
-        if self.check_connection_for_advanced_auto_refilling():
-            self.advanced_exchange_operation.start_premotion_timer()
+        #check the cell volume first
+        if self.widget_psd.volume_of_electrolyte_in_cell < 0.1:
+            logging.getLogger().exception('Error: Not enough electrolyte in cell. Please fill some solution in the cell first!')
+            self.tabWidget.setCurrentIndex(2) 
+        else:
+            if self.check_connection_for_advanced_auto_refilling():
+                self.advanced_exchange_operation.start_premotion_timer()
 
     def init_start_simple(self):
-        self.simple_exchange_operation.start_premotion_timer()
+        if self.widget_psd.volume_of_electrolyte_in_cell < 0.1:
+            logging.getLogger().exception('Error: Not enough electrolyte in cell. Please fill some solution in the cell first!')
+            self.tabWidget.setCurrentIndex(2) 
+        else:
+            self.simple_exchange_operation.start_premotion_timer()
 
     def init_stop_simple(self):
         self.stop_all_timers()
@@ -389,20 +385,6 @@ class MyMainWindow(QMainWindow):
         self.widget_psd.operation_mode = 'auto_refilling'
         self.widget_psd.update()
 
-    def update_to_pre_simple_refilling_mode(self):
-        syringe_tag_connected_to_cell_inlet = 'volume_syringe_{}'.format(self.widget_psd.actived_left_syringe_simple_exchange_mode)
-        syringe_tag_connected_to_cell_outlet = 'volume_syringe_{}'.format(self.widget_psd.actived_right_syringe_simple_exchange_mode)
-        exec('self.widget_psd.filling_status_syringe_{} = True'.format(self.widget_psd.actived_left_syringe_simple_exchange_mode))
-        exec('self.widget_psd.filling_status_syringe_{} = False'.format(self.widget_psd.actived_right_syringe_simple_exchange_mode))
-        self.widget_psd.operation_mode = 'pre_simple_refilling'
-        self.widget_psd.update()
-
-    def update_to_simple_refilling_mode(self):
-        self.widget_psd.operation_mode = 'simple_refilling'
-        self.widget_psd.actived_left_syringe_simple_exchange_mode = int(self.comboBox_pushing_syringe_simple_exchange_mode.currentText())
-        self.widget_psd.actived_right_syringe_simple_exchange_mode = int(self.comboBox_pulling_syringe_simple_exchange_mode.currentText())
-        self.widget_psd.update()
-
     def update_to_init_mode(self):
         self.widget_psd.operation_mode = 'init_mode'
         #which one is the syringe to pull electrolyte from cell
@@ -433,16 +415,6 @@ class MyMainWindow(QMainWindow):
         self.widget_psd.actived_syringe_valve_connection = eval('self.comboBox_valve_connection_{}.currentText()'.format(syringe_no))
         self.widget_psd.volume_normal_mode = eval('self.doubleSpinBox_stroke_factor_{}.value()'.format(syringe_no))*self.widget_psd.syringe_size
         self.widget_psd.update()
-        
-    def update_mode_empty_all(self):
-        self.widget_psd.operation_mode = 'empty_all_mode'
-        self.stop_all_timers()
-        self.timer_update_empty_all_mode.start(100)
-
-    def update_mode_refill_all(self):
-        self.widget_psd.operation_mode = 'fill_all_mode'
-        self.stop_all_timers()
-        self.timer_update_fill_all_mode.start(100)
 
     def add_solution_to_cell(self, amount):
         self.spinBox_speed_init_mode.setValue(int(self.spinBox_speed.value()))
@@ -487,208 +459,6 @@ class MyMainWindow(QMainWindow):
     #stop auto_refilling mode
     def stop(self):
         self.stop_all_timers()
-
-    def update_volume_empty_all_mode(self):
-        waste_volumn = self.widget_psd.waste_volumn + self.widget_psd.speed_by_default/10*4
-        if waste_volumn>self.widget_psd.waste_volumn_total:
-            self.timer_update_empty_all_mode.stop()
-            return
-        else:
-            self.widget_psd.waste_volumn = waste_volumn
-        self.widget_psd.volume_syringe_1 = self.widget_psd.volume_syringe_1 - self.widget_psd.speed_by_default/10
-        if self.widget_psd.volume_syringe_1<0:
-            self.widget_psd.volume_syringe_1 = 0
-        self.widget_psd.volume_syringe_2 = self.widget_psd.volume_syringe_2 - self.widget_psd.speed_by_default/10
-        if self.widget_psd.volume_syringe_2<0:
-            self.widget_psd.volume_syringe_2 = 0
-        self.widget_psd.volume_syringe_3 = self.widget_psd.volume_syringe_3 - self.widget_psd.speed_by_default/10
-        if self.widget_psd.volume_syringe_3<0:
-            self.widget_psd.volume_syringe_3 = 0
-        self.widget_psd.volume_syringe_4 = self.widget_psd.volume_syringe_4 - self.widget_psd.speed_by_default/10
-        if self.widget_psd.volume_syringe_4<0:
-            self.widget_psd.volume_syringe_4 = 0
-        if (self.widget_psd.volume_syringe_1+self.widget_psd.volume_syringe_2+self.widget_psd.volume_syringe_3+self.widget_psd.volume_syringe_4)==0:
-           self.timer_update_empty_all_mode.stop()
-
-    def update_volume_fill_all_mode(self):
-        resevoir_volumn = self.widget_psd.resevoir_volumn - self.widget_psd.speed_by_default/10*4
-        if resevoir_volumn<0:
-            self.timer_update_fill_all_mode.stop()
-            return
-        else:
-            self.widget_psd.resevoir_volumn = resevoir_volumn
-        self.widget_psd.volume_syringe_1 = self.widget_psd.volume_syringe_1 + self.widget_psd.speed_by_default/10
-        if self.widget_psd.volume_syringe_1>self.widget_psd.syringe_size:
-            self.widget_psd.volume_syringe_1 = self.widget_psd.syringe_size
-        self.widget_psd.volume_syringe_2 = self.widget_psd.volume_syringe_2 + self.widget_psd.speed_by_default/10
-        if self.widget_psd.volume_syringe_2>self.widget_psd.syringe_size:
-            self.widget_psd.volume_syringe_2 = self.widget_psd.syringe_size
-        self.widget_psd.volume_syringe_3 = self.widget_psd.volume_syringe_3 + self.widget_psd.speed_by_default/10
-        if self.widget_psd.volume_syringe_3>self.widget_psd.syringe_size:
-            self.widget_psd.volume_syringe_3 = self.widget_psd.syringe_size
-        self.widget_psd.volume_syringe_4 = self.widget_psd.volume_syringe_4 + self.widget_psd.speed_by_default/10
-        if self.widget_psd.volume_syringe_4>self.widget_psd.syringe_size:
-            self.widget_psd.volume_syringe_4 = self.widget_psd.syringe_size
-
-        if (self.widget_psd.volume_syringe_1+self.widget_psd.volume_syringe_2+self.widget_psd.volume_syringe_3+self.widget_psd.volume_syringe_4)==self.widget_psd.syringe_size*4:
-           self.timer_update_fill_all_mode.stop()
-
-        def _update_resevoir_waste_volume(add_volume_syringe):
-            if add_volume_syringe>0:#syringe pickup solution
-                if (self.widget_psd.resevoir_volumn - add_volume_syringe) >= 0:
-                    self.widget_psd.resevoir_volumn = self.widget_psd.resevoir_volumn - add_volume_syringe
-                else:
-                    self.timer_update_fill_half_mode.stop()
-            elif add_volume_syringe<0:#syringe dispense solution
-                if self.widget_psd.waste_volumn - add_volume_syringe <= self.widget_psd.waste_volumn_total:
-                    self.widget_psd.waste_volumn = self.widget_psd.waste_volumn - add_volume_syringe
-                else:
-                    self.timer_update_fill_half_mode.stop()
-
-        def _update_volume(full_volume,original_volume, add_volume):
-            filling = True
-            if original_volume == full_volume/2:
-                return original_volume, filling
-            elif original_volume > full_volume/2:
-                _update_resevoir_waste_volume(add_volume_syringe = -add_volume)
-                return original_volume - add_volume, not filling
-            elif original_volume < full_volume/2:
-                _update_resevoir_waste_volume(add_volume_syringe = add_volume)
-                return original_volume + add_volume, filling
-
-        self.widget_psd.volume_syringe_1, self.widget_psd.filling_status_syringe_1 = _update_volume(self.widget_psd.syringe_size, self.widget_psd.volume_syringe_1, self.widget_psd.speed_by_default/10)
-        if abs(self.widget_psd.volume_syringe_1-self.widget_psd.syringe_size/2)<self.widget_psd.speed_by_default/10:
-            self.widget_psd.volume_syringe_1 = self.widget_psd.syringe_size/2
-        self.widget_psd.volume_syringe_2,self.widget_psd.filling_status_syringe_2 = _update_volume(self.widget_psd.syringe_size, self.widget_psd.volume_syringe_2, self.widget_psd.speed_by_default/10)
-        if abs(self.widget_psd.volume_syringe_2-self.widget_psd.syringe_size/2)<self.widget_psd.speed_by_default/10:
-            self.widget_psd.volume_syringe_2 = self.widget_psd.syringe_size/2
-        self.widget_psd.volume_syringe_3,self.widget_psd.filling_status_syringe_3 = _update_volume(self.widget_psd.syringe_size, self.widget_psd.volume_syringe_3, self.widget_psd.speed_by_default/10)
-        if abs(self.widget_psd.volume_syringe_3-self.widget_psd.syringe_size/2)<self.widget_psd.speed_by_default/10:
-            self.widget_psd.volume_syringe_3 = self.widget_psd.syringe_size/2
-        self.widget_psd.volume_syringe_4, self.widget_psd.filling_status_syringe_4 = _update_volume(self.widget_psd.syringe_size, self.widget_psd.volume_syringe_4, self.widget_psd.speed_by_default/10)
-        if abs(self.widget_psd.volume_syringe_4-self.widget_psd.syringe_size/2)<self.widget_psd.speed_by_default/10:
-            self.widget_psd.volume_syringe_4 = self.widget_psd.syringe_size/2
-
-        if (self.widget_psd.volume_syringe_1+self.widget_psd.volume_syringe_2+self.widget_psd.volume_syringe_3+self.widget_psd.volume_syringe_4)==self.widget_psd.syringe_size*2:
-            self.timer_update_fill_half_mode.stop()
-            self.widget_psd.operation_mode = 'auto_refilling'#starting auto refilling mode
-            self.exchange_volume = 0
-            self.start_exchange.emit()
-
-    def update_volume_pre_motion_simple_exchange(self):
-        speed = self.doubleSpinBox_refill_speed_simple.value()/1000
-        if getattr(self.widget_psd, syringe_tag_connected_to_cell_inlet) + speed/10 > self.widget_psd.syringe_size:
-            setattr(self.widget_psd, syringe_tag_connected_to_cell_inlet, self.widget_psd.syringe_size)
-        else:
-            setattr(self.widget_psd, syringe_tag_connected_to_cell_inlet, getattr(self.widget_psd, syringe_tag_connected_to_cell_inlet) + speed/10)
-        if getattr(self.widget_psd, syringe_tag_connected_to_cell_outlet) - speed/10 < 0:
-            setattr(self.widget_psd, syringe_tag_connected_to_cell_oulet, 0)
-        else:
-            setattr(self.widget_psd, syringe_tag_connected_to_cell_outlet, getattr(self.widget_psd, syringe_tag_connected_to_cell_outlet) - speed/10)
-        if (getattr(self.widget_psd, syringe_tag_connected_to_cell_outlet) == self.widget_psd.syringe_size) and (getattr(self.widget_psd, syringe_tag_connected_to_cell_outlet) == 0):
-            self.timer_update_simple_pre.stop()
-            self.update_to_simple_refilling_mode()
-            self.start_exchange_simple_mode.emit()
-
-    def update_volume_simple_exchange(self):
-        #vol_tags = ['volume_syringe_1','volume_syringe_2','volume_syringe_3','volume_syringe_4']
-        #fill_tags = ['filling_status_syringe_1','filling_status_syringe_2','filling_status_syringe_3','filling_status_syringe_4']
-        syringe_tag_connected_to_cell_inlet = 'volume_syringe_{}'.format(self.widget_psd.actived_left_syringe_simple_exchange_mode)
-        syringe_tag_connected_to_cell_outlet = 'volume_syringe_{}'.format(self.widget_psd.actived_right_syringe_simple_exchange_mode)
-        fill_tag_connected_to_cell_inlet = 'filling_status_syringe_{}'.format(self.widget_psd.actived_left_syringe_simple_exchange_mode)
-        fill_tag_connected_to_cell_outlet = 'filling_status_syringe_{}'.format(self.widget_psd.actived_right_syringe_simple_exchange_mode)
-
-        ready = []#'ready' means the syringe is at ready state to switch role from pulling to pushing or versa visa
-        real_change_volume = []# The volume change for each syringe in this time segment.
-        ready_syringe_to_cell_inlet, volume_change_syringe_to_cell_inlet = self._update_volume_simple_exchange(syringe_tag_connected_to_cell_inlet, \
-                                                                                                               fill_tag_connected_to_cell_inlet, \
-                                                                                                               exchange = not getattr(self.widget_psd, fill_tag_connected_to_cell_inlet))
-
-        ready_syringe_to_cell_outlet, volume_change_syringe_to_cell_outlet = self._update_volume_simple_exchange(syringe_tag_connected_to_cell_outlet, \
-                                                                                                               fill_tag_connected_to_cell_outlet, \
-                                                                                                               exchange = getattr(self.widget_psd, fill_tag_connected_to_cell_outlet))
-        ready = [ready_syringe_to_cell_inlet, ready_syringe_to_cell_outlet]
-        real_change_volume = [volume_change_syringe_to_cell_inlet, volume_change_syringe_to_cell_outlet]
-
-        if 'ready' in ready and 'not_ready' in ready:
-            self.auto_refilling_sychronized_ready = False
-        else:
-            self.auto_refilling_sychronized_ready = True
-
-        if real_change_volume[0] >0: #S1 not in exchange, and sucking solution from resevoir
-            self.widget_psd.resevoir_volumn = self.widget_psd.resevoir_volumn - real_change_volume[0]
-        else: #S1 under exchange, so update exchange_volume, the waste and resovior should maintain!
-            self.exchange_volume = self.exchange_volume + real_change_volume[0]
-
-        if real_change_volume[1] <0: #s2 not in exchange, and dispense solution to the waste
-            self.widget_psd.waste_volumn = self.widget_psd.waste_volumn - real_change_volume[2]
-
-        self.lcdNumber_exchange_volume.display(self.exchange_volume)
-        self.lcdNumber_time.display(int(time.time()-self.auto_refilling_elapsed_time))
-
-        #update waste and resevoir volume as well 
-        if (self.widget_psd.waste_volumn > self.widget_psd.waste_volumn_total) or (self.widget_psd.resevoir_volumn < 0):
-            self.timer_update.stop()
-
-    def _update_volume_simple_exchange(self,vol_tag='volume',fill_tag='filling',in_exchange = True):
-        if in_exchange:
-            speed = self.doubleSpinBox_exchange_speed_simple.value()/1000 # in uL in the GUI
-        else:
-            speed = self.doubleSpinBox_refill_speed_simple.value()/1000 # in uL in the GUI
-
-        real_change_volume = 0
-        changed_volume = speed/10 * [-1,1][int(getattr(self.widget_psd,fill_tag))]
-        new_volume = getattr(self.widget_psd,vol_tag) + changed_volume 
-        if new_volume > self.widget_psd.syringe_size:
-            real_change_volume = self.widget_psd.syringe_size - getattr(self.widget_psd,vol_tag)
-            setattr(self.widget_psd,vol_tag,self.widget_psd.syringe_size)
-            if self.auto_refilling_sychronized_ready:
-                setattr(self.widget_psd,fill_tag, False)
-            return 'ready', real_change_volume
-        elif new_volume<0:
-            real_change_volume = 0 - getattr(self.widget_psd,vol_tag)
-            setattr(self.widget_psd,vol_tag,0)
-            if self.auto_refilling_sychronized_ready:#switch the filling status only when synchronized is ready
-                setattr(self.widget_psd,fill_tag, True)
-            return 'ready', real_change_volume
-        else:
-            setattr(self.widget_psd,vol_tag, new_volume)
-            return 'not_ready', changed_volume
-
-    def _update_volume(self,vol_tag='volume',fill_tag='filling'):
-        real_change_volume = 0
-        changed_volume = self.widget_psd.speed/10 * [-1,1][int(getattr(self.widget_psd,fill_tag))]
-        new_volume = getattr(self.widget_psd,vol_tag) + changed_volume 
-        if new_volume > self.widget_psd.syringe_size:
-            real_change_volume = self.widget_psd.syringe_size - getattr(self.widget_psd,vol_tag)
-            setattr(self.widget_psd,vol_tag,self.widget_psd.syringe_size)
-            if self.auto_refilling_sychronized_ready:
-                setattr(self.widget_psd,fill_tag, False)
-            return 'ready', real_change_volume
-        elif new_volume<0:
-            real_change_volume = 0 - getattr(self.widget_psd,vol_tag)
-            setattr(self.widget_psd,vol_tag,0)
-            if self.auto_refilling_sychronized_ready:#switch the filling status only when synchronized is ready
-                setattr(self.widget_psd,fill_tag, True)
-            return 'ready', real_change_volume
-        else:
-            setattr(self.widget_psd,vol_tag, new_volume)
-            return 'not_ready', changed_volume
-
-        """
-        if (12.5-getattr(self.widget_psd,vol_tag))<=0:
-            setattr(self.widget_psd,vol_tag,12.5)
-            setattr(self.widget_psd,fill_tag, False)
-        elif getattr(self.widget_psd,vol_tag)<=0:
-            setattr(self.widget_psd,vol_tag, 0)
-            setattr(self.widget_psd,fill_tag, True)
-        else:
-            pass
-        if getattr(self.widget_psd,fill_tag):
-            setattr(self.widget_psd,vol_tag, getattr(self.widget_psd,vol_tag)+self.widget_psd.speed/10)
-        else:
-            setattr(self.widget_psd,vol_tag, getattr(self.widget_psd,vol_tag)-self.widget_psd.speed/10)
-        """
 
     def update_speed(self):
         self.widget_psd.speed = float(self.doubleSpinBox.value())

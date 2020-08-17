@@ -24,6 +24,8 @@ class QTextEditLogger(logging.Handler):
 
 class baseOperationMode(object):
     def __init__(self, psd_widget, error_widget, timer_premotion, timer_motion, timeout, pump_settings, settings):
+        self.switch_success_pump_server = True
+        self.server_ready = False
         self.psd_widget = psd_widget
         self.error_widget = error_widget
         self.timer_premotion = timer_premotion
@@ -124,6 +126,7 @@ class baseOperationMode(object):
                 #update the syringe volume according to this speed
                 setattr(self.psd_widget, type_name_in_widget, value_before_motion + direction_sign*speed_syringe)
                 if self.timer_motion.isActive():
+                    # print(checked_value_connection_part)
                     self.timer_motion.stop()
                 if self.timer_premotion!= None:
                     if self.timer_premotion.isActive():
@@ -248,9 +251,13 @@ class simpleRefillingOperationMode(baseOperationMode):
         self.turn_valve(push_syringe_index, 'left')
         self.append_valve_info(pull_syringe_index, pushing_syringe = False)
         self.append_valve_info(push_syringe_index, pushing_syringe = True)
+        #TODO: send cmd to server to turn valve to the right position. Program should suspend until the valve are turned sucessfully. 
+        #Also update the speed in syringe instance, which should be refill_speed here
 
     def start_premotion_timer(self):
         self.init_premotion()
+        #TODO (Before timer started!): send cmd to server to apply motions of the related syringes. Under exchange mode, cmd should be broadcasted instead of send one by one to allow synchronization.
+        #Program continues upon all syringes starting to move.
         self.timer_premotion.start(100)
 
     def premotion(self):
@@ -258,9 +265,9 @@ class simpleRefillingOperationMode(baseOperationMode):
             if self.timer_premotion.isActive():
                 self.timer_premotion.stop()
                 self.init_motion()
+                #TODO (Before timer starts!!): send cmd to server to apply motions of the related syringes. Under exchange mode, cmd should be broadcasted instead of send one by one to allow synchronization.
+                #Now you should set the speed in syringe instances to exchange speed. Program continues upon all syringes starting to move.
                 self.timer_motion.start(100)
-                #self.exchange_t0 = time.time()
-                #self.waste_volume_t0 = self.psd_widget.waste_volumn
         else:
             for i in [int(self.settings['pull_syringe_handle']()),int(self.settings['push_syringe_handle']())]:
                 self.single_syringe_motion(i, speed_tag = 'refill_speed', continual_exchange = True)
@@ -277,20 +284,32 @@ class simpleRefillingOperationMode(baseOperationMode):
         #set mvp channel
         self.psd_widget.mvp_channel = int(self.pump_settings['S{}_mvp'.format(push_syringe_index)].rsplit('_')[1])
         self.psd_widget.mvp_connected_valve = 'S{}_right'.format(push_syringe_index)
+        #TODO: send cmd to server to turn valve (including MVP valve) to the right position. Program should suspend until the valve are turned sucessfully.
 
     def exchange_motion(self):
         if self.check_synchronization():
-            self.switch_state_during_exchange(syringe_index_list = [self.psd_widget.actived_left_syringe_simple_exchange_mode,self.psd_widget.actived_right_syringe_simple_exchange_mode])
-            self.set_status_to_moving()
-            exchange_tag = self.check_refill_or_exchange()
-            if exchange_tag:
-                speed_tag = 'exchange_speed'
+            if not self.server_ready:
+                pass
             else:
-                speed_tag = 'refill_speed'
-            for i in [int(self.settings['pull_syringe_handle']()),int(self.settings['push_syringe_handle']())]:
-                self.single_syringe_motion(i, speed_tag = speed_tag, continual_exchange = True)
+                #TODO: switch status (valve positions, speed, and dispense/fill volume) in pump server side for next cycle. Update the switch_success_pump_server
+                self.switch_success_pump_server = True
+                if self.switch_success_pump_server:
+                    #TODO: send cmd to server to apply motions of the related syringes. Under exchange mode, cmd should be broadcasted instead of send one by one to allow synchronization.
+                    #Program continues upon all syringes starting to move.
+                    self.switch_state_during_exchange(syringe_index_list = [self.psd_widget.actived_left_syringe_simple_exchange_mode,self.psd_widget.actived_right_syringe_simple_exchange_mode])
+                    self.set_status_to_moving()
+                    exchange_tag = self.check_refill_or_exchange()
+                    if exchange_tag:
+                        speed_tag = 'exchange_speed'
+                    else:
+                        speed_tag = 'refill_speed'
+                    for i in [int(self.settings['pull_syringe_handle']()),int(self.settings['push_syringe_handle']())]:
+                        self.single_syringe_motion(i, speed_tag = speed_tag, continual_exchange = True)
+                else:
+                    pass#if not ready, GUI update will be suspended!
         else:
             exchange_tag = self.check_refill_or_exchange()
+            # print('I am here now. The exchange tag is {}'.format(exchange_tag))
             if exchange_tag:
                 speed_tag = 'exchange_speed'
             else:
@@ -302,6 +321,12 @@ class simpleRefillingOperationMode(baseOperationMode):
         for i in [int(self.settings['pull_syringe_handle']()),int(self.settings['push_syringe_handle']())]:
             if self.settings['syringe{}_status'.format(i)]!='ready':
                 return False
+        #TODO: check if all related syringes are busy (give the value to the server_ready). If so set server_ready to False, else set it to True
+        self.server_ready = True
+        if self.server_ready:
+            #TODO: switch status (valve positions, speed, and dispense/fill volume) for next cycle.
+            #return True
+            pass
         return True
 
     def check_refill_or_exchange(self):
