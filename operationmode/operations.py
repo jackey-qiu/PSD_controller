@@ -212,6 +212,7 @@ class simpleRefillingOperationMode(baseOperationMode):
     def __init__(self, psd_widget, error_widget, timer_premotion, timer_motion, timeout, pump_settings, settings):
         super().__init__(psd_widget, error_widget, timer_premotion, timer_motion,timeout, pump_settings, settings)
         self.operation_mode = 'simple_exchange_mode'
+        self.onetime = False
         self.timer_motion.timeout.connect(self.exchange_motion)
         self.timer_premotion.timeout.connect(self.premotion)
         self.check_settings()
@@ -264,13 +265,18 @@ class simpleRefillingOperationMode(baseOperationMode):
         if self.check_synchronization():
             if self.timer_premotion.isActive():
                 self.timer_premotion.stop()
-                self.init_motion()
+                #self.init_motion()
                 #TODO (Before timer starts!!): send cmd to server to apply motions of the related syringes. Under exchange mode, cmd should be broadcasted instead of send one by one to allow synchronization.
                 #Now you should set the speed in syringe instances to exchange speed. Program continues upon all syringes starting to move.
-                self.timer_motion.start(100)
+                #self.timer_motion.start(100)
         else:
             for i in [int(self.settings['pull_syringe_handle']()),int(self.settings['push_syringe_handle']())]:
                 self.single_syringe_motion(i, speed_tag = 'refill_speed', continual_exchange = True)
+
+    def start_motion_timer(self,onetime):
+        self.onetime = onetime
+        self.init_motion()
+        self.timer_motion.start(100)
 
     def init_motion(self):
         pull_syringe_index = int(self.settings['pull_syringe_handle']())
@@ -291,6 +297,9 @@ class simpleRefillingOperationMode(baseOperationMode):
             if not self.server_ready:
                 pass
             else:
+                if self.onetime:
+                    self.timer_motion.stop()
+                    return
                 #TODO: switch status (valve positions, speed, and dispense/fill volume) in pump server side for next cycle. Update the switch_success_pump_server
                 self.switch_success_pump_server = True
                 if self.switch_success_pump_server:
@@ -349,6 +358,7 @@ class advancedRefillingOperationMode(baseOperationMode):
     def __init__(self, psd_widget, error_widget, timer_premotion, timer_motion, timeout, pump_settings, settings):
         super().__init__(psd_widget, error_widget, timer_premotion, timer_motion,timeout, pump_settings, settings)
         self.operation_mode = 'autorefilling_mode'
+        self.onetime = False
         self.timer_premotion.timeout.connect(self.premotion)
         self.timer_motion.timeout.connect(self.start_motion)
         self.check_settings()
@@ -403,12 +413,17 @@ class advancedRefillingOperationMode(baseOperationMode):
         self.init_premotion()
         self.timer_premotion.start(100)
 
+    def start_motion_timer(self, onetime = False):
+        self.onetime = onetime
+        self.init_motion()
+        self.timer_motion.start(100)
+
     def premotion(self):
         if self.check_synchronization():
             if self.timer_premotion.isActive():
                 self.timer_premotion.stop()
-                self.init_motion()
-                self.timer_motion.start(100)
+                #self.init_motion()
+                #self.timer_motion.start(100)
                 self.exchange_t0 = time.time()
                 self.waste_volume_t0 = self.psd_widget.waste_volumn
         else:
@@ -450,11 +465,14 @@ class advancedRefillingOperationMode(baseOperationMode):
                 self.psd_widget.mvp_channel = int(self.pump_settings['S{}_mvp'.format(syringe_index)].rsplit('_')[1])
 
     def start_motion(self):
-        self.settings['time_record_handle'](int(time.time()-self.exchange_t0))
+        # self.settings['time_record_handle'](int(time.time()-self.exchange_t0))
         self.settings['volume_record_handle'](round(self.psd_widget.waste_volumn-self.waste_volume_t0,3))
         if self.check_synchronization():
             self.switch_state_during_exchange(syringe_index_list = [1, 2, 3, 4])
             self.set_status_to_moving()
+            if self.onetime:
+                self.timer_motion.stop()
+                return
             for i in range(1,5):
                 self.single_syringe_motion(i, speed_tag = 'exchange_speed', continual_exchange = True)
         else:
@@ -476,6 +494,7 @@ class normalOperationMode(baseOperationMode):
         super().__init__(psd_widget, error_widget, timer_premotion, timer_motion,timeout, pump_settings, settings)
         self.operation_mode = 'normal_mode'
         self.timer_motion.timeout.connect(self.start_motion)
+        self.syringe_index = None
         self.check_settings()
 
     def check_settings(self):
@@ -487,12 +506,12 @@ class normalOperationMode(baseOperationMode):
             logging.getLogger().exception('Missing the following keys in this normal_mode settings:{}'.format(','.join(missed)))
 
     def init_motion(self):
-        syringe_index = int(self.settings['syringe_handle']())
-        self.syringe_index = syringe_index
-        valve_position = self.settings['valve_position_handle']()
-        valve_connection = self.settings['valve_connection_handle']()
-        vol = float(self.settings['vol_handle']())*self.psd_widget.syringe_size #note the vol in GUI is in stroke unit
-        speed = float(self.settings['speed_handle']())/(1000/self.timeout)
+        #syringe_index = int(self.settings['syringe_handle']())
+        syringe_index = self.syringe_index
+        valve_position = self.settings['valve_position_handle'](syringe_index)
+        valve_connection = self.settings['valve_connection_handle'](syringe_index)
+        vol = float(self.settings['vol_handle'](syringe_index))*self.psd_widget.syringe_size #note the vol in GUI is in stroke unit
+        speed = float(self.settings['speed_handle'](syringe_index))/(1000/self.timeout)
 
         #set widget variables
         self.psd_widget.operation_mode = 'normal_mode'
