@@ -231,7 +231,7 @@
                  </widget>
                 </item>
                 <item row="0" column="8">
-                 <widget class="QPushButton" name="pushButton_remove_1ul">
+                 <widget class="QPushButton" name="pushButton_dispense_init_mode">
                   <property name="sizePolicy">
                    <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
                     <horstretch>0</horstretch>
@@ -251,6 +251,9 @@
                 </item>
                 <item row="0" column="3">
                  <widget class="QSpinBox" name="spinBox_speed">
+                  <property name="maximum">
+                   <number>1000</number>
+                  </property>
                   <property name="value">
                    <number>5</number>
                   </property>
@@ -276,7 +279,7 @@
                  </widget>
                 </item>
                 <item row="0" column="7">
-                 <widget class="QPushButton" name="pushButton_add_1ul">
+                 <widget class="QPushButton" name="pushButton_fill_init_mode">
                   <property name="sizePolicy">
                    <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
                     <horstretch>0</horstretch>
@@ -295,7 +298,11 @@
                  </widget>
                 </item>
                 <item row="0" column="5">
-                 <widget class="QSpinBox" name="spinBox"/>
+                 <widget class="QSpinBox" name="spinBox_amount">
+                  <property name="maximum">
+                   <number>10000</number>
+                  </property>
+                 </widget>
                 </item>
                 <item row="0" column="4">
                  <widget class="QLabel" name="label_46">
@@ -398,7 +405,7 @@
                  </widget>
                 </item>
                 <item row="0" column="9">
-                 <widget class="QPushButton" name="pushButton_10">
+                 <widget class="QPushButton" name="pushButton_stop_init_mode">
                   <property name="sizePolicy">
                    <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
                     <horstretch>0</horstretch>
@@ -558,7 +565,7 @@
                 <enum>QTabWidget::West</enum>
                </property>
                <property name="currentIndex">
-                <number>0</number>
+                <number>1</number>
                </property>
                <property name="elideMode">
                 <enum>Qt::ElideRight</enum>
@@ -1553,19 +1560,6 @@
                      </item>
                     </widget>
                    </item>
-                   <item row="2" column="6">
-                    <spacer name="horizontalSpacer_6">
-                     <property name="orientation">
-                      <enum>Qt::Horizontal</enum>
-                     </property>
-                     <property name="sizeHint" stdset="0">
-                      <size>
-                       <width>40</width>
-                       <height>20</height>
-                      </size>
-                     </property>
-                    </spacer>
-                   </item>
                    <item row="2" column="4">
                     <widget class="QComboBox" name="comboBox_S2_mvp">
                      <property name="sizePolicy">
@@ -1818,6 +1812,95 @@
                      </property>
                     </widget>
                    </item>
+                   <item row="0" column="6">
+                    <widget class="QLabel" name="label_2">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <property name="text">
+                      <string>Volume (ml)</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="1" column="6">
+                    <widget class="QLineEdit" name="lineEdit_vol_1">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <property name="maximumSize">
+                      <size>
+                       <width>90</width>
+                       <height>16777215</height>
+                      </size>
+                     </property>
+                     <property name="text">
+                      <string>250</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="2" column="6">
+                    <widget class="QLineEdit" name="lineEdit_vol_2">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <property name="maximumSize">
+                      <size>
+                       <width>90</width>
+                       <height>16777215</height>
+                      </size>
+                     </property>
+                     <property name="text">
+                      <string>250</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="3" column="6">
+                    <widget class="QLineEdit" name="lineEdit_vol_3">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <property name="maximumSize">
+                      <size>
+                       <width>90</width>
+                       <height>16777215</height>
+                      </size>
+                     </property>
+                     <property name="text">
+                      <string>None</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="4" column="6">
+                    <widget class="QLineEdit" name="lineEdit_vol_4">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <property name="maximumSize">
+                      <size>
+                       <width>90</width>
+                       <height>16777215</height>
+                      </size>
+                     </property>
+                     <property name="text">
+                      <string>None</string>
+                     </property>
+                    </widget>
+                   </item>
                   </layout>
                  </item>
                  <item>
@@ -1917,6 +2000,13 @@
                    </property>
                    <property name="text">
                     <string>webcam</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="Line" name="line">
+                   <property name="orientation">
+                    <enum>Qt::Vertical</enum>
                    </property>
                   </widget>
                  </item>
@@ -2121,7 +2211,7 @@
   <customwidget>
    <class>syringe_widget</class>
    <extends>QWidget</extends>
-   <header>syringe_widget_beta.h</header>
+   <header>syringe_widget.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

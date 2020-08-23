@@ -10,6 +10,7 @@ import sys,os
 import cv2
 import logging
 import time
+import functools
 try:
     from . import locate_path
 except:
@@ -29,7 +30,7 @@ class QTextEditLogger(logging.Handler):
         separator = '-' * 80
         notice = \
         """An unhandled exception occurred. Please report the problem\n"""\
-        """using the error reporting dialog or via email to <%s>.\n"""%\
+        """using the error reporting dialog or via email to <%s>."""%\
         ("crqiu2@gmail.com")
         self.textBrowser_error_msg.clear()
         cursor = self.textBrowser_error_msg.textCursor()
@@ -40,17 +41,15 @@ class MyMainWindow(QMainWindow):
     def __init__(self, parent = None):
         super(MyMainWindow, self).__init__(parent)
         #load GUI ui file made by qt designer
-        ui_path = os.path.join(script_path,'psd_gui.ui')
+        ui_path = os.path.join(script_path,'psd_gui_beta.ui')
         uic.loadUi(ui_path,self)
-        self.show_cam_settings = False
-        self.show_or_hide_cam_settings()
-        self.spinBox_cell_volume.valueChanged.connect(self.update_cell_volume)
+        self.connected_mvp_channel = None #like 'channel_1'
 
         self.pump_settings = {}
         self.pushButton_apply_settings.clicked.connect(self.apply_pump_settings)
         self.apply_pump_settings()
 
-        self.lineEdit_frame_path.setText(os.path.join(script_path,'images'))
+        self.cam_frame_path = os.path.join(script_path,'images')
 
         self.psd_server = 'psd server'
 
@@ -69,63 +68,38 @@ class MyMainWindow(QMainWindow):
         self.image = None
         self.frame_number = 0
         self.pushButton_catch_frame.clicked.connect(self.catch_frame)
-        self.pushButton_show_hide_camviewer.clicked.connect(self.show_or_hide_cam_settings)
 
         self.pushButton_start.clicked.connect(self.init_start)
         self.pushButton_stop.clicked.connect(self.stop)
+        self.pushButton_exchange.clicked.connect(self.start_exchange)
 
-        self.pushButton_start_simple.clicked.connect(self.init_start_simple)
-        self.pushButton_stop_simple.clicked.connect(self.init_stop_simple)
-
-        self.pushButton_reset_exchange.clicked.connect(self.reset_exchange)
-
-        self.pushButton_fill_syringe_1.clicked.connect(lambda:self.fill_syringe(self.radioButton_syringe_1,1))
-        self.pushButton_dispense_syringe_1.clicked.connect(lambda:self.dispense_syringe(self.radioButton_syringe_1,1))
-        self.pushButton_fill_syringe_2.clicked.connect(lambda:self.fill_syringe(self.radioButton_syringe_2,2))
-        self.pushButton_dispense_syringe_2.clicked.connect(lambda:self.dispense_syringe(self.radioButton_syringe_2,2))
-        self.pushButton_fill_syringe_3.clicked.connect(lambda:self.fill_syringe(self.radioButton_syringe_3,3))
-        self.pushButton_dispense_syringe_3.clicked.connect(lambda:self.dispense_syringe(self.radioButton_syringe_3,3))
-        self.pushButton_fill_syringe_4.clicked.connect(lambda:self.fill_syringe(self.radioButton_syringe_4,4))
-        self.pushButton_dispense_syringe_4.clicked.connect(lambda:self.dispense_syringe(self.radioButton_syringe_4,4))
-        self.pushButton_stop_1.clicked.connect(self.stop_timer_normal_mode)
-        self.pushButton_stop_2.clicked.connect(self.stop_timer_normal_mode)
-        self.pushButton_stop_3.clicked.connect(self.stop_timer_normal_mode)
-        self.pushButton_stop_4.clicked.connect(self.stop_timer_normal_mode)
+        self.pushButton_fill_syringe_1.clicked.connect(lambda:self.fill_syringe(1))
+        self.pushButton_dispense_syringe_1.clicked.connect(lambda:self.dispense_syringe(1))
+        self.pushButton_fill_syringe_2.clicked.connect(lambda:self.fill_syringe(2))
+        self.pushButton_dispense_syringe_2.clicked.connect(lambda:self.dispense_syringe(2))
+        self.pushButton_fill_syringe_3.clicked.connect(lambda:self.fill_syringe(3))
+        self.pushButton_dispense_syringe_3.clicked.connect(lambda:self.dispense_syringe(3))
+        self.pushButton_fill_syringe_4.clicked.connect(lambda:self.fill_syringe(4))
+        self.pushButton_dispense_syringe_4.clicked.connect(lambda:self.dispense_syringe(4))
+        self.pushButton_stop_normal.clicked.connect(self.stop_timer_normal_mode)
         self.comboBox_valve_port_1.currentTextChanged.connect(lambda:self.update_to_normal_mode(1))
         self.comboBox_valve_port_2.currentTextChanged.connect(lambda:self.update_to_normal_mode(2))
         self.comboBox_valve_port_3.currentTextChanged.connect(lambda:self.update_to_normal_mode(3))
         self.comboBox_valve_port_4.currentTextChanged.connect(lambda:self.update_to_normal_mode(4))
 
-        self.comboBox_valve_connection_1.currentTextChanged.connect(lambda:self.update_to_normal_mode(1))
-        self.comboBox_valve_connection_2.currentTextChanged.connect(lambda:self.update_to_normal_mode(2))
-        self.comboBox_valve_connection_3.currentTextChanged.connect(lambda:self.update_to_normal_mode(3))
-        self.comboBox_valve_connection_4.currentTextChanged.connect(lambda:self.update_to_normal_mode(4))
+        self.pushButton_connect_mvp_syringe_1.clicked.connect(lambda:self.update_mvp_connection(1))
+        self.pushButton_connect_mvp_syringe_2.clicked.connect(lambda:self.update_mvp_connection(2))
+        self.pushButton_connect_mvp_syringe_3.clicked.connect(lambda:self.update_mvp_connection(3))
+        self.pushButton_connect_mvp_syringe_4.clicked.connect(lambda:self.update_mvp_connection(4))
 
-        self.radioButton_syringe_1.clicked.connect(lambda:self.update_to_normal_mode(1))
-        self.radioButton_syringe_2.clicked.connect(lambda:self.update_to_normal_mode(2))
-        self.radioButton_syringe_3.clicked.connect(lambda:self.update_to_normal_mode(3))
-        self.radioButton_syringe_4.clicked.connect(lambda:self.update_to_normal_mode(4))
-
-        self.pushButton_stop_all.clicked.connect(self.stop_all_motion)
+        self.actionStop_all_motions.triggered.connect(self.stop_all_motion)
+        self.actionReset_resevoir_and_waste_volume.triggered.connect(self.reset_exchange)
         self.doubleSpinBox.valueChanged.connect(self.update_speed)
         self.update_speed()
         self.label_cam.setScaledContents(True)
 
         self.pushButton_fill_init_mode.clicked.connect(self.fill_init_mode)
         self.pushButton_dispense_init_mode.clicked.connect(self.dispense_init_mode)
-        self.comboBox_pushing_syringe_init_mode.currentTextChanged.connect(self.update_to_init_mode)
-        self.comboBox_pulling_syringe_init_mode.currentTextChanged.connect(self.update_to_init_mode)
-        self.pushButton_add_1ul.clicked.connect(lambda:self.add_solution_to_cell(1))
-        self.pushButton_add_3ul.clicked.connect(lambda:self.add_solution_to_cell(3))
-        self.pushButton_add_5ul.clicked.connect(lambda:self.add_solution_to_cell(5))
-        self.pushButton_add_10ul.clicked.connect(lambda:self.add_solution_to_cell(10))
-        self.pushButton_add_50ul.clicked.connect(lambda:self.add_solution_to_cell(50))
-
-        self.pushButton_remove_1ul.clicked.connect(lambda:self.remove_solution_from_cell(1))
-        self.pushButton_remove_3ul.clicked.connect(lambda:self.remove_solution_from_cell(3))
-        self.pushButton_remove_5ul.clicked.connect(lambda:self.remove_solution_from_cell(5))
-        self.pushButton_remove_10ul.clicked.connect(lambda:self.remove_solution_from_cell(10))
-        self.pushButton_remove_50ul.clicked.connect(lambda:self.remove_solution_from_cell(50))
 
         self.pushButton_start_webcam.clicked.connect(self.start_webcam)
         self.pushButton_stop_webcam.clicked.connect(self.stop_webcam)
@@ -155,17 +129,23 @@ class MyMainWindow(QMainWindow):
         #action done before auto_refilling, serve purpose to fill the cell first
         self.timer_update_init_mode = QTimer(self)
 
+        #timer to add/remove extra amount of solution to/from cell during simple or advance exchange mode
+        self.timer_extra_amount = QTimer(self)
+        self.timer_extra_amount.timeout.connect(self.empty_func)
+
         # in this mode, all syringes will be half-filled (internally actived before auto_refilling mode)
         self.timer_update_fill_half_mode = QTimer(self)
 
         self.timers = [self.timer_update_simple, self.timer_update_simple_pre, self.timer_update_fill_half_mode,  self.timer_update,self.timer_update_normal_mode, self.timer_update_init_mode]
+        self.timers_partial = [self.timer_update_simple_pre, self.timer_update_fill_half_mode, self.timer_update_normal_mode, self.timer_update_init_mode]
 
+        self.pushButton_connect_mvp_syringe_1.click()
         #instances of operation modes
         self.init_operation = initOperationMode(self.widget_psd,self.textBrowser_error_msg, None, self.timer_update_init_mode, 100, self.pump_settings, \
-                                                settings = {'pull_syringe_handle':self.comboBox_pulling_syringe_init_mode.currentText,
-                                                            'push_syringe_handle':self.comboBox_pushing_syringe_init_mode.currentText,
-                                                            'vol_handle':self.spinBox_volume_init_mode.value,
-                                                            'speed_handle':self.spinBox_speed_init_mode.value})
+                                                settings = {'pull_syringe_handle':self.get_pulling_syringe_simple_exchange_mode,
+                                                            'push_syringe_handle':self.get_pushing_syringe_simple_exchange_mode,
+                                                            'vol_handle':self.spinBox_amount.value,
+                                                            'speed_handle':self.spinBox_speed.value})
 
         self.normal_operation = normalOperationMode(self.widget_psd,self.textBrowser_error_msg, None, self.timer_update_normal_mode, 100, self.pump_settings, \
                                                 settings = {'syringe_handle':self.get_syringe_index_handle_normal_mode,
@@ -177,14 +157,47 @@ class MyMainWindow(QMainWindow):
         self.advanced_exchange_operation = advancedRefillingOperationMode(self.widget_psd, self.textBrowser_error_msg, self.timer_update_fill_half_mode, self.timer_update, 100, self.pump_settings, \
                                                 settings = {'premotion_speed_handle':self.doubleSpinBox_premotion_speed.value,
                                                             'exchange_speed_handle':self.doubleSpinBox.value,
-                                                            'time_record_handle':self.lcdNumber_time.display,
-                                                            'volume_record_handle':self.lcdNumber_exchange_volume.display})
+                                                            'time_record_handle':self.display_exchange_time,
+                                                            'volume_record_handle':self.display_exchange_volume,
+                                                            'extra_amount_timer':self.timer_extra_amount,
+                                                            'extra_amount_handle':self.spinBox_amount.value,
+                                                            'extra_amount_speed_handle':self.spinBox_speed.value})
 
         self.simple_exchange_operation = simpleRefillingOperationMode(self.widget_psd,self.textBrowser_error_msg, self.timer_update_simple_pre, self.timer_update_simple, 100, self.pump_settings, \
-                                                settings = {'pull_syringe_handle':self.comboBox_pulling_syringe_simple_exchange_mode.currentText,
-                                                            'push_syringe_handle':self.comboBox_pushing_syringe_simple_exchange_mode.currentText,
-                                                            'refill_speed_handle':self.doubleSpinBox_refill_speed_simple.value,
-                                                            'exchange_speed_handle':self.doubleSpinBox_exchange_speed_simple.value})
+                                                settings = {'pull_syringe_handle':self.get_pulling_syringe_simple_exchange_mode,
+                                                            'push_syringe_handle':self.get_pushing_syringe_simple_exchange_mode,
+                                                            'refill_speed_handle':self.doubleSpinBox_premotion_speed.value,
+                                                            'exchange_speed_handle':self.doubleSpinBox.value})
+        
+    def display_exchange_time(self):
+        pass
+    
+    def empty_func(self):
+        pass
+
+    def display_exchange_volume(self, vol):
+        self.statusbar.clearMessage()
+        self.statusbar.showMessage('Exchange vol: {} ml'.format(vol))
+
+    def get_pulling_syringe_simple_exchange_mode(self):
+        syringe = None
+        #each looks like : S1_left
+        for each in self.pump_settings:
+            if self.pump_settings[each] == 'cell_outlet':
+                syringe = each
+                break
+        if syringe != None:
+            return int(''.join(syringe.rsplit('_')[0][1:]))
+        else:
+            logging.getLogger().exception('Error: Could not find syringe to pull electrolyte from cell. Check your setting table!')
+            self.tabWidget.setCurrentIndex(2)
+
+    def get_pushing_syringe_simple_exchange_mode(self):
+        for each in self.pump_settings:
+            if self.pump_settings[each] == self.connected_mvp_channel:
+                return int(''.join(each.rsplit('_')[0][1:]))
+        logging.getLogger().exception('No MVP channel is actived now. Connect it first!')
+        self.tabWidget.setCurrentIndex(2) 
 
     def update_cell_volume(self):
         self.widget_psd.cell_volume_in_total = self.spinBox_cell_volume.value()
@@ -196,23 +209,19 @@ class MyMainWindow(QMainWindow):
                 return int(i+1)
         logging.getLogger().exception('No radioButton has been clicked! Click one button to activate normal mode!')
 
-    def get_valve_position_handle_normal_mode(self):
-        index = self.get_syringe_index_handle_normal_mode()
+    def get_valve_position_handle_normal_mode(self,index):
         if isinstance(index, int):
             return eval('self.comboBox_valve_port_{}.currentText()'.format(index))
 
-    def get_valve_connection_handle_normal_mode(self):
-        index = self.get_syringe_index_handle_normal_mode()
+    def get_valve_connection_handle_normal_mode(self, index):
         if isinstance(index, int):
-            return eval('self.comboBox_valve_connection_{}.currentText()'.format(index))
+            return self.pump_settings['S{}_{}'.format(index, self.widget_psd.connect_valve_port[index])]
 
-    def get_speed_handle_normal_mode(self):
-        index = self.get_syringe_index_handle_normal_mode()
+    def get_speed_handle_normal_mode(self,index):
         if isinstance(index, int):
             return eval('self.doubleSpinBox_speed_normal_mode_{}.value()'.format(index))
 
-    def get_vol_handle_normal_mode(self):
-        index = self.get_syringe_index_handle_normal_mode()
+    def get_vol_handle_normal_mode(self,index):
         if isinstance(index, int):
             return eval('self.doubleSpinBox_stroke_factor_{}.value()'.format(index))
 
@@ -224,11 +233,12 @@ class MyMainWindow(QMainWindow):
                 for each in items:
                     self.pump_settings['S{}_{}'.format(i,each)] = getattr(self,'comboBox_S{}_{}'.format(i, each)).currentText()
                 self.pump_settings['S{}_solution'.format(i)] = getattr(self, 'lineEdit_sol_{}'.format(i)).text()
+                self.pump_settings['S{}_volume'.format(i)] = eval(getattr(self, 'lineEdit_vol_{}'.format(i)).text())
                 i += 1
             except:
                 break
-        self.update_syringe_info_in_init_and_simple_exchange_mode()
         setattr(self.widget_psd, 'pump_settings', self.pump_settings)
+        self.widget_psd.set_resevoir_volumes()
 
     def check_limit(self):
         limits = {'volume_syringe_1':[0,self.widget_psd.syringe_size], \
@@ -268,10 +278,9 @@ class MyMainWindow(QMainWindow):
     #save a snapshot of webcam
     def catch_frame(self):
         if self.timer_webcam.isActive():
-            frame_path = os.path.join(self.lineEdit_frame_path.text(),self.lineEdit_frame_name.text())
+            frame_path = os.path.join(script_path,'cam_frame{}.png'.format(self.frame_number))
             cv2.imwrite(frame_path, self.image)
             self.frame_number+=1
-            self.lineEdit_frame_name.setText('cam_frame{}.png'.format(self.frame_number))
             self.statusbar.showMessage('Cam Image is saved at {}!'.format(frame_path))
         else:
             pass
@@ -281,7 +290,37 @@ class MyMainWindow(QMainWindow):
             if timer.isActive():
                 timer.stop()
 
+    def check_any_timer(func):
+        @functools.wraps(func)
+        def wrapper_func(self, *args, **kwargs):
+            for timer in self.timers:
+                if timer.isActive():
+                    logging.getLogger().exception('Error: some timer is running now. Stop it before you can make this move!')
+                    self.tabWidget.setCurrentIndex(2)
+                    return
+            return func(self, *args, **kwargs)
+        return wrapper_func
+
+    def check_any_timer_except_exchange(func):
+        @functools.wraps(func)
+        def wrapper_func(self, *args, **kwargs):
+            for timer in self.timers_partial:
+                if timer.isActive():
+                    logging.getLogger().exception('Error: some timer is running now. Stop it before you can make this move!')
+                    self.tabWidget.setCurrentIndex(2)
+                    return
+            return func(self, *args, **kwargs)
+        return wrapper_func
+
     def init_start(self):
+        if self.comboBox_exchange_mode.currentText() == 'Continuous':
+            self.init_start_advance()
+        elif self.comboBox_exchange_mode.currentText() == 'Intermittent':
+            self.init_start_simple()
+
+    @check_any_timer
+    def init_start_advance(self):
+        self.textBrowser_error_msg.setText('')
         #check the cell volume first
         if self.widget_psd.volume_of_electrolyte_in_cell < 0.1:
             logging.getLogger().exception('Error: Not enough electrolyte in cell. Please fill some solution in the cell first!')
@@ -290,12 +329,31 @@ class MyMainWindow(QMainWindow):
             if self.check_connection_for_advanced_auto_refilling():
                 self.advanced_exchange_operation.start_premotion_timer()
 
+    @check_any_timer
     def init_start_simple(self):
+        self.textBrowser_error_msg.setText('')
         if self.widget_psd.volume_of_electrolyte_in_cell < 0.1:
             logging.getLogger().exception('Error: Not enough electrolyte in cell. Please fill some solution in the cell first!')
             self.tabWidget.setCurrentIndex(2) 
         else:
             self.simple_exchange_operation.start_premotion_timer()
+
+    def start_exchange(self):
+        if self.comboBox_exchange_mode.currentText() == 'Continuous':
+            self.start_exchange_advance(not self.checkBox_auto.isChecked())
+        elif self.comboBox_exchange_mode.currentText() == 'Intermittent':
+            self.start_exchange_simple(not self.checkBox_auto.isChecked())
+
+    @check_any_timer
+    def start_exchange_advance(self, onetime):
+        self.textBrowser_error_msg.setText('')
+        self.advanced_exchange_operation.start_motion_timer(onetime)
+
+    @check_any_timer
+    def start_exchange_simple(self, onetime):
+        self.textBrowser_error_msg.setText('')
+        self.simple_exchange_operation.start_motion_timer(onetime)
+        #self.advanced_exchange_operation.start_motion_timer(onetime)
 
     def init_stop_simple(self):
         self.stop_all_timers()
@@ -321,25 +379,6 @@ class MyMainWindow(QMainWindow):
                 self.tabWidget.setCurrentIndex(2) 
                 return False
         return True
-
-    def update_syringe_info_in_init_and_simple_exchange_mode(self):
-        syringes_connect_to_cell_inlet = []
-        syringes_connect_to_cell_outlet = []
-        f = lambda s: s.rsplit('_')[0][1:]
-        for each, value in self.pump_settings.items():
-            if value=='cell_inlet':
-                syringes_connect_to_cell_inlet.append(f(each))
-            elif value == 'cell_outlet':
-                syringes_connect_to_cell_outlet.append(f(each))
-        self.comboBox_pushing_syringe_init_mode.clear()
-        self.comboBox_pushing_syringe_init_mode.addItems(syringes_connect_to_cell_inlet)
-        self.comboBox_pulling_syringe_init_mode.clear()
-        self.comboBox_pulling_syringe_init_mode.addItems(syringes_connect_to_cell_outlet)
-
-        self.comboBox_pushing_syringe_simple_exchange_mode.clear()
-        self.comboBox_pushing_syringe_simple_exchange_mode.addItems(syringes_connect_to_cell_inlet)
-        self.comboBox_pulling_syringe_simple_exchange_mode.clear()
-        self.comboBox_pulling_syringe_simple_exchange_mode.addItems(syringes_connect_to_cell_outlet)
 
     def viewCam(self):
         # read image in BGR format
@@ -386,6 +425,7 @@ class MyMainWindow(QMainWindow):
         self.widget_psd.update()
 
     def update_to_init_mode(self):
+        self.textBrowser_error_msg.setText('')
         self.widget_psd.operation_mode = 'init_mode'
         #which one is the syringe to pull electrolyte from cell
         self.widget_psd.actived_pulling_syringe_init_mode = int(self.comboBox_pulling_syringe_init_mode.currentText())
@@ -399,6 +439,7 @@ class MyMainWindow(QMainWindow):
         self.widget_psd.update()
 
     def update_to_normal_mode(self, syringe_no):
+        self.textBrowser_error_msg.setText('')
         #radioButton_widget.setChecked(True)
         self.widget_psd.actived_syringe_normal_mode = syringe_no
         self.widget_psd.operation_mode = 'normal_mode'
@@ -406,14 +447,25 @@ class MyMainWindow(QMainWindow):
         self.widget_psd.connect_valve_port[self.widget_psd.actived_syringe_normal_mode] = valve_position
         key_for_pump_setting = 'S{}_{}'.format(syringe_no,valve_position)
         key_for_mvp = 'S{}_mvp'.format(syringe_no)
+        '''
         #update mvp channel if connecting to cell_inlet
         if self.pump_settings[key_for_pump_setting]=='cell_inlet':
             self.widget_psd.mvp_channel = int(self.pump_settings[key_for_mvp].rsplit('_')[1])
             self.widget_psd.mvp_connected_valve = 'S{}'.format(self.widget_psd.mvp_channel)
+        '''
         #update the valve connection based on the info in pump settings
-        eval("self.comboBox_valve_connection_{}.setCurrentText('{}')".format(syringe_no,self.pump_settings[key_for_pump_setting]))
-        self.widget_psd.actived_syringe_valve_connection = eval('self.comboBox_valve_connection_{}.currentText()'.format(syringe_no))
+        #eval("self.comboBox_valve_connection_{}.setCurrentText('{}')".format(syringe_no,self.pump_settings[key_for_pump_setting]))
+        #self.widget_psd.actived_syringe_valve_connection = eval('self.comboBox_valve_connection_{}.currentText()'.format(syringe_no))
+        self.widget_psd.actived_syringe_valve_connection = self.pump_settings[key_for_pump_setting]
         self.widget_psd.volume_normal_mode = eval('self.doubleSpinBox_stroke_factor_{}.value()'.format(syringe_no))*self.widget_psd.syringe_size
+        self.widget_psd.update()
+
+    @check_any_timer
+    def update_mvp_connection(self, syringe_no):
+        self.textBrowser_error_msg.setText('')
+        self.connected_mvp_channel = self.pump_settings['S{}_mvp'.format(syringe_no)]
+        self.widget_psd.mvp_channel = syringe_no
+        self.widget_psd.mvp_connected_valve = 'S{}'.format(syringe_no)
         self.widget_psd.update()
 
     def add_solution_to_cell(self, amount):
@@ -426,32 +478,56 @@ class MyMainWindow(QMainWindow):
         self.spinBox_volume_init_mode.setValue(int(amount))
         self.dispense_init_mode()
 
-    def fill_init_mode(self):
-        self.widget_psd.actived_syringe_motion_init_mode = 'fill'
-        self.stop_all_timers()
-        self.init_operation.start_exchange_timer()
+    @check_any_timer_except_exchange
+    def fill_init_mode(self,kwargs = None):
+        self.textBrowser_error_msg.setText('')
+        if self.timer_update.isActive() or self.timer_update_simple.isActive():
+            self.advanced_exchange_operation.extra_amount_fill = True
+            self.advanced_exchange_operation.fill_or_dispense_extra_amount = self.advanced_exchange_operation.settings['extra_amount_handle']()/1000
+            self.timer_extra_amount.start(1000)
+        else:
+            self.widget_psd.actived_syringe_motion_init_mode = 'fill'
+            self.stop_all_timers()
+            self.init_operation.start_exchange_timer()
 
-    def dispense_init_mode(self):
-        self.widget_psd.actived_syringe_motion_init_mode = 'dispense'
-        self.stop_all_timers()
-        self.init_operation.start_exchange_timer()
+    @check_any_timer_except_exchange
+    def dispense_init_mode(self, kwargs = None):
+        self.textBrowser_error_msg.setText('')
+        if self.timer_update.isActive() or self.timer_update_simple.isActive():
+            self.advanced_exchange_operation.extra_amount_fill = False
+            self.advanced_exchange_operation.fill_or_dispense_extra_amount = self.advanced_exchange_operation.settings['extra_amount_handle']()/1000
+            self.timer_extra_amount.start(1000)
+        else:
+            self.widget_psd.actived_syringe_motion_init_mode = 'dispense'
+            self.stop_all_timers()
+            self.init_operation.start_exchange_timer()
 
-    def fill_syringe(self,radioButton_widget,syringe_no):
+    @check_any_timer
+    def fill_syringe(self,syringe_no):
+        self.textBrowser_error_msg.setText('')
+        if self.pump_settings['S{}_mvp'.format(syringe_no)] != 'not_used':
+            exec('self.pushButton_connect_mvp_syringe_{}.click()'.format(syringe_no))
         self.widget_psd.actived_syringe_motion_normal_mode = 'fill'
         exec('self.widget_psd.filling_status_syringe_{} = True'.format(syringe_no))
-        radioButton_widget.setChecked(True)
-        self.stop_all_timers()
+        self.normal_operation.syringe_index = syringe_no
         self.normal_operation.start_timer_motion()
 
-    def dispense_syringe(self,radioButton_widget,syringe_no):
+    @check_any_timer
+    def dispense_syringe(self,syringe_no):
+        self.textBrowser_error_msg.setText('')
+        if self.pump_settings['S{}_mvp'.format(syringe_no)] != 'not_used':
+            exec('self.pushButton_connect_mvp_syringe_{}.click()'.format(syringe_no))
         self.widget_psd.actived_syringe_motion_normal_mode = 'dispense'
         exec('self.widget_psd.filling_status_syringe_{} = False'.format(syringe_no))
-        radioButton_widget.setChecked(True)
+        #radioButton_widget.setChecked(True)
         self.stop_all_timers()
+        self.normal_operation.syringe_index = syringe_no
         self.normal_operation.start_timer_motion()
 
     #reset the volume of resevoir and waste bottom
-    def reset_exchange(self):
+    @check_any_timer
+    def reset_exchange(self, kwargs = 1):
+        self.textBrowser_error_msg.setText('')
         self.widget_psd.waste_volumn = 0
         self.widget_psd.resevoir_volumn = self.widget_psd.resevoir_volumn_total
         self.widget_psd.update()
@@ -464,12 +540,12 @@ class MyMainWindow(QMainWindow):
         self.widget_psd.speed = float(self.doubleSpinBox.value())
 
 if __name__ == "__main__":
-    QApplication.setStyle("fusion")
+    QApplication.setStyle("windows")
     app = QApplication(sys.argv)
     #get dpi info: dots per inch
     screen = app.screens()[0]
     dpi = screen.physicalDotsPerInch()
     myWin = MyMainWindow()
-    # app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
+    app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
     myWin.show()
     sys.exit(app.exec_())

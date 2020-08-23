@@ -109,8 +109,13 @@ class baseOperationMode(object):
             if connection not in ['resevoir', 'cell_outlet', 'not_used']:
                 logging.getLogger().exception('Pump setting Error:YOU ARE ONLY allowed to withdraw solution from RESEVOIR or CELL_OUTLET')
             elif connection == 'resevoir':
-                checked_value_connection_part = {'type':'resevoir', 'checked_value':self.check_limits(self.psd_widget.resevoir_volumn-speed_new, 'resevoir')}
-                self.psd_widget.resevoir_volumn = self.psd_widget.resevoir_volumn - (speed_new - checked_value_connection_part['checked_value'])
+                # checked_value_connection_part = {'type':'resevoir', 'checked_value':self.check_limits(self.psd_widget.resevoir_volumn-speed_new, 'resevoir')}
+                # self.psd_widget.resevoir_volumn = self.psd_widget.resevoir_volumn - (speed_new - checked_value_connection_part['checked_value'])
+                resevoir_volumn = getattr(self.psd_widget, 'resevoir_volumn_S{}'.format(index))
+                checked_value_connection_part = {'type':'resevoir', 'checked_value':self.check_limits(resevoir_volumn-speed_new, 'resevoir')}
+                self.psd_widget.resevoir_volumn = resevoir_volumn - (speed_new - checked_value_connection_part['checked_value'])
+                setattr(self.psd_widget, 'resevoir_volumn_S{}'.format(index), self.psd_widget.resevoir_volumn)
+                self.psd_widget.label_resevoir = self.pump_settings['S{}_solution'.format(index)]
             elif connection == 'cell_outlet':
                 checked_value_connection_part = {'type':'cell', 'checked_value':self.check_limits(self.psd_widget.volume_of_electrolyte_in_cell-speed_new, 'cell')}
                 self.psd_widget.volume_of_electrolyte_in_cell = self.psd_widget.volume_of_electrolyte_in_cell - (speed_new - checked_value_connection_part['checked_value'])
@@ -365,6 +370,8 @@ class advancedRefillingOperationMode(baseOperationMode):
         self.append_valve_info()
         self.waste_volume_t0 = 0
         self.exchange_t0 = 0
+        self.fill_or_dispense_extra_amount = 0 
+        self.extra_amount_fill = True
 
     def append_valve_info(self):
         self.settings['possible_connection_valves_syringe_1'] = ['left', 'right']
@@ -374,7 +381,7 @@ class advancedRefillingOperationMode(baseOperationMode):
 
     def check_settings(self):
         missed = []
-        for each in ['premotion_speed_handle','exchange_speed_handle', 'time_record_handle', 'volume_record_handle']:
+        for each in ['premotion_speed_handle','exchange_speed_handle', 'time_record_handle', 'volume_record_handle', 'extra_amount_timer', 'extra_amount_handle', 'extra_amount_speed_handle']:
             if each not in self.settings:
                 missed.append(each)
         if len(missed)>0:
@@ -464,6 +471,18 @@ class advancedRefillingOperationMode(baseOperationMode):
                 self.psd_widget.mvp_connected_valve = 'S{}_{}'.format(syringe_index, self.psd_widget.connect_valve_port[syringe_index])
                 self.psd_widget.mvp_channel = int(self.pump_settings['S{}_mvp'.format(syringe_index)].rsplit('_')[1])
 
+    #set addup_speed when clicking fill or dispense during exchange
+    def set_addup_speed(self, overshoot = 0):
+        self.settings['addup_speed'] = self.settings['exchange_speed'] + self.settings['extra_amount_speed_handle']()/1000/(1000/self.timeout)*[-1,1][int(self.extra_amount_fill)] - overshoot
+
+    def update_extra_amount(self):
+        self.fill_or_dispense_extra_amount = self.fill_or_dispense_extra_amount - self.settings['extra_amount_speed_handle']()/1000/(1000/self.timeout)
+        if self.fill_or_dispense_extra_amount < 0:
+            self.settings['extra_amount_timer'].stop()
+            return abs(self.fill_or_dispense_extra_amount)
+        else:
+            return 0
+
     def start_motion(self):
         # self.settings['time_record_handle'](int(time.time()-self.exchange_t0))
         self.settings['volume_record_handle'](round(self.psd_widget.waste_volumn-self.waste_volume_t0,3))
@@ -473,17 +492,44 @@ class advancedRefillingOperationMode(baseOperationMode):
             if self.onetime:
                 self.timer_motion.stop()
                 return
+            if self.settings['extra_amount_timer'].isActive():
+                overshoot_amount = self.update_extra_amount()
             for i in range(1,5):
-                self.single_syringe_motion(i, speed_tag = 'exchange_speed', continual_exchange = True)
+                if self.settings['extra_amount_timer'].isActive():
+                    if i == self.psd_widget.get_syringe_index_mvp_connection():
+                        self.set_addup_speed(overshoot_amount)
+                        self.single_syringe_motion(i, speed_tag = 'addup_speed', continual_exchange = True)
+                    else:
+                        self.single_syringe_motion(i, speed_tag = 'exchange_speed', continual_exchange = True)
+                else:
+                    self.single_syringe_motion(i, speed_tag = 'exchange_speed', continual_exchange = True)
         else:
+            if self.settings['extra_amount_timer'].isActive():
+                overshoot_amount = self.update_extra_amount()
             for i in range(1,5):
-                self.single_syringe_motion(i, speed_tag = 'exchange_speed', continual_exchange = True)
+                if self.settings['extra_amount_timer'].isActive():
+                    if i == self.psd_widget.get_syringe_index_mvp_connection():
+                        self.set_addup_speed(overshoot_amount)
+                        self.single_syringe_motion(i, speed_tag = 'addup_speed', continual_exchange = True)
+                    else:
+                        self.single_syringe_motion(i, speed_tag = 'exchange_speed', continual_exchange = True)
+                else:
+                    self.single_syringe_motion(i, speed_tag = 'exchange_speed', continual_exchange = True)
+
 
     def check_synchronization(self):
-        for i in [1,2,3,4]:
-            if self.settings['syringe{}_status'.format(i)]!='ready':
-                return False
-        return True
+        if not self.settings['extra_amount_timer'].isActive():
+            for i in [1,2,3,4]:
+                if self.settings['syringe{}_status'.format(i)]!='ready':
+                    return False
+            return True
+        else:
+            for i in [1,2,3,4]:
+                if self.settings['syringe{}_status'.format(i)]=='ready':
+                    self.timer_motion.stop()
+                    self.settings['extra_amount_timer'].stop()
+                    break
+            return False
 
     def set_status_to_moving(self):
         for i in [1,2,3,4]:
