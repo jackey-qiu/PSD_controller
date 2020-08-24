@@ -12,6 +12,8 @@ class syringe_widget(QWidget):
         self.number_of_channel_mvp = 5
         #mvp valve position, integer larger than 1
         self.mvp_channel = 1
+        #The mvp valve position to the currently activated syringe
+        self.syringe_mvp_cell_inlet_channel = 1
         #mvp connected valve: S1_right
         self.mvp_connected_valve = 'S1_right'
         #label of resevoir
@@ -30,11 +32,11 @@ class syringe_widget(QWidget):
         #size of syringe
         self.syringe_size = 12.5
         #leftover volumn in resevoir
-        self.resevoir_volumn = 250 #in mL
+        self.resevoir_volumn = 350 #in mL
         #volumn size of resevoir bottle
-        self.resevoir_volumn_total = 250 #in ml
+        self.resevoir_volumn_total = 350 #in ml
         #volumn size of waste bottle
-        self.waste_volumn_total = 250 #in ml
+        self.waste_volumn_total = 350 #in ml
         #current volumn in the waste bottle
         self.waste_volumn = 0 # in mL
         #speed for auto_refilling mode
@@ -76,6 +78,25 @@ class syringe_widget(QWidget):
         self.volume_of_electrolyte_in_cell = 0
         #max vol in cell
         self.cell_volume_in_total = 5
+
+    def get_syringe_mvp_cell_inlet_channel(self):
+        line_index = [1,2,3,4]
+        if self.operation_mode == 'simple_exchange_mode':
+            line_index = [self.actived_left_syringe_simple_exchange_mode,self.actived_right_syringe_simple_exchange_mode]
+        elif self.operation_mode == 'init_mode':
+            line_index = [self.actived_pulling_syringe_init_mode,self.actived_pushing_syringe_init_mode]
+        elif self.operation_mode == 'normal_mode':
+            line_index = [self.actived_syringe_normal_mode]
+        for i in line_index:
+            valve_pos = self.connect_valve_port[i]
+            key = 'S{}_{}'.format(i, valve_pos)
+            connection = self.pump_settings[key]
+            if connection == 'cell_inlet':
+                self.syringe_mvp_cell_inlet_channel = i
+                return i
+        else:#if no syringe is connected to cell inlet, just set this to 1, which doesnot hurt.
+            self.syringe_mvp_cell_inlet_channel = 1
+            return 1
 
     #you can have multiple resevoir bottles but only one waste bottle
     def set_resevoir_volumes(self):
@@ -130,10 +151,10 @@ class syringe_widget(QWidget):
         self.draw_radio_signal(qp,[rects_4[8][0]-6,rects_4[8][1]+90],msg=self.connect_status[4])
         # if self.operation_mode in ['auto_refilling','init_mode']:
         self.draw_cell(qp,offset=[(19.5*0 + left_bound_cell)*self.ref_unit,(1.3)*self.ref_unit])
-        rects_resevoir = self.draw_bottle(qp, fill_height = self.resevoir_volumn/250*200, offset = [1*0+ left_bound_resevoir,8+2],volume=self.resevoir_volumn_total,label = self.label_resevoir)
-        rects_waste = self.draw_bottle(qp, fill_height = self.waste_volumn/250*200, offset = [36*0 + left_bound_waste,8+2], volume = self.waste_volumn_total,label = 'Waste')
+        rects_resevoir = self.draw_bottle(qp, fill_height = self.resevoir_volumn/self.resevoir_volumn_total*200, offset = [1*0+ left_bound_resevoir,8+2],volume=self.resevoir_volumn_total,label = self.label_resevoir)
+        rects_waste = self.draw_bottle(qp, fill_height = self.waste_volumn/self.waste_volumn_total*200, offset = [36*0 + left_bound_waste,8+2], volume = self.waste_volumn_total,label = 'Waste')
         # self.draw_mvp_valve(qp,[rects_waste[0][0]+150, rects_waste[0][1]-150, 50, 50],connected_channel = self.mvp_channel)
-        mvp_connect_coord_channel, mvp_connect_coord_cell = self.draw_mvp_valve(qp,[self.cell_rect[0] - (50 - self.cell_rect[2])/2, self.cell_rect[1]+20, 50, 50],connected_channel = self.mvp_channel)
+        mvp_connect_coord_channel, mvp_connect_coord_cell = self.draw_mvp_valve(qp,[self.cell_rect[0] - (50 - self.cell_rect[2])/2, self.cell_rect[1]+20, 50, 50],connected_channel = self.mvp_channel, syringe_connected_channel = self.get_syringe_mvp_cell_inlet_channel())
         mvp_connect_rect_channel = list(mvp_connect_coord_channel- np.array([1,1])) + [2,2]
         mvp_connect_rect_cell = list(mvp_connect_coord_cell- np.array([1,1])) + [2,2]
         pen = QPen([Qt.red,Qt.blue][0], 2, line_styles[int(self.line_style==1)])
@@ -399,7 +420,9 @@ class syringe_widget(QWidget):
             rect_dim = eval('rec{}_dim'.format(i))
             rects.append(rect_pos+rect_dim)
         qp.setPen(QPen(QColor(10, 10, 10), 1, Qt.SolidLine, Qt.FlatCap, Qt.MiterJoin))
-        self.draw_markers(qp,rec5_pos+[bottom_width,bottom_height_total],'left',volume,[50,100,150,200],False)
+        # self.draw_markers(qp,rec5_pos+[bottom_width,bottom_height_total],'left',volume,[50,100,150,200],False)
+        markers = [int(volume/5)*(i+1) for i in range(4)]
+        self.draw_markers(qp,rec5_pos+[bottom_width,bottom_height_total],'left',volume,markers,False)
         return rects
 
     def draw_valve(self,qp, dim, connect_port = 'left'):
@@ -419,7 +442,7 @@ class syringe_widget(QWidget):
             qp.drawLine(*(coord_top+coord_center))
         qp.drawLine(*(coord_bottom+coord_center))
 
-    def draw_mvp_valve(self,qp, dim, connected_channel = 3):
+    def draw_mvp_valve(self,qp, dim, connected_channel = 3, syringe_connected_channel =3):
         coord_center = [dim[0]+dim[2]/2,dim[1]+dim[3]/2]
         qp.setPen(QPen(Qt.blue,  2, Qt.SolidLine))
         # qp.drawRect(*dim)
@@ -439,7 +462,7 @@ class syringe_widget(QWidget):
             if i == 0:
                 coord_tmp = list(coord_tmp - np.array([0,8]))
                 return_coord_cell = coord_tmp
-            if i == connected_channel:
+            if i == syringe_connected_channel:
                 return_coord_channel = coord_tmp
             qp.drawLine(*(coord_tmp+coord_center))
         qp.setFont(QFont('Decorative', 12))
