@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1920</width>
-    <height>1035</height>
+    <height>1053</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -361,7 +361,7 @@
                   </property>
                   <property name="font">
                    <font>
-                    <pointsize>14</pointsize>
+                    <pointsize>10</pointsize>
                     <weight>75</weight>
                     <bold>true</bold>
                     <strikeout>false</strikeout>
@@ -388,7 +388,7 @@
                   </property>
                   <property name="font">
                    <font>
-                    <pointsize>14</pointsize>
+                    <pointsize>10</pointsize>
                     <weight>75</weight>
                     <bold>true</bold>
                    </font>
@@ -565,7 +565,7 @@
                 <enum>QTabWidget::West</enum>
                </property>
                <property name="currentIndex">
-                <number>1</number>
+                <number>0</number>
                </property>
                <property name="elideMode">
                 <enum>Qt::ElideRight</enum>
@@ -2166,7 +2166,7 @@
      <x>0</x>
      <y>0</y>
      <width>1920</width>
-     <height>22</height>
+     <height>21</height>
     </rect>
    </property>
   </widget>

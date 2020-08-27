@@ -441,6 +441,8 @@ class advancedRefillingOperationMode(baseOperationMode):
         self.psd_widget.operation_mode = 'auto_refilling'
         speed = float(self.settings['exchange_speed_handle']())/(1000/self.timeout)
         self.settings['exchange_speed'] = speed
+        refill_speed = float(self.settings['premotion_speed_handle']())/(1000/self.timeout)
+        self.settings['refill_speed'] = refill_speed
 
         #syringe_1 to syringe_4
         self.turn_valve(1,'left')
@@ -500,9 +502,15 @@ class advancedRefillingOperationMode(baseOperationMode):
                         self.set_addup_speed(overshoot_amount)
                         self.single_syringe_motion(i, speed_tag = 'addup_speed', continual_exchange = True)
                     else:
-                        self.single_syringe_motion(i, speed_tag = 'exchange_speed', continual_exchange = True)
+                        if i in self.psd_widget.get_refill_syringes_advance_exchange_mode():
+                            self.single_syringe_motion(i, speed_tag = 'refill_speed', continual_exchange = True)
+                        else:
+                            self.single_syringe_motion(i, speed_tag = 'exchange_speed', continual_exchange = True)
                 else:
-                    self.single_syringe_motion(i, speed_tag = 'exchange_speed', continual_exchange = True)
+                    if i in self.psd_widget.get_refill_syringes_advance_exchange_mode():
+                        self.single_syringe_motion(i, speed_tag = 'refill_speed', continual_exchange = True)
+                    else:
+                        self.single_syringe_motion(i, speed_tag = 'exchange_speed', continual_exchange = True)
         else:
             if self.settings['extra_amount_timer'].isActive():
                 overshoot_amount = self.update_extra_amount()
@@ -512,24 +520,38 @@ class advancedRefillingOperationMode(baseOperationMode):
                         self.set_addup_speed(overshoot_amount)
                         self.single_syringe_motion(i, speed_tag = 'addup_speed', continual_exchange = True)
                     else:
-                        self.single_syringe_motion(i, speed_tag = 'exchange_speed', continual_exchange = True)
+                        if i in self.psd_widget.get_refill_syringes_advance_exchange_mode():
+                            self.single_syringe_motion(i, speed_tag = 'refill_speed', continual_exchange = True)
+                        else:
+                            self.single_syringe_motion(i, speed_tag = 'exchange_speed', continual_exchange = True)
                 else:
-                    self.single_syringe_motion(i, speed_tag = 'exchange_speed', continual_exchange = True)
-
+                    if i in self.psd_widget.get_refill_syringes_advance_exchange_mode():
+                        self.single_syringe_motion(i, speed_tag = 'refill_speed', continual_exchange = True)
+                    else:
+                        self.single_syringe_motion(i, speed_tag = 'exchange_speed', continual_exchange = True)
 
     def check_synchronization(self):
+        '''
         if not self.settings['extra_amount_timer'].isActive():
             for i in [1,2,3,4]:
                 if self.settings['syringe{}_status'.format(i)]!='ready':
                     return False
             return True
         else:
+            for i in self.psd_widget.get_exchange_syringes_advance_exchange_mode():
+                if self.settings['syringe{}_status'.format(i)]=='ready':
+                    return True
             for i in [1,2,3,4]:
                 if self.settings['syringe{}_status'.format(i)]=='ready':
                     self.timer_motion.stop()
                     self.settings['extra_amount_timer'].stop()
                     break
-            return False
+        '''
+        #whichever is ready, the valve positions of all syringes will switch over
+        for i in self.psd_widget.get_exchange_syringes_advance_exchange_mode():
+            if self.settings['syringe{}_status'.format(i)]=='ready':
+                return True 
+        return False
 
     def set_status_to_moving(self):
         for i in [1,2,3,4]:

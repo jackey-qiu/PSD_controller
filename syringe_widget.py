@@ -79,6 +79,18 @@ class syringe_widget(QWidget):
         #max vol in cell
         self.cell_volume_in_total = 5
 
+    #get the index of syringe for refilling (connecting to resevoir) and dispensing (connecting to waste) in advance exchange mode
+    def get_refill_syringes_advance_exchange_mode(self):
+        index_list = []
+        for ix, direction in self.connect_valve_port.items():
+            if self.pump_settings['S{}_{}'.format(ix,direction)] in ['waste', 'resevoir']:
+                index_list.append(ix)
+        return index_list
+
+    def get_exchange_syringes_advance_exchange_mode(self):
+        index_list = self.get_refill_syringes_advance_exchange_mode()
+        return [each for each in self.connect_valve_port if each not in index_list]
+
     def get_syringe_mvp_cell_inlet_channel(self):
         line_index = [1,2,3,4]
         if self.operation_mode == 'simple_exchange_mode':
@@ -411,6 +423,7 @@ class syringe_widget(QWidget):
         qp.setBrush(QColor(250, 250, 250))
         # qp.drawRect(*(rec10_pos+rec10_dim))
         qp.setPen(QPen(QColor(200, 200, 200), 1, Qt.SolidLine, Qt.FlatCap, Qt.MiterJoin))
+        qp.setFont(QFont('Decorative', 12))
         qp.drawText(rec6_pos[0],rec6_pos[1]+rec6_dim[1]+60,"{}:{:6.2f} ml".format(label,volume/bottom_height_total*fill_height))
         if label!='Waste':
             qp.drawText(rec6_pos[0],rec6_pos[1]+rec6_dim[1]+40,"Resevoir")
