@@ -262,6 +262,10 @@ class simpleRefillingOperationMode(baseOperationMode):
 
     def start_premotion_timer(self):
         self.init_premotion()
+        signal_ready = True # waiting for ready_signal from the server
+        while True:
+            if signal_ready:
+                break
         #TODO (Before timer started!): send cmd to server to apply motions of the related syringes. Under exchange mode, cmd should be broadcasted instead of send one by one to allow synchronization.
         #Program continues upon all syringes starting to move.
         self.timer_premotion.start(100)
@@ -281,6 +285,10 @@ class simpleRefillingOperationMode(baseOperationMode):
     def start_motion_timer(self,onetime):
         self.onetime = onetime
         self.init_motion()
+        signal_ready = True
+        while True:
+            if signal_ready:
+                break
         self.timer_motion.start(100)
 
     def init_motion(self):

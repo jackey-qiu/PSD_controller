@@ -1,5 +1,5 @@
 from PyQt5 import QtCore
-from PyQt5.QtWidgets import QCheckBox, QRadioButton, QTableWidgetItem, QHeaderView, QAbstractItemView, QInputDialog
+from PyQt5.QtWidgets import QCheckBox, QRadioButton, QTableWidgetItem, QHeaderView, QAbstractItemView, QInputDialog, QDialog
 from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtGui import QTransform, QFont, QBrush, QColor, QIcon, QImage, QPixmap
 from pyqtgraph.Qt import QtGui
@@ -41,7 +41,7 @@ class MyMainWindow(QMainWindow):
     def __init__(self, parent = None):
         super(MyMainWindow, self).__init__(parent)
         #load GUI ui file made by qt designer
-        ui_path = os.path.join(script_path,'psd_gui_beta.ui')
+        ui_path = os.path.join(script_path,'psd_gui_beta2.ui')
         uic.loadUi(ui_path,self)
         self.connected_mvp_channel = None #like 'channel_1'
 
@@ -97,6 +97,8 @@ class MyMainWindow(QMainWindow):
         self.doubleSpinBox.valueChanged.connect(self.update_speed)
         self.update_speed()
         self.label_cam.setScaledContents(True)
+
+        self.actioncleaner.triggered.connect(self.onCleanerClicked)
 
         self.pushButton_fill_init_mode.clicked.connect(self.fill_init_mode)
         self.pushButton_dispense_init_mode.clicked.connect(self.dispense_init_mode)
@@ -169,6 +171,12 @@ class MyMainWindow(QMainWindow):
                                                             'refill_speed_handle':self.doubleSpinBox_premotion_speed.value,
                                                             'exchange_speed_handle':self.doubleSpinBox.value})
         
+    def onCleanerClicked(self):
+        dlg = Cleaner(self)
+        dlg.exec()
+
+    #def 
+
     def display_exchange_time(self):
         pass
     
@@ -525,12 +533,19 @@ class MyMainWindow(QMainWindow):
         self.normal_operation.start_timer_motion()
 
     #reset the volume of resevoir and waste bottom
+    '''
     @check_any_timer
     def reset_exchange(self, kwargs = 1):
         self.textBrowser_error_msg.setText('')
         self.widget_psd.waste_volumn = 0
         self.widget_psd.resevoir_volumn = self.widget_psd.resevoir_volumn_total
         self.widget_psd.update()
+    '''
+
+    @check_any_timer
+    def reset_exchange(self,kwargs = 1):
+        dlg = ResetResevoirWaste(self)
+        dlg.exec()
 
     #stop auto_refilling mode
     def stop(self):
@@ -538,6 +553,47 @@ class MyMainWindow(QMainWindow):
 
     def update_speed(self):
         self.widget_psd.speed = float(self.doubleSpinBox.value())
+
+class Cleaner(QDialog):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        # Load the dialog's GUI
+        uic.loadUi("cleaner_dialog.ui", self)
+
+class ResetResevoirWaste(QDialog):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.parent = parent
+        # Load the dialog's GUI
+        uic.loadUi("reset_resevoir_waste_dialog.ui", self)
+        # print(self.__dir__())
+        self.get_info_from_parent()
+        self.pushButton_apply.clicked.connect(self.apply)
+        
+    def get_info_from_parent(self):
+        for i in range(1,5):
+            tag = 'S{}_volume'.format(i)
+            tag2 = 'S{}_solution'.format(i)
+            if self.parent.pump_settings[tag2] == 'waste':
+                getattr(self,tag).setText('None')
+            else:
+                getattr(self,tag).setText(str(self.parent.pump_settings[tag]))
+            getattr(self,tag2).setText(str(self.parent.pump_settings[tag2]))
+            self.lineEdit_max_vol.setText(str(self.parent.widget_psd.resevoir_volumn_total))
+    
+    def apply(self):
+        for i in range(1,5):
+            tag = 'S{}_volume'.format(i)
+            tag2 = 'S{}_solution'.format(i)
+            if self.parent.pump_settings[tag2] == 'waste':
+                pass
+            else:
+                self.parent.pump_settings[tag] = eval(getattr(self,tag).text())
+            self.parent.pump_settings[tag2]= getattr(self,tag2).text()
+        self.parent.widget_psd.pump_settings = self.parent.pump_settings
+        self.parent.widget_psd.set_resevoir_volumes()
+        self.parent.widget_psd.waste_volumn = eval(self.lineEdit_waste_vol.text())
+        self.parent.widget_psd.update()
 
 if __name__ == "__main__":
     QApplication.setStyle("windows")

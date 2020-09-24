@@ -32,11 +32,11 @@ class syringe_widget(QWidget):
         #size of syringe
         self.syringe_size = 12.5
         #leftover volumn in resevoir
-        self.resevoir_volumn = 350 #in mL
+        self.resevoir_volumn = 250 #in mL
         #volumn size of resevoir bottle
-        self.resevoir_volumn_total = 350 #in ml
+        self.resevoir_volumn_total = 250 #in ml
         #volumn size of waste bottle
-        self.waste_volumn_total = 350 #in ml
+        self.waste_volumn_total = 250 #in ml
         #current volumn in the waste bottle
         self.waste_volumn = 0 # in mL
         #speed for auto_refilling mode
@@ -48,7 +48,7 @@ class syringe_widget(QWidget):
         #default speed for fill_all and empty_all mode
         self.speed_by_default = 1
         #ref length for drawing syringe
-        self.ref_unit = 20
+        self.ref_unit = 15
         self.line_style = 1
         #either init_mode, auto_refilling mode or normal_mode
         self.operation_mode = 'not_ready_mode'
@@ -78,6 +78,8 @@ class syringe_widget(QWidget):
         self.volume_of_electrolyte_in_cell = 0
         #max vol in cell
         self.cell_volume_in_total = 5
+        #the height in the drawing of resevior/waste bottle
+        self.bottom_height_total = 150
 
     #get the index of syringe for refilling (connecting to resevoir) and dispensing (connecting to waste) in advance exchange mode
     def get_refill_syringes_advance_exchange_mode(self):
@@ -163,8 +165,8 @@ class syringe_widget(QWidget):
         self.draw_radio_signal(qp,[rects_4[8][0]-6,rects_4[8][1]+90],msg=self.connect_status[4])
         # if self.operation_mode in ['auto_refilling','init_mode']:
         self.draw_cell(qp,offset=[(19.5*0 + left_bound_cell)*self.ref_unit,(1.3)*self.ref_unit])
-        rects_resevoir = self.draw_bottle(qp, fill_height = self.resevoir_volumn/self.resevoir_volumn_total*200, offset = [1*0+ left_bound_resevoir,8+2],volume=self.resevoir_volumn_total,label = self.label_resevoir)
-        rects_waste = self.draw_bottle(qp, fill_height = self.waste_volumn/self.waste_volumn_total*200, offset = [36*0 + left_bound_waste,8+2], volume = self.waste_volumn_total,label = 'Waste')
+        rects_resevoir = self.draw_bottle(qp, fill_height = self.resevoir_volumn/self.resevoir_volumn_total*self.bottom_height_total, offset = [1*0+ left_bound_resevoir,8+2],volume=self.resevoir_volumn_total,label = self.label_resevoir)
+        rects_waste = self.draw_bottle(qp, fill_height = self.waste_volumn/self.waste_volumn_total*self.bottom_height_total, offset = [36*0 + left_bound_waste,8+2], volume = self.waste_volumn_total,label = 'Waste')
         # self.draw_mvp_valve(qp,[rects_waste[0][0]+150, rects_waste[0][1]-150, 50, 50],connected_channel = self.mvp_channel)
         mvp_connect_coord_channel, mvp_connect_coord_cell = self.draw_mvp_valve(qp,[self.cell_rect[0] - (50 - self.cell_rect[2])/2, self.cell_rect[1]+20, 50, 50],connected_channel = self.mvp_channel, syringe_connected_channel = self.get_syringe_mvp_cell_inlet_channel())
         mvp_connect_rect_channel = list(mvp_connect_coord_channel- np.array([1,1])) + [2,2]
@@ -371,11 +373,11 @@ class syringe_widget(QWidget):
         qp.setBrush(QColor(122, 163, 39))
         qp.drawPath(path)
         self.cell_rect = [x+l1-(l1-l2)/2-l2,y+(l1-l2)/2,l2,l2]
-        qp.drawText(self.cell_rect[0]-15-18,self.cell_rect[1]-40,"cell vol:{} ml".format(round(self.volume_of_electrolyte_in_cell,3)))
+        qp.drawText(self.cell_rect[0]-15-18,self.cell_rect[1]-35,"cell vol:{} ml".format(round(self.volume_of_electrolyte_in_cell,3)))
         return [x+l1-(l1-l2)/2-l2,y+(l1-l2)/2,l2,l2]
 
     def draw_radio_signal(self,qp,pos,dim=[40,40],start_angle=50,num_arcs = 0,vertical_spacing =10, msg='error'):
-        color = 'blue'
+        color = 'green'
         if msg == 'error':
             color = 'red'
         qp.setPen(QPen(getattr(Qt,color), 2, Qt.SolidLine))
@@ -394,9 +396,10 @@ class syringe_widget(QWidget):
                 qp.drawArc(current_pos[0],current_pos[1],current_dim[0],current_dim[1],30*16,120*16)
 
         offset = [-15,2][int(msg=='error')]
-        qp.drawText(pos[0]+offset,pos[1]+vertical_spacing*num_arcs+8,msg)
+        qp.drawText(pos[0]+offset,pos[1]+vertical_spacing*num_arcs-10,msg)
 
-    def draw_bottle(self,qp,top_width = 100,top_height = 4, bottom_width = 110, bottom_height_total = 200, fill_height =20, offset = [0,0],color = [0,0,250],label='resevoir',volume=250):
+    def draw_bottle(self,qp,top_width = 80,top_height = 4, bottom_width = 90, fill_height =20, offset = [0,0],color = [0,0,250],label='resevoir',volume=250):
+        bottom_height_total = self.bottom_height_total
         rec1_pos = [self.ref_unit*offset[0],self.ref_unit*offset[1]]
         rec1_dim = [bottom_width,top_height*4]
         rec2_dim = [top_width,top_height]
@@ -424,9 +427,9 @@ class syringe_widget(QWidget):
         # qp.drawRect(*(rec10_pos+rec10_dim))
         qp.setPen(QPen(QColor(200, 200, 200), 1, Qt.SolidLine, Qt.FlatCap, Qt.MiterJoin))
         qp.setFont(QFont('Decorative', 12))
-        qp.drawText(rec6_pos[0],rec6_pos[1]+rec6_dim[1]+60,"{}:{:6.2f} ml".format(label,volume/bottom_height_total*fill_height))
+        qp.drawText(rec6_pos[0],rec6_pos[1]+rec6_dim[1]+50,"{}:{:6.2f} ml".format(label,volume/bottom_height_total*fill_height))
         if label!='Waste':
-            qp.drawText(rec6_pos[0],rec6_pos[1]+rec6_dim[1]+40,"Resevoir")
+            qp.drawText(rec6_pos[0],rec6_pos[1]+rec6_dim[1]+30,"Resevoir")
         rects = []
         for i in range(1,6):
             rect_pos = eval('rec{}_pos'.format(i))
@@ -534,6 +537,7 @@ class syringe_widget(QWidget):
 
         rec_tube = rec6_pos+[ref_unit*4,ref_unit*8]
 
+        # print(rec7_pos+rec7_dim)
         qp.drawRect(*(rec1_pos+rec1_dim))
         qp.drawRect(*(rec2_pos+rec2_dim))
         qp.drawRect(*(rec3_pos+rec3_dim))

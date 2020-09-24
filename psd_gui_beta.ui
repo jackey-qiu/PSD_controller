@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1920</width>
-    <height>1053</height>
+    <height>1109</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -2166,7 +2166,7 @@
      <x>0</x>
      <y>0</y>
      <width>1920</width>
-     <height>21</height>
+     <height>22</height>
     </rect>
    </property>
   </widget>
@@ -2184,6 +2184,7 @@
    <addaction name="actionCalibrate_Syringes"/>
    <addaction name="actionStop_all_motions"/>
    <addaction name="actionReset_resevoir_and_waste_volume"/>
+   <addaction name="actioncleaner"/>
   </widget>
   <action name="actionCalibrate_Syringes">
    <property name="text">
@@ -2198,6 +2199,11 @@
   <action name="actionReset_resevoir_and_waste_volume">
    <property name="text">
     <string>Reset resevoir and waste volume</string>
+   </property>
+  </action>
+  <action name="actioncleaner">
+   <property name="text">
+    <string>cleaner</string>
    </property>
   </action>
  </widget>
