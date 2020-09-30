@@ -18,6 +18,11 @@ class syringe_widget(QWidget):
         self.mvp_connected_valve = 'S1_right'
         #label of resevoir
         self.label_resevoir = 'Resevoir'
+        #syringe info in clean_mode, keys are syringe index
+        self.syringe_info_clean_mode = {1:{'refill_speed':0,'refill_times':5,'holding_time':0,'inlet_port':'left','outlet_pot':'up'},
+                                        2:{'refill_speed':0,'refill_times':5,'holding_time':0,'inlet_port':'left','outlet_pot':'up'},
+                                        3:{'refill_speed':0,'refill_times':5,'holding_time':0,'inlet_port':'left','outlet_pot':'up'},
+                                        4:{'refill_speed':0,'refill_times':5,'holding_time':0,'inlet_port':'left','outlet_pot':'up'}}
         #volume of solution in each syringe
         self.volume_syringe_1 = 0
         self.volume_syringe_2 = 0
@@ -56,6 +61,14 @@ class syringe_widget(QWidget):
         self.connect_valve_port = {1:'left',2:'right',3:'up',4:'up'}
         #connected status
         self.connect_status = {1:'connected',2:'connected',3:'connected',4:'connected', 'mvp': 'connected'}
+        #The actived syringe index(only one) for operating in refill cell mode
+        self.actived_syringe_fill_cell_mode = 1
+        #either fill or dispense
+        self.actived_syringe_motion_fill_cell_mode = 'fill'
+        #refill speed
+        self.refill_speed_fill_cell_mode =0.1#in ml per second
+        #refill times
+        self.refill_times_fill_cell_mode =10
         #the actived syringe index(only one) for operating in normal mode
         self.actived_syringe_normal_mode = 1
         #status in normal mode: fill or dispense
@@ -77,7 +90,7 @@ class syringe_widget(QWidget):
         #volume of solution in cell
         self.volume_of_electrolyte_in_cell = 0
         #max vol in cell
-        self.cell_volume_in_total = 5
+        self.cell_volume_in_total = 500000000
         #the height in the drawing of resevior/waste bottle
         self.bottom_height_total = 150
 
@@ -101,6 +114,8 @@ class syringe_widget(QWidget):
             line_index = [self.actived_pulling_syringe_init_mode,self.actived_pushing_syringe_init_mode]
         elif self.operation_mode == 'normal_mode':
             line_index = [self.actived_syringe_normal_mode]
+        elif self.operation_mode == 'fill_cell_mode':
+            line_index = [self.actived_syringe_fill_cell_mode]
         for i in line_index:
             valve_pos = self.connect_valve_port[i]
             key = 'S{}_{}'.format(i, valve_pos)
@@ -199,6 +214,8 @@ class syringe_widget(QWidget):
             line_index = [self.actived_pulling_syringe_init_mode,self.actived_pushing_syringe_init_mode]
         elif self.operation_mode == 'normal_mode':
             line_index = [self.actived_syringe_normal_mode]
+        elif self.operation_mode == 'fill_cell_mode':
+            line_index = [self.actived_syringe_fill_cell_mode]
         for i in line_index:
             valve_pos = self.connect_valve_port[i]
             key = 'S{}_{}'.format(i, valve_pos)
@@ -373,7 +390,7 @@ class syringe_widget(QWidget):
         qp.setBrush(QColor(122, 163, 39))
         qp.drawPath(path)
         self.cell_rect = [x+l1-(l1-l2)/2-l2,y+(l1-l2)/2,l2,l2]
-        qp.drawText(self.cell_rect[0]-15-18,self.cell_rect[1]-35,"cell vol:{} ml".format(round(self.volume_of_electrolyte_in_cell,3)))
+        qp.drawText(self.cell_rect[0]-15-18,self.cell_rect[1]-35,"cell vol:{:7.1f} ul".format(self.volume_of_electrolyte_in_cell*1000))
         return [x+l1-(l1-l2)/2-l2,y+(l1-l2)/2,l2,l2]
 
     def draw_radio_signal(self,qp,pos,dim=[40,40],start_angle=50,num_arcs = 0,vertical_spacing =10, msg='error'):
@@ -556,7 +573,8 @@ class syringe_widget(QWidget):
         qp.setFont(QFont("Arial", 12))
         qp.setPen(QPen(QColor(250, 250, 250), 1, Qt.SolidLine, Qt.FlatCap, Qt.MiterJoin))
         qp.drawText(rec8_pos[0],rec9_pos[1]+40,label[1])
-        qp.drawText(rec8_pos[0],rec9_pos[1]+60,"{}:{:6.2f} ml".format(label[0],getattr(self,vol_tag)))
+        # qp.drawText(rec8_pos[0],rec9_pos[1]+60,"{}:{:6.2f} ml".format(label[0],getattr(self,vol_tag)))
+        qp.drawText(rec8_pos[0],rec9_pos[1]+60,"{}:{:7.1f} ul".format(label[0],getattr(self,vol_tag)*1000))
         rects = []
         for i in range(1,10):
             rect_pos = eval('rec{}_pos'.format(i))
