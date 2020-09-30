@@ -231,7 +231,7 @@ class CommunicationServer(mp.Process):
     
     """
     
-    def __init__(self, serialinstance, commandQueue, priorityQueue, stopevent,statusbytes,syringePos,idlearray):
+    def __init__(self, serialinstance, commandQueue, priorityQueue, stopevent,statusbytes,syringePos,valvePos,idlearray):
         self.serialinstance = serialinstance
         self.commandQueue = commandQueue
         self.priorityQueue = priorityQueue
@@ -239,6 +239,7 @@ class CommunicationServer(mp.Process):
         self.statusbytes = statusbytes
         self.idlearray = idlearray
         self.syringePos = syringePos
+        self.valvePos = valvePos
         self.retries = 1 # maximum number of retries until the communication will be considered as failed
         self.__sequence = np.zeros(16,dtype=np.int)
         self.__availableDeviceId = []
@@ -352,6 +353,8 @@ class CommunicationServer(mp.Process):
             else:
                 self.__deviceType.append(0)
                 mp.get_logger().info("Found valve positioner device with id %s: %s" % (i,firmware))
+            
+            self._updateStatus(self.__availableDeviceId[-1], self.__deviceType[-1])
 
         mp.get_logger().warn("Available devices: %s" % (self.__availableDeviceId))
     
@@ -360,22 +363,18 @@ class CommunicationServer(mp.Process):
         if devicetype == 1: # syringe pump
             try:
                 status, msg = self._sendCmd(deviceIdToAddress(deviceId), b'?')
-                self.statusbytes[deviceId-1] = status
-                if DeviceError.isBusyStatus(status):
-                    self.idlearray[deviceId-1].clear()
-                else:
-                    self.idlearray[deviceId-1].set()
                 self.syringePos[deviceId-1] = deviceAnswerToNumber(msg)
+                
+                status, msg = self._sendCmd(deviceIdToAddress(deviceId), b'?24000')
+                self.valvePos[deviceId-1] = deviceAnswerToNumber(msg)
+                
             except Exception as e:
                 mp.get_logger().info("Communication error with id %s; error: %s" % (deviceId,e))
         elif devicetype == 0: # MVP
             try:
-                status, msg = self._sendCmd(deviceIdToAddress(deviceId), b'Q')
-                self.statusbytes[deviceId-1] = status
-                if DeviceError.isBusyStatus(status):
-                    self.idlearray[deviceId-1].clear()
-                else:
-                    self.idlearray[deviceId-1].set()
+                status, msg = self._sendCmd(deviceIdToAddress(deviceId), b'?24000')
+                self.valvePos[deviceId-1] = deviceAnswerToNumber(msg)
+                
             except Exception as e:
                 mp.get_logger().info("Communication error with id %s; error: %s" % (deviceId,e))
                 
@@ -383,11 +382,6 @@ class CommunicationServer(mp.Process):
             mp.get_logger().info("Unknown device with id %s, type is %s" % (deviceId,self.__deviceType))
             try:
                 status, msg = self._sendCmd(deviceIdToAddress(deviceId), b'Q')
-                self.statusbytes[deviceId-1] = status
-                if DeviceError.isBusyStatus(status):
-                    self.idlearray[deviceId-1].clear()
-                else:
-                    self.idlearray[deviceId-1].set()
             except Exception as e:
                 mp.get_logger().info("Communication error with id %s; error: %s" % (deviceId,e))
         
@@ -456,7 +450,10 @@ class CommunicationServer(mp.Process):
                 
                 status = messageArray[2]
                 self.statusbytes[deviceId-1] = status
-                # TODO: also update idlearray
+                if DeviceError.isBusyStatus(status):
+                    self.idlearray[deviceId-1].clear()
+                else:
+                    self.idlearray[deviceId-1].set()
                 message = messageArray[3:-1]
                 return status,message
             else:

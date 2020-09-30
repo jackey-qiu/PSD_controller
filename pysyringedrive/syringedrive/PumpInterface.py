@@ -17,7 +17,7 @@ import atexit
 from collections import OrderedDict 
 from . import CommunicationServer as cms
 from .CommunicationServer import CommunicationServer, DeviceError, DataReciever
-
+from .device import Valve, Syringe, PSD4_smooth
 
 valveType = {
     0 : '3-way 120 degree Y valve',
@@ -43,6 +43,9 @@ class PumpController(object):
     multiprocessing-safe interface for the communication 
     with Hamilton PSD4 pumps and MVP valves via RS-485 protocol
     """
+    
+    defaultTimeout = 0.25
+    
     def __init__(self,**portsettings):
         """
 
@@ -64,6 +67,27 @@ class PumpController(object):
         self.portsettings = portsettings
         atexit.register(self.stopServer)
         self.reinitialize()
+        
+    def getSyringe(self,deviceId,syringetype=None,maxvolume=None,**keyargs):
+        if deviceId in self.__syringes:
+            return self.__syringes[deviceId]
+        elif syringetype is not None and maxvolume is not None:
+            assert issubclass(syringetype, Syringe)
+            sett = self.getSettings(deviceId)
+            keyargs['settings'] = sett
+            self.__syringes[deviceId] = syringetype(self,deviceId,maxvolume,**keyargs)
+            return self.__syringes[deviceId]
+        else:
+            raise ValueError("If the syringe was not configured yet, you must provide the syringe class and the volume of the attached syringe")
+            
+    def getValve(self,deviceId,**keyargs):
+        if deviceId in self.__valves:
+            return self.__valves[deviceId]
+        else:
+            sett = self.getSettings(deviceId)
+            keyargs['settings'] = sett
+            self.__valves[deviceId] = Valve(self,deviceId,**keyargs)
+            return self.__valves[deviceId]
         
     def deviceIds(self):
         status = np.array(self.statusbytes[:])
@@ -120,10 +144,9 @@ class PumpController(object):
         stroke = np.array(self.syringePos[:])[ids-1]
         return ids[np.nonzero(stroke < 0)]
     
-    def getSettings(self,deviceId,wait=True,timeout=0.3):
+    def getSettings(self,deviceId,**keyargs):
         recv = self.getFirmware(deviceId,False)
         recv.appendReciever(self.getValveType(deviceId,False))
-        recv.appendReciever(self.getValvePosition(deviceId,False))
         
         if self.syringePos[deviceId-1] < 0: # valve positioner
             recv.data['type'] = 'MVP'
@@ -133,63 +156,59 @@ class PumpController(object):
             recv.appendReciever(self.getStopVelocity(deviceId,False))
             recv.appendReciever(self.getReturnSteps(deviceId,False))
             recv.data['type'] = 'PSD'
-        if wait:
-            recv(timeout)
+        if keyargs.get('wait',True):
+            recv(keyargs.get('timeout',PumpController.defaultTimeout))
         return recv
         
-    def getValvePosition(self,deviceId,wait=True,timeout=0.25):
-        pipe = self._tansmitCommand(cms.deviceIdToAddress(deviceId), b'?24000')
-        recv = DataReciever(pipe,'valve position',cms.deviceAnswerToNumber,False)
-        if wait:
-            recv(timeout)
-        return recv
+    def getValvePosition(self,deviceId,**keyargs):
+        return self.valvePos[deviceId-1]
             
-    def getValveType(self,deviceId,wait=True,timeout=0.25):
+    def getValveType(self,deviceId,**keyargs):
         pipe = self._tansmitCommand(cms.deviceIdToAddress(deviceId), b'?21000')
         recv = DataReciever(pipe,'valve type',cms.deviceAnswerToNumber,False)
-        if wait:
-            recv(timeout)
+        if keyargs.get('wait',True):
+            recv(keyargs.get('timeout',PumpController.defaultTimeout))
         return recv
         
-    def getFirmware(self,deviceId,wait=True,timeout=0.25):
+    def getFirmware(self,deviceId,**keyargs):
         pipe = self._tansmitCommand(cms.deviceIdToAddress(deviceId), b'&')
         recv = DataReciever(pipe,'firmware',codecs.decode,False)
-        if wait:
-            recv(timeout)
+        if keyargs.get('wait',True):
+            recv(keyargs.get('timeout',PumpController.defaultTimeout))
         return recv
         
-    def getStartVelocity(self,deviceId,wait=True,timeout=0.25):
+    def getStartVelocity(self,deviceId,**keyargs):
         pipe = self._tansmitCommand(cms.deviceIdToAddress(deviceId), b'?1')
         recv = DataReciever(pipe,'start velocity',cms.deviceAnswerToNumber,False)
-        if wait:
-            recv(timeout)
+        if keyargs.get('wait',True):
+            recv(keyargs.get('timeout',PumpController.defaultTimeout))
         return recv
 
-    def getMaximumVelocity(self,deviceId,wait=True,timeout=0.25):
+    def getMaximumVelocity(self,deviceId,**keyargs):
         pipe = self._tansmitCommand(cms.deviceIdToAddress(deviceId), b'?2')
         recv = DataReciever(pipe,'maximum velocity',cms.deviceAnswerToNumber,False)
-        if wait:
-            recv(timeout)
+        if keyargs.get('wait',True):
+            recv(keyargs.get('timeout',PumpController.defaultTimeout))
         return recv
         
-    def getStopVelocity(self,deviceId,wait=True,timeout=0.25):
+    def getStopVelocity(self,deviceId,**keyargs):
         pipe = self._tansmitCommand(cms.deviceIdToAddress(deviceId), b'?3')
         recv = DataReciever(pipe,'stop velocity',cms.deviceAnswerToNumber,False)
-        if wait:
-            recv(timeout)
+        if keyargs.get('wait',True):
+            recv(keyargs.get('timeout',PumpController.defaultTimeout))
         return recv
         
-    def getReturnSteps(self,deviceId,wait=True,timeout=0.25):
+    def getReturnSteps(self,deviceId,**keyargs):
         pipe = self._tansmitCommand(cms.deviceIdToAddress(deviceId), b'?12')
         recv = DataReciever(pipe,'return steps',cms.deviceAnswerToNumber,False)
-        if wait:
-            recv(timeout)
+        if keyargs.get('wait',True):
+            recv(keyargs.get('timeout',PumpController.defaultTimeout))
         return recv
     
     def getSyringePos(self,deviceId):
         return self.syringePos[deviceId-1]
     
-    def setSettings(self,deviceId,settingsdict,wait=True,timeout=0.25):
+    def setSettings(self,deviceId,settingsdict,**keyargs):
         """
         Send settings to a device.
         
@@ -230,62 +249,62 @@ class PumpController(object):
             
         recv = recievers.pop(0)
         [recv.appendReciever(r) for r in recievers]
-        if wait:
-            recv(timeout)
+        if keyargs.get('wait',True):
+            recv(keyargs.get('timeout',PumpController.defaultTimeout))
         return recv
             
-    def setValveType(self,deviceId,vtype ,wait=True,timeout=0.25):
+    def setValveType(self,deviceId,vtype ,**keyargs):
         if isinstance(vtype, str):
             vtype = valveType_inv[vtype]
         vtype += 21000
         cmd = "h%sR" % int(vtype)
         pipe = self._tansmitCommand(cms.deviceIdToAddress(deviceId), cmd.encode('ascii'))
         recv = DataReciever(pipe,'valve type',lambda x : x,False)
-        if wait:
-            recv(timeout)
+        if keyargs.get('wait',True):
+            recv(keyargs.get('timeout',PumpController.defaultTimeout))
         return recv
     
-    def setStartVelocity(self,deviceId,velocity ,wait=True,timeout=0.25):
+    def setStartVelocity(self,deviceId,velocity ,**keyargs):
         if not 50 <= velocity <= 800:
             raise ValueError("Start velocity v has to be in the range 50 <= v <= 800 motor steps/s, is : %s" % velocity)
         cmd = "v%sR" % int(velocity)
         pipe = self._tansmitCommand(cms.deviceIdToAddress(deviceId), cmd.encode('ascii'))
         recv = DataReciever(pipe,'start velocity',lambda x : x,False)
-        if wait:
-            recv(timeout)
-        return recv    
+        if keyargs.get('wait',True):
+            recv(keyargs.get('timeout',PumpController.defaultTimeout))
+        return recv
     
-    def setMaximumVelocity(self,deviceId,velocity ,wait=True,timeout=0.25):
+    def setMaximumVelocity(self,deviceId,velocity ,**keyargs):
         if not 2 <= velocity <= 3400:
             raise ValueError("Maximum velocity V has to be in the range 2 <= V <= 3400 motor steps/s, is : %s" % velocity)
         cmd = "V%sR" % int(velocity)
         pipe = self._tansmitCommand(cms.deviceIdToAddress(deviceId), cmd.encode('ascii'))
         recv = DataReciever(pipe,'maximum velocity',lambda x : x,False)
-        if wait:
-            recv(timeout)
+        if keyargs.get('wait',True):
+            recv(keyargs.get('timeout',PumpController.defaultTimeout))
         return recv
     
-    def setStopVelocity(self,deviceId,velocity ,wait=True,timeout=0.25):
+    def setStopVelocity(self,deviceId,velocity ,**keyargs):
         if not 50 <= velocity <= 1700:
             raise ValueError("Stop velocity c has to be in the range 50 <= c <= 1700 motor steps/s, is : %s" % velocity)
         cmd = "c%sR" % int(velocity)
         pipe = self._tansmitCommand(cms.deviceIdToAddress(deviceId), cmd.encode('ascii'))
         recv = DataReciever(pipe,'stop velocity',lambda x : x,False)
-        if wait:
-            recv(timeout)
-        return recv    
+        if keyargs.get('wait',True):
+            recv(keyargs.get('timeout',PumpController.defaultTimeout))
+        return recv
     
-    def setReturnSteps(self,deviceId,steps ,wait=True,timeout=0.25):
+    def setReturnSteps(self,deviceId,steps ,**keyargs):
         if not 0 <= steps <= 6400:
             raise ValueError("Return steps K has to be in the range 0 <= K <= 6400 motor steps, is : %s" % steps)
         cmd = "K%sR" % int(steps)
         pipe = self._tansmitCommand(cms.deviceIdToAddress(deviceId), cmd.encode('ascii'))
         recv = DataReciever(pipe,'return steps',lambda x : x,False)
-        if wait:
-            recv(timeout)
+        if keyargs.get('wait',True):
+            recv(keyargs.get('timeout',PumpController.defaultTimeout))
         return recv
     
-    def setAcceleration(self,deviceId,acceleration ,wait=True,timeout=0.25):
+    def setAcceleration(self,deviceId,acceleration, **keyargs):
         """
         Sets the acceleration of the syringe.
         The actual acceleration is mapped to an acceleration code,
@@ -326,8 +345,8 @@ class PumpController(object):
         cmd = "L%sR" % int(acceleration // 2500)
         pipe = self._tansmitCommand(cms.deviceIdToAddress(deviceId), cmd.encode('ascii'))
         recv = DataReciever(pipe,'acceleration',lambda x : x,False)
-        if wait:
-            recv(timeout)
+        if keyargs.get('wait',True):
+            recv(keyargs.get('timeout',PumpController.defaultTimeout))
         return recv
     
     def terminateMovement(self, deviceId=None ):
@@ -340,18 +359,30 @@ class PumpController(object):
         recv(0.5)
         return recv
     
-    def initializeValve(self, deviceId=None ,wait=True,timeout=0.25):
+    def stopCommandBuffer(self,deviceId=None,**keyargs):
+        cmd = "t"
+        if deviceId is None: # broadcast to all devices
+            pipe = self._tansmitCommand(int('5f',16), cmd.encode('ascii'),True)
+        else:
+            pipe = self._tansmitCommand(cms.deviceIdToAddress(deviceId), cmd.encode('ascii'),True)
+        recv = DataReciever(pipe,'terminate buffer',lambda x : x,False)
+        if keyargs.get('wait',True):
+            recv(keyargs.get('timeout',PumpController.defaultTimeout))
+        return recv
+        
+    
+    def initializeValve(self, deviceId=None,**keyargs):
         cmd = "h20000"
         if deviceId is None:
             pipe = self._tansmitCommand(int('5f',16), cmd.encode('ascii'),True)
         else:
             pipe = self._tansmitCommand(cms.deviceIdToAddress(deviceId), cmd.encode('ascii'),True)
         recv = DataReciever(pipe,'valve init',lambda x : x,False)
-        if wait:
-            recv(timeout)
+        if keyargs.get('wait',True):
+            recv(keyargs.get('timeout',PumpController.defaultTimeout))
         return recv
     
-    def initializeSyringe(self,deviceId,output,speed,backoff,wait=True,timeout=0.25):
+    def initializeSyringe(self,deviceId,output,speed,backoff,**keyargs):
         if not 1 <= output <= 8:
             raise ValueError("Possible valve positions are 1 <= output <= 8, is : %s" % output)
         if not 1 <= speed <= 40:
@@ -363,22 +394,25 @@ class PumpController(object):
         cmd = "k%sh%sh%sR" % (int(backoff),int(output),int(speed))
         pipe = self._tansmitCommand(cms.deviceIdToAddress(deviceId), cmd.encode('ascii'))
         recv = DataReciever(pipe,'syringe init',lambda x : x,False)
-        if wait:
-            recv(timeout)
+        if keyargs.get('wait',True):
+            recv(keyargs.get('timeout',PumpController.defaultTimeout))
         return recv
     
-    def moveValve(self,deviceId,position,wait=True,timeout=0.25):
+    def moveValve(self,deviceId,position,**keyargs):
         if not 1 <= position <= 8:
             raise ValueError("Possible valve positions are 1 <= position <= 8, is : %s" % position)
         position += 26000
-        cmd = "h%sR" % int(position)
+        if keyargs.get('enqueue',False):
+            cmd = "h%s" % int(position)
+        else:
+            cmd = "h%sR" % int(position)
         pipe = self._tansmitCommand(cms.deviceIdToAddress(deviceId), cmd.encode('ascii'))
         recv = DataReciever(pipe,'valve move',lambda x : x,True)
-        if wait:
-            recv(timeout)
+        if keyargs.get('wait',True):
+            recv(keyargs.get('timeout',PumpController.defaultTimeout))
         return recv
     
-    def moveSyringe(self,deviceId,stroke,velocity=-1,valvePos=-1,wait=True,timeout=0.25):
+    def moveSyringe(self,deviceId,stroke,velocity=-1,valvePos=-1,**keyargs):
         """
         Moves the plunger of the syringe to an absolute position in microsteps.
         
@@ -437,15 +471,18 @@ class PumpController(object):
                 raise ValueError("Possible valve positions are 1 <= valvePos <= 8, is : %s" % valvePos)
             valvePos += 26000
             cmd += "h%s" % int(valvePos)
-
-        cmd += "A%sR" % int(stroke)
+            
+        if keyargs.get('enqueue',False):
+            cmd += "A%s" % int(stroke)
+        else:
+            cmd += "A%sR" % int(stroke)
         pipe = self._tansmitCommand(cms.deviceIdToAddress(deviceId), cmd.encode('ascii'))
         recv = DataReciever(pipe,'syringe move',lambda x : x,True)
-        if wait:
-            recv(timeout)
+        if keyargs.get('wait',True):
+            recv(keyargs.get('timeout',PumpController.defaultTimeout))
         return recv
     
-    def dispense(self,deviceId,microsteps,velocity=-1,valvePos=-1,wait=True,timeout=0.25):
+    def dispense(self,deviceId,microsteps,velocity=-1,valvePos=-1,**keyargs):
         """
         Relative dispense: Moves the plunger of the syringe microsteps up.
         
@@ -506,15 +543,18 @@ class PumpController(object):
                 raise ValueError("Possible valve positions are 1 <= valvePos <= 8, is : %s" % valvePos)
             valvePos += 26000
             cmd += "h%s" % int(valvePos)
-
-        cmd += "D%sR" % int(microsteps)
+            
+        if keyargs.get('enqueue',False):
+            cmd += "D%s" % int(microsteps)
+        else:
+            cmd += "D%sR" % int(microsteps)
         pipe = self._tansmitCommand(cms.deviceIdToAddress(deviceId), cmd.encode('ascii'))
         recv = DataReciever(pipe,'dispense',lambda x : x,True)
-        if wait:
-            recv(timeout)
+        if keyargs.get('wait',True):
+            recv(keyargs.get('timeout',PumpController.defaultTimeout))
         return recv
         
-    def pickup(self,deviceId,microsteps,velocity=-1,valvePos=-1,wait=True,timeout=0.25):
+    def pickup(self,deviceId,microsteps,velocity=-1,valvePos=-1,**keyargs):
         """
         Relative Pickup: Moves the plunger of the syringe microsteps down.
         
@@ -575,15 +615,17 @@ class PumpController(object):
                 raise ValueError("Possible valve positions are 1 <= valvePos <= 8, is : %s" % valvePos)
             valvePos += 26000
             cmd += "h%s" % int(valvePos)
-
-        cmd += "P%sR" % int(microsteps)
+        if keyargs.get('enqueue',False):
+            cmd += "P%s" % int(microsteps)
+        else:
+            cmd += "P%sR" % int(microsteps)
         pipe = self._tansmitCommand(cms.deviceIdToAddress(deviceId), cmd.encode('ascii'))
         recv = DataReciever(pipe,'pickup',lambda x : x,True)
-        if wait:
-            recv(timeout)
+        if keyargs.get('wait',True):
+            recv(keyargs.get('timeout',PumpController.defaultTimeout))
         return recv
     
-    def refill(self,deviceId,velocity,valveToReservoir,wait=True,timeout=0.25):
+    def fill(self,deviceId,velocity,valveToReservoir,wait=True,timeout=0.25,**keyargs):
         """
         Completely refills a syringe from the valve position valveToReservoir
         with the velocity velocity.
@@ -625,9 +667,9 @@ class PumpController(object):
             If wait was not set, this can raise DeviceErrors. 
 
         """
-        return self.moveSyringe(deviceId,192000,velocity,valveToReservoir,wait,timeout)
+        return self.moveSyringe(deviceId,192000,velocity,valveToReservoir,wait,timeout,**keyargs)
     
-    def drain(self,deviceId,velocity,valveToWaste,wait=True,timeout=0.25):
+    def drain(self,deviceId,velocity,valveToWaste,wait=True,timeout=0.25,**keyargs):
         """
         Empties a syringe into the valve position valveToWaste
         with the velocity velocity.
@@ -669,7 +711,28 @@ class PumpController(object):
             If wait was not set, this can raise DeviceErrors. 
 
         """
-        return self.moveSyringe(deviceId,0,velocity,valveToWaste,wait,timeout)    
+        return self.moveSyringe(deviceId,0,velocity,valveToWaste,wait,timeout,**keyargs)
+    
+    
+    def delay(self,address,delaymilliseconds,**keyargs):
+        if keyargs.get('enqueue',True):
+            cmd = "M%s" % int(delaymilliseconds)
+        else:
+            cmd = "M%sR" % int(delaymilliseconds)
+        pipe = self._tansmitCommand(address,cmd.encode('ascii'))
+        recv = DataReciever(pipe,'delay',lambda x : x,True)
+        if keyargs.get('wait',True):
+            recv(keyargs.get('timeout',PumpController.defaultTimeout))
+        return recv
+    
+    def executeCommands(self,address,**keyargs):
+        
+        pipe = self._tansmitCommand(address,b'R')
+        recv = DataReciever(pipe,'excecute',lambda x : x,True)
+        if keyargs.get('wait',True):
+            recv(keyargs.get('timeout',PumpController.defaultTimeout))
+        return recv
+    
         
     def waitServerReady(self,timeout=5):
         """        
@@ -803,16 +866,20 @@ class PumpController(object):
         
         self.statusbytes = mp.Array('i', np.full(16,-1))
         self.syringePos = mp.Array('i', np.full(16,-1))
+        self.valvePos = mp.Array('i', np.full(16,-1))
         self.idle = [mp.Event() for i in range(17)] # last one is set after startup of the server
         
         self.__comServer = CommunicationServer(self.serialinstance,self.commandQueue,
                                                  self.priorityQueue, self.__killComProcessEvent,
-                                                 self.statusbytes,self.syringePos, self.idle)
+                                                 self.statusbytes,self.syringePos,self.valvePos , self.idle)
         
         self.__comServer.start()
         mp.get_logger().info("Server process on serial port %s started" % self.serialinstance.port)
         if wait:
             self.waitServerReady()
+            
+        self.__syringes = {}
+        self.__valves = {}
         
     
     def stopServer(self):
