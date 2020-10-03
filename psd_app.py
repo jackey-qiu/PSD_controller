@@ -17,6 +17,8 @@ except:
     import locate_path
 from operationmode.operations import initOperationMode, normalOperationMode, advancedRefillingOperationMode, simpleRefillingOperationMode, fillCellOperationMode, cleanOperationMode
 script_path = locate_path.module_path_locator()
+sys.path.append(os.path.join(script_path, 'pysyringedrive'))
+from syringedrive.PumpInterface import PumpController
 
 #redirect the error stream to qt widge_syiit
 class QTextEditLogger(logging.Handler):
@@ -51,7 +53,8 @@ class MyMainWindow(QMainWindow):
 
         self.cam_frame_path = os.path.join(script_path,'images')
 
-        self.psd_server = 'psd server'
+        self.psd_server = PumpController(port = 'CCGF84058HG9L1F0')
+        self.psd_server.waitServerReady()
 
         self.widget_terminal.update_name_space('psd_widget',self.widget_psd)
         self.widget_terminal.update_name_space('main_gui',self)
@@ -173,26 +176,27 @@ class MyMainWindow(QMainWindow):
         # in this mode, all syringes will be half-filled (internally actived before auto_refilling mode)
         self.timer_update_fill_half_mode = QTimer(self)
 
-        self.timers = [self.timer_update_simple, self.timer_update_simple_pre, self.timer_update_fill_half_mode,  self.timer_update,self.timer_update_normal_mode, self.timer_update_init_mode, self.timer_update_fill_cell]
+        self.timers = [self.timer_update_simple, self.timer_update_simple_pre, self.timer_update_fill_half_mode,  self.timer_update,self.timer_update_normal_mode, self.timer_update_init_mode, self.timer_update_fill_cell, self.timer_clean_S1, self.timer_clean_S2, self.timer_clean_S3, self.timer_clean_S4]
         self.timers_partial = [self.timer_update_simple_pre, self.timer_update_fill_half_mode, self.timer_update_normal_mode, self.timer_update_init_mode]
 
         self.pushButton_connect_mvp_syringe_1.click()
         #instances of operation modes
-        self.init_operation = initOperationMode(self.widget_psd,self.textBrowser_error_msg, None, self.timer_update_init_mode, 100, self.pump_settings, \
+        self.init_operation = initOperationMode(self.psd_server, self.widget_psd,self.textBrowser_error_msg, None, self.timer_update_init_mode, 100, self.pump_settings, \
                                                 settings = {'pull_syringe_handle':self.get_pulling_syringe_simple_exchange_mode,
                                                             'push_syringe_handle':self.get_pushing_syringe_simple_exchange_mode,
                                                             'vol_handle':self.spinBox_amount.value,
                                                             'speed_handle':self.spinBox_speed.value})
 
-        self.normal_operation = normalOperationMode(self.widget_psd,self.textBrowser_error_msg, None, self.timer_update_normal_mode, 100, self.pump_settings, \
+        self.normal_operation = normalOperationMode(self.psd_server, self.widget_psd,self.textBrowser_error_msg, None, self.timer_update_normal_mode, 100, self.pump_settings, \
                                                 settings = {'syringe_handle':self.get_syringe_index_handle_normal_mode,
                                                             'valve_position_handle':self.get_valve_position_handle_normal_mode,
                                                             'valve_connection_handle':self.get_valve_connection_handle_normal_mode,
                                                             'vol_handle':self.get_vol_handle_normal_mode,
                                                             'speed_handle':self.get_speed_handle_normal_mode})
 
-        self.advanced_exchange_operation = advancedRefillingOperationMode(self.widget_psd, self.textBrowser_error_msg, self.timer_update_fill_half_mode, self.timer_update, 100, self.pump_settings, \
-                                                settings = {'premotion_speed_handle':lambda:self.doubleSpinBox_premotion_speed.value()/1000,
+        self.advanced_exchange_operation = advancedRefillingOperationMode(self.psd_server, self.widget_psd, self.textBrowser_error_msg, self.timer_update_fill_half_mode, self.timer_update, 100, self.pump_settings, \
+                                                settings = {'premotion_speed_handle':lambda:0.5,
+                                                            'total_exchange_amount_handle':lambda:self.doubleSpinBox_exchange_amount.value()/1000,
                                                             'exchange_speed_handle':lambda:self.doubleSpinBox.value()/1000,
                                                             'time_record_handle':self.display_exchange_time,
                                                             'volume_record_handle':self.display_exchange_volume,
@@ -200,18 +204,18 @@ class MyMainWindow(QMainWindow):
                                                             'extra_amount_handle':self.spinBox_amount.value,
                                                             'extra_amount_speed_handle':self.spinBox_speed.value})
 
-        self.simple_exchange_operation = simpleRefillingOperationMode(self.widget_psd,self.textBrowser_error_msg, self.timer_update_simple_pre, self.timer_update_simple, 100, self.pump_settings, \
+        self.simple_exchange_operation = simpleRefillingOperationMode(self.psd_server, self.widget_psd,self.textBrowser_error_msg, self.timer_update_simple_pre, self.timer_update_simple, 100, self.pump_settings, \
                                                 settings = {'pull_syringe_handle':self.get_pulling_syringe_simple_exchange_mode,
                                                             'push_syringe_handle':self.get_pushing_syringe_simple_exchange_mode,
-                                                            'refill_speed_handle':lambda:self.doubleSpinBox_premotion_speed.value()/1000,
+                                                            'refill_speed_handle':lambda:0.5,
                                                             'exchange_speed_handle':lambda:self.doubleSpinBox.value()/1000})
 
-        self.fill_cell_operation = fillCellOperationMode(self.widget_psd,self.textBrowser_error_msg, None, self.timer_update_fill_cell, 100, self.pump_settings, \
+        self.fill_cell_operation = fillCellOperationMode(self.psd_server, self.widget_psd,self.textBrowser_error_msg, None, self.timer_update_fill_cell, 100, self.pump_settings, \
                                                 settings = {'push_syringe_handle':self.get_pushing_syringe_fill_cell_mode,
                                                             'refill_speed_handle':self.get_refill_speed_fill_cell_mode,
                                                             'refill_times_handle':self.get_refill_times_fill_cell_mode})
 
-        self.clean_operation_S1 = cleanOperationMode(self.widget_psd,self.textBrowser_error_msg, None, self.timer_clean_S1, 100, self.pump_settings, \
+        self.clean_operation_S1 = cleanOperationMode(self.psd_server, self.widget_psd,self.textBrowser_error_msg, None, self.timer_clean_S1, 100, self.pump_settings, \
                                                 settings = {'syringe_handle':lambda:1,
                                                             'refill_speed_handle':lambda:self.get_refill_speed_clean_mode(1),
                                                             'refill_times_handle':lambda:self.get_refill_times_clean_mode(1),
@@ -219,7 +223,7 @@ class MyMainWindow(QMainWindow):
                                                             'inlet_port_handle':lambda:self.get_inlet_port_clean_mode(1),
                                                             'outlet_port_handle':lambda:self.get_outlet_port_clean_mode(1)})
 
-        self.clean_operation_S2 = cleanOperationMode(self.widget_psd,self.textBrowser_error_msg, None, self.timer_clean_S2, 100, self.pump_settings, \
+        self.clean_operation_S2 = cleanOperationMode(self.psd_server, self.widget_psd,self.textBrowser_error_msg, None, self.timer_clean_S2, 100, self.pump_settings, \
                                                 settings = {'syringe_handle':lambda:2,
                                                             'refill_speed_handle':lambda:self.get_refill_speed_clean_mode(2),
                                                             'refill_times_handle':lambda:self.get_refill_times_clean_mode(2),
@@ -227,7 +231,7 @@ class MyMainWindow(QMainWindow):
                                                             'inlet_port_handle':lambda:self.get_inlet_port_clean_mode(2),
                                                             'outlet_port_handle':lambda:self.get_outlet_port_clean_mode(2)})
 
-        self.clean_operation_S3 = cleanOperationMode(self.widget_psd,self.textBrowser_error_msg, None, self.timer_clean_S3, 100, self.pump_settings, \
+        self.clean_operation_S3 = cleanOperationMode(self.psd_server, self.widget_psd,self.textBrowser_error_msg, None, self.timer_clean_S3, 100, self.pump_settings, \
                                                 settings = {'syringe_handle':lambda:3,
                                                             'refill_speed_handle':lambda:self.get_refill_speed_clean_mode(3),
                                                             'refill_times_handle':lambda:self.get_refill_times_clean_mode(3),
@@ -235,7 +239,7 @@ class MyMainWindow(QMainWindow):
                                                             'inlet_port_handle':lambda:self.get_inlet_port_clean_mode(3),
                                                             'outlet_port_handle':lambda:self.get_outlet_port_clean_mode(3)})
 
-        self.clean_operation_S4 = cleanOperationMode(self.widget_psd,self.textBrowser_error_msg, None, self.timer_clean_S4, 100, self.pump_settings, \
+        self.clean_operation_S4 = cleanOperationMode(self.psd_server, self.widget_psd,self.textBrowser_error_msg, None, self.timer_clean_S4, 100, self.pump_settings, \
                                                 settings = {'syringe_handle':lambda:4,
                                                             'refill_speed_handle':lambda:self.get_refill_speed_clean_mode(4),
                                                             'refill_times_handle':lambda:self.get_refill_times_clean_mode(4),
@@ -318,7 +322,7 @@ class MyMainWindow(QMainWindow):
 
     def display_exchange_volume(self, vol):
         self.statusbar.clearMessage()
-        self.statusbar.showMessage('Exchange vol: {} ml'.format(vol))
+        self.statusbar.showMessage('Exchange vol: {} ul'.format(vol))
 
     def get_pushing_syringe_fill_cell_mode(self):
         syringe = self.widget_psd.actived_syringe_fill_cell_mode
