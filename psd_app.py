@@ -19,6 +19,7 @@ from operationmode.operations import initOperationMode, normalOperationMode, adv
 script_path = locate_path.module_path_locator()
 sys.path.append(os.path.join(script_path, 'pysyringedrive'))
 from syringedrive.PumpInterface import PumpController
+from syringedrive.device import PSD4_smooth, Valve, ExchangePair
 
 #redirect the error stream to qt widge_syiit
 class QTextEditLogger(logging.Handler):
@@ -46,19 +47,16 @@ class MyMainWindow(QMainWindow):
         ui_path = os.path.join(script_path,'psd_gui_beta2.ui')
         uic.loadUi(ui_path,self)
         self.connected_mvp_channel = None #like 'channel_1'
+        self.fill_speed_syringe = 500 # global speed for filling syringe in ul/s
+        self.demo = True
 
         self.pump_settings = {}
         self.pushButton_apply_settings.clicked.connect(self.apply_pump_settings)
         self.apply_pump_settings()
 
         self.cam_frame_path = os.path.join(script_path,'images')
-
-        self.psd_server = PumpController(port = 'CCGF84058HG9L1F0')
-        self.psd_server.waitServerReady()
-
         self.widget_terminal.update_name_space('psd_widget',self.widget_psd)
         self.widget_terminal.update_name_space('main_gui',self)
-        self.widget_terminal.update_name_space('psd_server',self.psd_server)
 
         #set redirection of error message to embeted text browser widget
         logTextBox = QTextEditLogger(self.textBrowser_error_msg)
@@ -72,9 +70,13 @@ class MyMainWindow(QMainWindow):
         self.frame_number = 0
         self.pushButton_catch_frame.clicked.connect(self.catch_frame)
 
-        self.pushButton_fill_cell.setIcon(QtGui.QIcon(os.path.join(script_path,'icons','refill1.png')))
-        self.pushButton_fill_cell.setIconSize(QtCore.QSize(60,60))
-        self.pushButton_fill_cell.clicked.connect(self.open_refill_dialog)
+        self.pushButton_fill_syringe.setIcon(QtGui.QIcon(os.path.join(script_path,'icons','refill1.png')))
+        self.pushButton_fill_syringe.setIconSize(QtCore.QSize(60,60))
+        self.pushButton_fill_syringe.clicked.connect(self.fill_specified_syringe)
+
+        self.pushButton_init_line.setIcon(QtGui.QIcon(os.path.join(script_path,'icons','init_tube3.png')))
+        self.pushButton_init_line.setIconSize(QtCore.QSize(60,60))
+        self.pushButton_init_line.clicked.connect(self.open_refill_dialog)
 
         self.pushButton_start.setIcon(QtGui.QIcon(os.path.join(script_path,'icons','refill.png')))
         self.pushButton_start.setIconSize(QtCore.QSize(60,60))
@@ -83,7 +85,7 @@ class MyMainWindow(QMainWindow):
         self.pushButton_stop.clicked.connect(self.stop)
 
         self.pushButton_exchange.setIcon(QtGui.QIcon(os.path.join(script_path,'icons','exchange.png')))
-        self.pushButton_exchange.setIconSize(QtCore.QSize(60,60))
+        self.pushButton_exchange.setIconSize(QtCore.QSize(50,50))
         self.pushButton_exchange.clicked.connect(self.start_exchange)
 
         self.pushButton_fill_syringe_1.clicked.connect(lambda:self.fill_syringe(1))
@@ -180,72 +182,138 @@ class MyMainWindow(QMainWindow):
         self.timers_partial = [self.timer_update_simple_pre, self.timer_update_fill_half_mode, self.timer_update_normal_mode, self.timer_update_init_mode]
 
         self.pushButton_connect_mvp_syringe_1.click()
+        self.syn_valve_pos()
         #instances of operation modes
-        self.init_operation = initOperationMode(self.psd_server, self.widget_psd,self.textBrowser_error_msg, None, self.timer_update_init_mode, 100, self.pump_settings, \
+
+    def syn_valve_pos(self):
+        #syn T valve position between widget_psd and the GUI comboBOx
+        for each_key in self.widget_psd.connect_valve_port:
+            exec(f"self.comboBox_valve_port_{each_key}.setCurrentText('{self.widget_psd.connect_valve_port[each_key]}')")
+
+    def init_server_devices(self):
+        if self.demo:
+            self.server_devices = {'syringe': {1:None,2:None, 3:None, 4:None},\
+                                'T_valve': {1:None,2:None,3:None,4:None},\
+                                'mvp_valve': None,\
+                                'exchange_pair':{'S1_S4':None, 'S2_S3':None},
+                                'server':None}
+        else:
+            self.psd_server = PumpController()
+            self.syringe_server_S1 = PSD4_smooth(self.psd_server,1, 12500)
+            self.syringe_server_S2 = PSD4_smooth(self.psd_server,3, 12500)
+            self.syringe_server_S3 = PSD4_smooth(self.psd_server,4, 12500)
+            self.syringe_server_S4 = PSD4_smooth(self.psd_server,2, 12500)
+
+            self.valve_server_S1 = Valve(self.psd_server, 1)
+            self.valve_server_S2 = Valve(self.psd_server, 3)
+            self.valve_server_S3 = Valve(self.psd_server, 4)
+            self.valve_server_S4 = Valve(self.psd_server, 2)
+            self.set_valve_pos_alias(valve_devices = [self.valve_server_S1,self.valve_server_S2,self.valve_server_S3,self.valve_server_S4])
+            self.mvp_valve_server = Valve(self.psd_server,5)
+
+            self.exchange_pair_S1_and_S4 = ExchangePair(pushSyr=self.psd_server.getSyringe(2), pullSyr=self.psd_server.getSyringe(1))
+            self.exchange_pair_S2_and_S3 = ExchangePair(pushSyr=self.psd_server.getSyringe(3), pullSyr=self.psd_server.getSyringe(4))
+
+            self.server_devices = {'syringe': {1:self.syringe_server_S1,2:self.syringe_server_S2, 3:self.syringe_server_S3, 4:self.syringe_server_S4},\
+                                'T_valve': {1:self.valve_server_S1,2:self.valve_server_S2,3:self.valve_server_S3,4:self.valve_server_S4},\
+                                'mvp_valve': self.mvp_valve_server,\
+                                'exchange_pair':{'S1_S4':self.exchange_pair_S1_and_S4, 'S2_S3':self.exchange_pair_S2_and_S3},
+                                'server':self.psd_server}
+        self.widget_terminal.update_name_space('server_devices',self.server_devices)
+
+    def set_up_operations(self):
+        self.init_operation = initOperationMode(self.server_devices, self.widget_psd,self.textBrowser_error_msg, None, self.timer_update_init_mode, 100, self.pump_settings, \
                                                 settings = {'pull_syringe_handle':self.get_pulling_syringe_simple_exchange_mode,
                                                             'push_syringe_handle':self.get_pushing_syringe_simple_exchange_mode,
                                                             'vol_handle':self.spinBox_amount.value,
-                                                            'speed_handle':self.spinBox_speed.value})
+                                                            'speed_handle':self.spinBox_speed.value}, demo = self.demo)
 
-        self.normal_operation = normalOperationMode(self.psd_server, self.widget_psd,self.textBrowser_error_msg, None, self.timer_update_normal_mode, 100, self.pump_settings, \
+        self.normal_operation = normalOperationMode(self.server_devices, self.widget_psd,self.textBrowser_error_msg, None, self.timer_update_normal_mode, 100, self.pump_settings, \
                                                 settings = {'syringe_handle':self.get_syringe_index_handle_normal_mode,
                                                             'valve_position_handle':self.get_valve_position_handle_normal_mode,
                                                             'valve_connection_handle':self.get_valve_connection_handle_normal_mode,
                                                             'vol_handle':self.get_vol_handle_normal_mode,
-                                                            'speed_handle':self.get_speed_handle_normal_mode})
+                                                            'speed_handle':self.get_speed_handle_normal_mode}, demo = self.demo)
 
-        self.advanced_exchange_operation = advancedRefillingOperationMode(self.psd_server, self.widget_psd, self.textBrowser_error_msg, self.timer_update_fill_half_mode, self.timer_update, 100, self.pump_settings, \
-                                                settings = {'premotion_speed_handle':lambda:0.5,
+        self.advanced_exchange_operation = advancedRefillingOperationMode(self.server_devices, self.widget_psd, self.textBrowser_error_msg, self.timer_update_fill_half_mode, self.timer_update, 100, self.pump_settings, \
+                                                settings = {'premotion_speed_handle':self.get_default_filling_speed,
                                                             'total_exchange_amount_handle':lambda:self.doubleSpinBox_exchange_amount.value()/1000,
                                                             'exchange_speed_handle':lambda:self.doubleSpinBox.value()/1000,
                                                             'time_record_handle':self.display_exchange_time,
                                                             'volume_record_handle':self.display_exchange_volume,
                                                             'extra_amount_timer':self.timer_extra_amount,
                                                             'extra_amount_handle':self.spinBox_amount.value,
-                                                            'extra_amount_speed_handle':self.spinBox_speed.value})
+                                                            'extra_amount_speed_handle':self.spinBox_speed.value}, demo = self.demo)
 
-        self.simple_exchange_operation = simpleRefillingOperationMode(self.psd_server, self.widget_psd,self.textBrowser_error_msg, self.timer_update_simple_pre, self.timer_update_simple, 100, self.pump_settings, \
+        self.simple_exchange_operation = simpleRefillingOperationMode(self.server_devices, self.widget_psd,self.textBrowser_error_msg, self.timer_update_simple_pre, self.timer_update_simple, 100, self.pump_settings, \
                                                 settings = {'pull_syringe_handle':self.get_pulling_syringe_simple_exchange_mode,
+                                                            'total_exchange_amount_handle':lambda:self.doubleSpinBox_exchange_amount.value()/1000,
                                                             'push_syringe_handle':self.get_pushing_syringe_simple_exchange_mode,
-                                                            'refill_speed_handle':lambda:0.5,
-                                                            'exchange_speed_handle':lambda:self.doubleSpinBox.value()/1000})
+                                                            'refill_speed_handle':self.get_default_filling_speed,
+                                                            'exchange_speed_handle':lambda:self.doubleSpinBox.value()/1000}, demo = self.demo)
 
-        self.fill_cell_operation = fillCellOperationMode(self.psd_server, self.widget_psd,self.textBrowser_error_msg, None, self.timer_update_fill_cell, 100, self.pump_settings, \
+        self.fill_cell_operation = fillCellOperationMode(self.server_devices, self.widget_psd,self.textBrowser_error_msg, None, self.timer_update_fill_cell, 100, self.pump_settings, \
                                                 settings = {'push_syringe_handle':self.get_pushing_syringe_fill_cell_mode,
                                                             'refill_speed_handle':self.get_refill_speed_fill_cell_mode,
-                                                            'refill_times_handle':self.get_refill_times_fill_cell_mode})
+                                                            'refill_times_handle':self.get_refill_times_fill_cell_mode,
+                                                            'waste_disposal_vol_handle':self.get_vol_to_waste_fill_cell_mode,
+                                                            'waste_disposal_speed_handle':self.get_disposal_speed_fill_cell_mode,
+                                                            'cell_dispense_vol_handle':self.get_vol_to_cell_fill_cell_mode},
+                                                            demo = self.demo)
 
-        self.clean_operation_S1 = cleanOperationMode(self.psd_server, self.widget_psd,self.textBrowser_error_msg, None, self.timer_clean_S1, 100, self.pump_settings, \
+        self.clean_operation_S1 = cleanOperationMode(self.server_devices, self.widget_psd,self.textBrowser_error_msg, None, self.timer_clean_S1, 100, self.pump_settings, \
                                                 settings = {'syringe_handle':lambda:1,
                                                             'refill_speed_handle':lambda:self.get_refill_speed_clean_mode(1),
                                                             'refill_times_handle':lambda:self.get_refill_times_clean_mode(1),
                                                             'holding_time_handle':lambda:self.get_holding_time_clean_mode(1),
                                                             'inlet_port_handle':lambda:self.get_inlet_port_clean_mode(1),
-                                                            'outlet_port_handle':lambda:self.get_outlet_port_clean_mode(1)})
+                                                            'outlet_port_handle':lambda:self.get_outlet_port_clean_mode(1)}, demo = self.demo)
 
-        self.clean_operation_S2 = cleanOperationMode(self.psd_server, self.widget_psd,self.textBrowser_error_msg, None, self.timer_clean_S2, 100, self.pump_settings, \
+        self.clean_operation_S2 = cleanOperationMode(self.server_devices, self.widget_psd,self.textBrowser_error_msg, None, self.timer_clean_S2, 100, self.pump_settings, \
                                                 settings = {'syringe_handle':lambda:2,
                                                             'refill_speed_handle':lambda:self.get_refill_speed_clean_mode(2),
                                                             'refill_times_handle':lambda:self.get_refill_times_clean_mode(2),
                                                             'holding_time_handle':lambda:self.get_holding_time_clean_mode(2),
                                                             'inlet_port_handle':lambda:self.get_inlet_port_clean_mode(2),
-                                                            'outlet_port_handle':lambda:self.get_outlet_port_clean_mode(2)})
+                                                            'outlet_port_handle':lambda:self.get_outlet_port_clean_mode(2)}, demo = self.demo)
 
-        self.clean_operation_S3 = cleanOperationMode(self.psd_server, self.widget_psd,self.textBrowser_error_msg, None, self.timer_clean_S3, 100, self.pump_settings, \
+        self.clean_operation_S3 = cleanOperationMode(self.server_devices, self.widget_psd,self.textBrowser_error_msg, None, self.timer_clean_S3, 100, self.pump_settings, \
                                                 settings = {'syringe_handle':lambda:3,
                                                             'refill_speed_handle':lambda:self.get_refill_speed_clean_mode(3),
                                                             'refill_times_handle':lambda:self.get_refill_times_clean_mode(3),
                                                             'holding_time_handle':lambda:self.get_holding_time_clean_mode(3),
                                                             'inlet_port_handle':lambda:self.get_inlet_port_clean_mode(3),
-                                                            'outlet_port_handle':lambda:self.get_outlet_port_clean_mode(3)})
+                                                            'outlet_port_handle':lambda:self.get_outlet_port_clean_mode(3)}, demo = self.demo)
 
-        self.clean_operation_S4 = cleanOperationMode(self.psd_server, self.widget_psd,self.textBrowser_error_msg, None, self.timer_clean_S4, 100, self.pump_settings, \
+        self.clean_operation_S4 = cleanOperationMode(self.server_devices, self.widget_psd,self.textBrowser_error_msg, None, self.timer_clean_S4, 100, self.pump_settings, \
                                                 settings = {'syringe_handle':lambda:4,
                                                             'refill_speed_handle':lambda:self.get_refill_speed_clean_mode(4),
                                                             'refill_times_handle':lambda:self.get_refill_times_clean_mode(4),
                                                             'holding_time_handle':lambda:self.get_holding_time_clean_mode(4),
                                                             'inlet_port_handle':lambda:self.get_inlet_port_clean_mode(4),
-                                                            'outlet_port_handle':lambda:self.get_outlet_port_clean_mode(4)})
+                                                            'outlet_port_handle':lambda:self.get_outlet_port_clean_mode(4)}, demo = self.demo)
+    def get_default_filling_speed(self):
+        return float(self.lineEdit_default_speed.text())/1000
+
+    def fill_specified_syringe(self):
+        syringe, done = QInputDialog.getInt(self, 'Pick the syringe', 'Enter the syringe_index (ingeter from 1 to 4):')
+        if not done:
+            logging.getLogger().exception('Error in getting syringe index from pop-up dialog!')
+        else:
+            if syringe not in [1,2,3,4]:
+                logging.getLogger().exception('Invalid syringe index, must be an inteter from 1 to 4!')
+            else:
+                exec(f'self.doubleSpinBox_speed_normal_mode_{syringe}.setValue({float(self.lineEdit_default_speed.text())})')
+                exec(f'self.doubleSpinBox_stroke_factor_{syringe}.setValue(12500)')
+                exec(f"self.comboBox_valve_port_{syringe}.setCurrentText('left')")
+                exec(f'self.pushButton_fill_syringe_{syringe}.click()')
+
+    #set the alias for three T valve channel, double check the correctness of the mapping relationship
+    def set_valve_pos_alias(self, valve_devices):
+        for each in valve_devices:
+            each.setValvePosName(1,'left')
+            each.setValvePosName(2,'up')
+            each.setValvePosName(3,'right')
 
     #handles in clean mode
     def get_refill_speed_clean_mode(self,index):
@@ -341,6 +409,18 @@ class MyMainWindow(QMainWindow):
             speed = 0
         return speed
 
+    def get_disposal_speed_fill_cell_mode(self):
+        speed = self.widget_psd.disposal_speed_fill_cell_mode
+        if speed<0:
+            speed = 0
+        return speed
+
+    def get_vol_to_cell_fill_cell_mode(self):
+        return self.widget_psd.vol_to_cell_fill_cell_mode
+
+    def get_vol_to_waste_fill_cell_mode(self):
+        return self.widget_psd.vol_to_waste_fill_cell_mode
+
     def get_refill_times_fill_cell_mode(self):
         times = int(self.widget_psd.refill_times_fill_cell_mode)
         if times<0:
@@ -407,6 +487,7 @@ class MyMainWindow(QMainWindow):
                 break
         setattr(self.widget_psd, 'pump_settings', self.pump_settings)
         self.widget_psd.set_resevoir_volumes()
+        #self.
 
     def check_limit(self):
         limits = {'volume_syringe_1':[0,self.widget_psd.syringe_size], \
@@ -739,18 +820,24 @@ class RefillCellSetup(QDialog):
         super().__init__(parent)
         self.parent = parent
         # Load the dialog's GUI
-        uic.loadUi("refill_cell_dialog.ui", self)
+        uic.loadUi("refill_cell_dialog2.ui", self)
         self.buttonBox.accepted.connect(self.start_refill)
 
     def start_refill(self):
         syringe_index = int(self.lineEdit_syringe_index.text())
         refill_times = int(self.lineEdit_refill_times.text())
         refill_speed = float(self.lineEdit_refill_speed.text())/1000
+        disposal_speed = float(self.lineEdit_waste_disposal_speed.text())/1000
+        vol_to_cell = float(self.lineEdit_vol_cell_dispense.text())/1000
+        vol_to_waste = float(self.lineEdit_vol_waste_disposal.text())/1000
         assert syringe_index in [1,2,3,4], 'Warning: The syringe index is not set right. It should be integer from 1 to 4!'
         assert type(refill_times)==int and refill_times>=1, 'Warning: The refill is not set right. It should be integer >1!'
         self.parent.widget_psd.actived_syringe_fill_cell_mode = syringe_index
         self.parent.widget_psd.refill_times_fill_cell_mode = refill_times*2 # in the script, one stroke filled or emptied is counted as one time, so need to mult by 2
         self.parent.widget_psd.refill_speed_fill_cell_mode = refill_speed
+        self.parent.widget_psd.disposal_speed_fill_cell_mode = disposal_speed
+        self.parent.widget_psd.vol_to_cell_fill_cell_mode = vol_to_cell
+        self.parent.widget_psd.vol_to_waste_fill_cell_mode = vol_to_waste
         self.parent.start_fill_cell()
 
 class Cleaner(QDialog):
@@ -842,6 +929,12 @@ if __name__ == "__main__":
     screen = app.screens()[0]
     dpi = screen.physicalDotsPerInch()
     myWin = MyMainWindow()
+    if sys.argv[-1] == 'demo':
+        myWin.demo = True
+    else:
+        myWin.demo = False
+    myWin.init_server_devices()
+    myWin.set_up_operations()
     app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
     myWin.show()
     sys.exit(app.exec_())

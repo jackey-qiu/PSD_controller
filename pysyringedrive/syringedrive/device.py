@@ -241,7 +241,7 @@ class ExchangePair(object):
     def exchangeableVolume(self):
         return min(self.pushSyr.volume,self.pullSyr.maxvolume - self.pullSyr.volume)
         
-    def __call__(self,volume,rate,dispensedelay=0.0):
+    def __call__(self,rate,volume = -1, dispensedelay=0.0):
         """
         
 
@@ -268,6 +268,8 @@ class ExchangePair(object):
             raise Exception("Devices are busy")
         #self.pushSyr.rate = rate
         #self.pullSyr.rate = rate
+        if volume == -1:
+            volume = self.exchangeableVolume
         try:
             if dispensedelay > 0:
                 self.pushSyr.delay(int(dispensedelay*1000))

@@ -29,7 +29,7 @@ class syringe_widget(QWidget):
         self.volume_syringe_3 = 0
         self.volume_syringe_4 = 0
         #motion type for each syringe
-        #True: pushing; False: Pulling
+        #True: pulling; False: Pushing
         self.filling_status_syringe_1 = True
         self.filling_status_syringe_2 = False
         self.filling_status_syringe_3 = True
@@ -65,8 +65,14 @@ class syringe_widget(QWidget):
         self.actived_syringe_fill_cell_mode = 1
         #either fill or dispense
         self.actived_syringe_motion_fill_cell_mode = 'fill'
-        #refill speed
+        #refill speed for cell in fill_cell mode
         self.refill_speed_fill_cell_mode =0.1#in ml per second
+        #disposal speed to waste in fill_cell mode
+        self.disposal_speed_fill_cell_mode =0.1#in ml per second
+        #vol filled to cell in each cycle in fill_cell mode
+        self.vol_to_cell_fill_cell_mode = 0
+        #vol filled to waste in each cycle in fill_cell mode
+        self.vol_to_waste_fill_cell_mode = 0
         #refill times
         self.refill_times_fill_cell_mode =10
         #the actived syringe index(only one) for operating in normal mode
@@ -216,6 +222,8 @@ class syringe_widget(QWidget):
             line_index = [self.actived_syringe_normal_mode]
         elif self.operation_mode == 'fill_cell_mode':
             line_index = [self.actived_syringe_fill_cell_mode]
+        elif self.operation_mode == 'not_ready_mode':
+            line_index = []
         for i in line_index:
             valve_pos = self.connect_valve_port[i]
             key = 'S{}_{}'.format(i, valve_pos)
