@@ -5,6 +5,13 @@ from PyQt5.QtGui import QTransform, QFont, QBrush, QColor, QIcon, QImage, QPixma
 from pyqtgraph.Qt import QtGui
 from PyQt5.QtWidgets import QApplication, QMainWindow, QFileDialog, QMessageBox
 from PyQt5 import uic, QtWidgets
+#The following three lines are necessary as a detoure to the incompatibiltiy of Qt5 APP showing in Mac Big Sur OS
+#This solution seems non-sense, since the matplotlib is not used in the app.
+#But if these lines are removed, the app GUI is not gonna pop up.
+#This situation may change in the future.
+import matplotlib.pyplot as plt
+import matplotlib
+matplotlib.use("TkAgg")
 import qdarkstyle
 import sys,os
 import cv2
