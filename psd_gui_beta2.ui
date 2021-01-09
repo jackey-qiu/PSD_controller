@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1920</width>
-    <height>1035</height>
+    <height>1027</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -2307,7 +2307,7 @@
      <x>0</x>
      <y>0</y>
      <width>1920</width>
-     <height>22</height>
+     <height>24</height>
     </rect>
    </property>
   </widget>
@@ -2322,19 +2322,20 @@
    <attribute name="toolBarBreak">
     <bool>false</bool>
    </attribute>
-   <addaction name="actionCalibrate_pump_system"/>
+   <addaction name="actionStartServer"/>
+   <addaction name="actionStartPumpClient"/>
    <addaction name="actionStop_all_motions"/>
    <addaction name="actionReset_resevoir_and_waste_volume"/>
    <addaction name="actionReset_Cell_Vol"/>
    <addaction name="actioncleaner"/>
   </widget>
-  <action name="actionCalibrate_pump_system">
+  <action name="actionStartPumpClient">
    <property name="icon">
     <iconset>
      <normaloff>icons/calibration7.png</normaloff>icons/calibration7.png</iconset>
    </property>
    <property name="text">
-    <string>Calibrate Syringes</string>
+    <string>StartPumpClient</string>
    </property>
    <property name="toolTip">
     <string>Calibrate Syringes and MVP pumps</string>
@@ -2374,6 +2375,15 @@
    </property>
    <property name="text">
     <string>Reset Cell Vol. to 0</string>
+   </property>
+  </action>
+  <action name="actionStartServer">
+   <property name="icon">
+    <iconset>
+     <normaloff>icons/cloud.png</normaloff>icons/cloud.png</iconset>
+   </property>
+   <property name="text">
+    <string>StartServer</string>
    </property>
   </action>
  </widget>

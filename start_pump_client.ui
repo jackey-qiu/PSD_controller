@@ -95,14 +95,14 @@
      <item>
       <widget class="QLineEdit" name="lineEdit_device_name"/>
      </item>
-     <item>
-      <widget class="QPushButton" name="pushButton_load_without_config">
-       <property name="text">
-        <string>load without config</string>
-       </property>
-      </widget>
-     </item>
     </layout>
+   </item>
+   <item>
+    <widget class="QPushButton" name="pushButton_load_without_config">
+     <property name="text">
+      <string>createPumpClient without config file</string>
+     </property>
+    </widget>
    </item>
   </layout>
  </widget>

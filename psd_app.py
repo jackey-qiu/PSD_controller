@@ -1,5 +1,5 @@
 from PyQt5 import QtCore
-from PyQt5.QtWidgets import QCheckBox, QRadioButton, QTableWidgetItem, QHeaderView, QAbstractItemView, QInputDialog, QDialog,QShortcut
+from PyQt5.QtWidgets import QCheckBox, QRadioButton, QDialog, QTableWidgetItem, QHeaderView, QAbstractItemView, QInputDialog, QDialog,QShortcut
 from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtGui import QTransform, QFont, QBrush, QColor, QIcon, QImage, QPixmap
 from pyqtgraph.Qt import QtGui
@@ -18,6 +18,7 @@ import cv2
 import logging
 import time
 import functools
+import subprocess
 try:
     from . import locate_path
 except:
@@ -27,6 +28,21 @@ script_path = locate_path.module_path_locator()
 sys.path.append(os.path.join(script_path, 'pysyringedrive'))
 from syringedrive.PumpInterface import PumpController
 from syringedrive.device import PSD4_smooth, Valve, ExchangePair
+import syringedrive as psd
+
+def error_pop_up(msg_text = 'error', window_title = ['Error','Information','Warning'][0]):
+    msg = QMessageBox()
+    if window_title == 'Error':
+        msg.setIcon(QMessageBox.Critical)
+    elif window_title == 'Warning':
+        msg.setIcon(QMessageBox.Warning)
+    else:
+        msg.setIcon(QMessageBox.Information)
+
+    msg.setText(msg_text)
+    # msg.setInformativeText('More information')
+    msg.setWindowTitle(window_title)
+    msg.exec_()
 
 #redirect the error stream to qt widge_syiit
 class QTextEditLogger(logging.Handler):
@@ -47,6 +63,52 @@ class QTextEditLogger(logging.Handler):
         cursor.insertHtml('''<p><span style="color: red;">{} <br></span>'''.format(" "))
         self.textBrowser_error_msg.setText(notice + '\n' +separator+'\n'+error_msg)
 
+class StartServerDialog(QDialog):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.parent = parent
+        # Load the dialog's GUI
+        uic.loadUi(os.path.join(script_path,"start_pump_server.ui"), self)
+        self.pushButton_start.clicked.connect(lambda:self.parent.run_server(
+                                                     instance_name = self.lineEdit_server_instance.text(), 
+                                                     port = self.lineEdit_device_port.text(), 
+                                                     device_name = self.lineEdit_device_name.text(), 
+                                                     tango_db = self.checkBox_db_available.isChecked()))
+
+class StartPumpClientDialog(QDialog):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.parent = parent
+        # Load the dialog's GUI
+        uic.loadUi(os.path.join(script_path,"start_pump_client.ui"), self)
+        self.pushButton_open.clicked.connect(self.open_file)
+        self.pushButton_update.clicked.connect(self.update_file)
+        self.pushButton_load.clicked.connect(self.load_file)
+        self.pushButton_load_without_config.clicked.connect(self.load_file_without_config)
+
+    def open_file(self):
+        options = QFileDialog.Options()
+        options |= QFileDialog.DontUseNativeDialog
+        fileName, _ = QFileDialog.getOpenFileName(self,"QFileDialog.getOpenFileName()", "","config file (*.yml);;config Files (*.txt)", options=options)
+        if fileName:
+            with open(fileName,'r') as f:
+                self.textEdit_config.setPlainText(f.read())
+            self.lineEdit_config_path.setText(fileName)
+        else:
+            pass
+
+    def update_file(self):
+        if self.textEdit_config.toPlainText()!='':
+            with open(self.lineEdit_config_path.text(),'w') as f:
+                f.write(self.textEdit_config.toPlainText())
+    
+    def load_file(self):
+        self.parent.create_pump_client(config_file = self.lineEdit_config_path.text(), device_name = self.lineEdit_device_name.text(), config_use = True)
+
+    def load_file_without_config(self):
+        self.parent.create_pump_client(config_file = self.lineEdit_config_path.text(), device_name = self.lineEdit_device_name.text(), config_use = False)
+
+
 class MyMainWindow(QMainWindow):
     def __init__(self, parent = None):
         super(MyMainWindow, self).__init__(parent)
@@ -55,6 +117,7 @@ class MyMainWindow(QMainWindow):
         uic.loadUi(ui_path,self)
         self.connected_mvp_channel = None #like 'channel_1'
         self.fill_speed_syringe = 500 # global speed for filling syringe in ul/s
+        self.client = None
         self.demo = True
 
         self.pump_settings = {}
@@ -114,7 +177,8 @@ class MyMainWindow(QMainWindow):
         self.pushButton_connect_mvp_syringe_3.clicked.connect(lambda:self.update_mvp_connection(3))
         self.pushButton_connect_mvp_syringe_4.clicked.connect(lambda:self.update_mvp_connection(4))
 
-        self.actionCalibrate_pump_system.triggered.connect(self.config_pump_system)
+        self.actionStartPumpClient.triggered.connect(self.start_pump_client_dialog)
+        self.actionStartServer.triggered.connect(self.start_server_dialog)
 
         self.actionStop_all_motions.triggered.connect(self.stop_all_motion)
         self.shortcut_stop = QShortcut(QtGui.QKeySequence("Ctrl+C"), self)
@@ -191,6 +255,46 @@ class MyMainWindow(QMainWindow):
         self.pushButton_connect_mvp_syringe_1.click()
         self.syn_valve_pos()
         #instances of operation modes
+
+    def start_pump_client_dialog(self):
+        dlg = StartPumpClientDialog(self)
+        dlg.exec()
+
+    def start_server_dialog(self):
+        dlg = StartServerDialog(self)
+        dlg.exec()
+
+    def run_server(self, instance_name, port, device_name, tango_db = False):
+        bashCommand = "PumpServer {} -ORBendPoint giop:tcp::{} -nodb -dlist {}".format(instance_name, port, device_name)
+        bashCommand_db = "PumpServer {}".format(instance_name)
+        if tango_db:
+            try:
+                process = subprocess.Popen(bashCommand_db.split(), stdout=subprocess.PIPE)
+                output, error = process.communicate()
+                error_pop_up('\n'.join([str(output),str(error)]), ['Information','Error'][int(error=='')])
+            except Exception as e:
+                error_pop_up('Fail to start start server.'+'\n{}'.format(str(e)),'Error')
+        else:
+            try:
+                process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
+                output, error = process.communicate()
+                error_pop_up('\n'.join([str(output),str(error)]), ['Information','Error'][int(error=='')])
+            except Exception as e:
+                error_pop_up('Fail to start start server.'+'\n{}'.format(str(e)),'Error')
+
+    def create_pump_client(self, config_file = None, device_name = None, config_use = True):
+        if config_use:
+            assert config_file!=None, 'Specify config file first!'
+            try:
+                self.client = psd.fromFile(config_file)
+            except Exception as e:
+                error_pop_up('Fail to start start client.'+'\n{}'.format(str(e)),'Error')
+        else:
+            assert device_name!=None, 'Specify device_name first!'
+            try:
+                self.client = psd.connect(device_name)
+            except Exception as e:
+                error_pop_up('Fail to start start client.'+'\n{}'.format(str(e)),'Error')
 
     def syn_valve_pos(self):
         #syn T valve position between widget_psd and the GUI comboBOx
