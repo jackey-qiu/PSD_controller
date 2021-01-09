@@ -205,21 +205,21 @@ class MyMainWindow(QMainWindow):
                                 'exchange_pair':{'S1_S4':None, 'S2_S3':None},
                                 'server':None}
         else:
-            self.psd_server = PumpController()
-            self.syringe_server_S1 = PSD4_smooth(self.psd_server,1, 12500)
-            self.syringe_server_S2 = PSD4_smooth(self.psd_server,3, 12500)
-            self.syringe_server_S3 = PSD4_smooth(self.psd_server,4, 12500)
-            self.syringe_server_S4 = PSD4_smooth(self.psd_server,2, 12500)
+            #self.psd_server = PumpController()
+            self.syringe_server_S1 = self.client.getSyringe(1)#PSD4_smooth(self.psd_server,1, 12500)
+            self.syringe_server_S2 = self.client.getSyringe(3)#PSD4_smooth(self.psd_server,3, 12500)
+            self.syringe_server_S3 = self.client.getSyringe(4)#PSD4_smooth(self.psd_server,4, 12500)
+            self.syringe_server_S4 = self.client.getSyringe(2)#PSD4_smooth(self.psd_server,2, 12500)
 
-            self.valve_server_S1 = Valve(self.psd_server, 1)
-            self.valve_server_S2 = Valve(self.psd_server, 3)
-            self.valve_server_S3 = Valve(self.psd_server, 4)
-            self.valve_server_S4 = Valve(self.psd_server, 2)
+            self.valve_server_S1 = self.client.getValve(1)#the device id of valve the same as the syringe 
+            self.valve_server_S2 = self.client.getValve(3)
+            self.valve_server_S3 = self.client.getValve(4)
+            self.valve_server_S4 = self.client.getValve(2)
             self.set_valve_pos_alias(valve_devices = [self.valve_server_S1,self.valve_server_S2,self.valve_server_S3,self.valve_server_S4])
-            self.mvp_valve_server = Valve(self.psd_server,5)
+            self.mvp_valve_server = self.client.getValve(5)
 
-            self.exchange_pair_S1_and_S4 = ExchangePair(pushSyr=self.psd_server.getSyringe(2), pullSyr=self.psd_server.getSyringe(1))
-            self.exchange_pair_S2_and_S3 = ExchangePair(pushSyr=self.psd_server.getSyringe(3), pullSyr=self.psd_server.getSyringe(4))
+            self.exchange_pair_S1_and_S4 = ExchangePair(pushSyr=self.syringe_server_S1, pullSyr=self.syringe_server_S4)
+            self.exchange_pair_S2_and_S3 = ExchangePair(pushSyr=syringe_server_S2, pullSyr=syringe_server_S3)
 
             self.server_devices = {'syringe': {1:self.syringe_server_S1,2:self.syringe_server_S2, 3:self.syringe_server_S3, 4:self.syringe_server_S4},\
                                 'T_valve': {1:self.valve_server_S1,2:self.valve_server_S2,3:self.valve_server_S3,4:self.valve_server_S4},\
