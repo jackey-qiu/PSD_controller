@@ -25,10 +25,10 @@ except:
     import locate_path
 from operationmode.operations import initOperationMode, normalOperationMode, advancedRefillingOperationMode, simpleRefillingOperationMode, fillCellOperationMode, cleanOperationMode
 script_path = locate_path.module_path_locator()
-sys.path.append(os.path.join(script_path, 'pysyringedrive'))
-from syringedrive.PumpInterface import PumpController
-from syringedrive.device import PSD4_smooth, Valve, ExchangePair
-import syringedrive as psd
+# sys.path.append(os.path.join(script_path, 'pysyringedrive'))
+# from syringedrive.PumpInterface import PumpController
+# from syringedrive.device import PSD4_smooth, Valve, ExchangePair
+import psdrive as psd
 
 def error_pop_up(msg_text = 'error', window_title = ['Error','Information','Warning'][0]):
     msg = QMessageBox()
@@ -287,12 +287,16 @@ class MyMainWindow(QMainWindow):
             assert config_file!=None, 'Specify config file first!'
             try:
                 self.client = psd.fromFile(config_file)
+                self.init_server_devices()
+                self.set_up_operations()
             except Exception as e:
                 error_pop_up('Fail to start start client.'+'\n{}'.format(str(e)),'Error')
         else:
             assert device_name!=None, 'Specify device_name first!'
             try:
                 self.client = psd.connect(device_name)
+                self.init_server_devices()
+                self.set_up_operations()
             except Exception as e:
                 error_pop_up('Fail to start start client.'+'\n{}'.format(str(e)),'Error')
 
@@ -310,26 +314,29 @@ class MyMainWindow(QMainWindow):
                                 'server':None}
         else:
             #self.psd_server = PumpController()
-            self.syringe_server_S1 = self.client.getSyringe(1)#PSD4_smooth(self.psd_server,1, 12500)
-            self.syringe_server_S2 = self.client.getSyringe(3)#PSD4_smooth(self.psd_server,3, 12500)
-            self.syringe_server_S3 = self.client.getSyringe(4)#PSD4_smooth(self.psd_server,4, 12500)
-            self.syringe_server_S4 = self.client.getSyringe(2)#PSD4_smooth(self.psd_server,2, 12500)
+            self.syringe_server_S1 = self.client.getSyringe(4)#PSD4_smooth(self.psd_server,1, 12500)
+            self.syringe_server_S2 = self.client.getSyringe(2)#PSD4_smooth(self.psd_server,3, 12500)
+            self.syringe_server_S3 = self.client.getSyringe(3)#PSD4_smooth(self.psd_server,4, 12500)
+            self.syringe_server_S4 = self.client.getSyringe(1)#PSD4_smooth(self.psd_server,2, 12500)
 
-            self.valve_server_S1 = self.client.getValve(1)#the device id of valve the same as the syringe 
-            self.valve_server_S2 = self.client.getValve(3)
-            self.valve_server_S3 = self.client.getValve(4)
-            self.valve_server_S4 = self.client.getValve(2)
+            self.valve_server_S1 = self.syringe_server_S1
+            self.valve_server_S2 = self.syringe_server_S2
+            self.valve_server_S3 = self.syringe_server_S3
+            self.valve_server_S4 = self.syringe_server_S4
             self.set_valve_pos_alias(valve_devices = [self.valve_server_S1,self.valve_server_S2,self.valve_server_S3,self.valve_server_S4])
+            [each.initSyringe('up',200) for each in [self.valve_server_S1,self.valve_server_S2,self.valve_server_S3,self.valve_server_S4]]
             self.mvp_valve_server = self.client.getValve(5)
+            self.mvp_valve_server.initValve()
 
-            self.exchange_pair_S1_and_S4 = ExchangePair(pushSyr=self.syringe_server_S1, pullSyr=self.syringe_server_S4)
-            self.exchange_pair_S2_and_S3 = ExchangePair(pushSyr=syringe_server_S2, pullSyr=syringe_server_S3)
+            self.exchange_pair_S2_and_S4 = self.client.operations['Exchanger 1']
+            self.exchange_pair_S1_and_S3 = self.client.operations['Exchanger 2']
 
             self.server_devices = {'syringe': {1:self.syringe_server_S1,2:self.syringe_server_S2, 3:self.syringe_server_S3, 4:self.syringe_server_S4},\
                                 'T_valve': {1:self.valve_server_S1,2:self.valve_server_S2,3:self.valve_server_S3,4:self.valve_server_S4},\
                                 'mvp_valve': self.mvp_valve_server,\
-                                'exchange_pair':{'S1_S4':self.exchange_pair_S1_and_S4, 'S2_S3':self.exchange_pair_S2_and_S3},
-                                'server':self.psd_server}
+                                'exchange_pair':{'S1_S3':self.exchange_pair_S1_and_S3, 'S2_S4':self.exchange_pair_S2_and_S4},
+                                'client':self.client
+                                  }
         self.widget_terminal.update_name_space('server_devices',self.server_devices)
 
     def set_up_operations(self):
@@ -350,6 +357,7 @@ class MyMainWindow(QMainWindow):
                                                 settings = {'premotion_speed_handle':self.get_default_filling_speed,
                                                             'total_exchange_amount_handle':lambda:self.doubleSpinBox_exchange_amount.value()/1000,
                                                             'exchange_speed_handle':lambda:self.doubleSpinBox.value()/1000,
+                                                            'refill_speed_handle':self.get_default_filling_speed,
                                                             'time_record_handle':self.display_exchange_time,
                                                             'volume_record_handle':self.display_exchange_volume,
                                                             'extra_amount_timer':self.timer_extra_amount,
@@ -788,6 +796,8 @@ class MyMainWindow(QMainWindow):
                 each.stop()
             except:
                 pass
+        if not self.demo:
+            self.client.stop()
 
     def update_to_autorefilling_mode(self):
         self.widget_psd.operation_mode = 'auto_refilling'
@@ -1044,8 +1054,8 @@ if __name__ == "__main__":
         myWin.demo = True
     else:
         myWin.demo = False
-    myWin.init_server_devices()
-    myWin.set_up_operations()
+    # myWin.init_server_devices()
+    # myWin.set_up_operations()
     app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
     myWin.show()
     sys.exit(app.exec_())
