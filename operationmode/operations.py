@@ -352,6 +352,7 @@ class baseOperationMode(object):
 
     def turn_valve_from_server(self, index, position):
         self.server_devices['T_valve'][index].valve = position
+        self.server_devices['T_valve'][index].join()
 
     def turn_valve(self, index, to_position = None):
         if to_position in ['up','left','right']:
@@ -729,6 +730,7 @@ class advancedRefillingOperationMode(baseOperationMode):
         #set mvp channel from server side
         if not self.demo:
             self.server_devices['mvp_valve'].moveValve(self.psd_widget.mvp_channel)
+            self.server_devices['mvp_valve'].join()
 
         self.turn_valve(3,'up')
         setattr(self.psd_widget, 'filling_status_syringe_{}'.format(3), False)
@@ -739,16 +741,18 @@ class advancedRefillingOperationMode(baseOperationMode):
         self.settings['syringe{}_status'.format(4)] ='moving'
 
         #waiting for the server devices(valves) to be ready
+        
         if not self.demo:
+            '''
             while True:
                 if not self.check_server_devices_busy():
                     break
                 else:
                     pass
-
+            '''
             #launch electrolyte exchange
-            # at the beginning, S1 and S4 are connected to resevoir and waste, respectively
-            # while, S2 and S3 are connected to cell for exchangeing
+            # at the beginning, S1 and S3 are connected to resevoir and waste, respectively
+            # while, S2 and S4 are connected to cell for exchangeing
             self.server_devices['exchange_pair']['S1_S3'].exchange(volume = self.server_devices['exchange_pair']['S1_S3'].exchangeableVolume,rate = float(self.settings['refill_speed_handle']())*1000)
             self.server_devices['exchange_pair']['S2_S4'].exchange(volume = self.server_devices['exchange_pair']['S2_S4'].exchangeableVolume,rate = float(self.settings['exchange_speed_handle']())*1000)
 
@@ -766,31 +770,39 @@ class advancedRefillingOperationMode(baseOperationMode):
     def switch_state_during_exchange(self, syringe_index_list):
         for syringe_index in syringe_index_list:
             self.turn_valve(syringe_index)
+            '''
             if not self.demo:
                 while True:
                     if not self.check_server_devices_busy():
                         break 
+            '''
             setattr(self.psd_widget, 'filling_status_syringe_{}'.format(syringe_index), not getattr(self.psd_widget, 'filling_status_syringe_{}'.format(syringe_index)))
             if self.pump_settings['S{}_{}'.format(syringe_index, self.psd_widget.connect_valve_port[syringe_index])] == 'cell_inlet':
                 print('switch mvp now!')
                 self.psd_widget.mvp_connected_valve = 'S{}_{}'.format(syringe_index, self.psd_widget.connect_valve_port[syringe_index])
                 self.psd_widget.mvp_channel = int(self.pump_settings['S{}_mvp'.format(syringe_index)].rsplit('_')[1])
-                if not self.demo:            
+                if not self.demo:  
+                    '''          
                     while True:
                         if not self.check_server_devices_busy():
                             break 
+                    '''
                     self.server_devices['mvp_valve'].moveValve(self.psd_widget.mvp_channel)
-
+                    self.server_devices['mvp_valve'].join()
+        '''
         while True:
             if not self.check_server_devices_busy():
                 break
             else:
                 pass
+        '''
         if not self.demo:
             #make sure the mvp vale is switched succesfully
+            '''
             while True:
                 if not self.check_server_devices_busy():
                     break
+            '''
             self.server_devices['exchange_pair']['S1_S3'].swap()
             self.server_devices['exchange_pair']['S2_S4'].swap()
             if self.psd_widget.filling_status_syringe_1: #if pushing for S1, it is connected to cell for exchange
@@ -800,6 +812,8 @@ class advancedRefillingOperationMode(baseOperationMode):
                 self.server_devices['exchange_pair']['S1_S3'].exchange(volume = self.server_devices['exchange_pair']['S1_S3'].exchangeableVolume,rate = float(self.settings['refill_speed_handle']())*1000)
                 self.server_devices['exchange_pair']['S2_S4'].exchange(volume = self.server_devices['exchange_pair']['S2_S4'].exchangeableVolume,rate = float(self.settings['exchange_speed_handle']())*1000)
             #if the syringe start moving
+            #self.server_devices['exchange_pair']['S1_S3'].join()
+            #self.server_devices['exchange_pair']['S2_S4'].join()
             while True:
                 if self.check_server_devices_busy():
                     break

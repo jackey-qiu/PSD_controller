@@ -28,7 +28,6 @@ script_path = locate_path.module_path_locator()
 # sys.path.append(os.path.join(script_path, 'pysyringedrive'))
 # from syringedrive.PumpInterface import PumpController
 # from syringedrive.device import PSD4_smooth, Valve, ExchangePair
-import psdrive as psd
 
 def error_pop_up(msg_text = 'error', window_title = ['Error','Information','Warning'][0]):
     msg = QMessageBox()
@@ -143,20 +142,24 @@ class MyMainWindow(QMainWindow):
         self.pushButton_fill_syringe.setIcon(QtGui.QIcon(os.path.join(script_path,'icons','refill1.png')))
         self.pushButton_fill_syringe.setIconSize(QtCore.QSize(60,60))
         self.pushButton_fill_syringe.clicked.connect(self.fill_specified_syringe)
+        self.actionfillSyringe.triggered.connect(self.fill_specified_syringe)
 
         self.pushButton_init_line.setIcon(QtGui.QIcon(os.path.join(script_path,'icons','init_tube3.png')))
         self.pushButton_init_line.setIconSize(QtCore.QSize(60,60))
         self.pushButton_init_line.clicked.connect(self.open_refill_dialog)
+        self.actioninitTubeLine.triggered.connect(self.open_refill_dialog)
 
         self.pushButton_start.setIcon(QtGui.QIcon(os.path.join(script_path,'icons','refill.png')))
         self.pushButton_start.setIconSize(QtCore.QSize(60,60))
         self.pushButton_start.clicked.connect(self.init_start)
+        self.actioninitExchange.triggered.connect(self.init_start)
 
         self.pushButton_stop.clicked.connect(self.stop)
 
         self.pushButton_exchange.setIcon(QtGui.QIcon(os.path.join(script_path,'icons','exchange.png')))
         self.pushButton_exchange.setIconSize(QtCore.QSize(50,50))
         self.pushButton_exchange.clicked.connect(self.start_exchange)
+        self.actionExchange.triggered.connect(self.start_exchange)
 
         self.pushButton_fill_syringe_1.clicked.connect(lambda:self.fill_syringe(1))
         self.pushButton_dispense_syringe_1.clicked.connect(lambda:self.dispense_syringe(1))
@@ -193,14 +196,19 @@ class MyMainWindow(QMainWindow):
         #cleaner dialog pop up
         self.actioncleaner.triggered.connect(self.onCleanerClicked)
 
+        self.actionshowSettingFrame.triggered.connect(self.display_setting_frame)
+        self.actionhideSettingFrame.triggered.connect(self.hide_setting_frame)
+
         #fill the button with icon
         self.pushButton_fill_init_mode.setIcon(QtGui.QIcon(os.path.join(script_path,'icons','big_drop.png')))
         self.pushButton_fill_init_mode.setIconSize(QtCore.QSize(50,50))
         self.pushButton_fill_init_mode.clicked.connect(self.fill_init_mode)
+        self.actionPuffMeniscus.triggered.connect(self.fill_init_mode)
 
         self.pushButton_dispense_init_mode.setIcon(QtGui.QIcon(os.path.join(script_path,'icons','small_drop.png')))
         self.pushButton_dispense_init_mode.setIconSize(QtCore.QSize(50,50)) 
         self.pushButton_dispense_init_mode.clicked.connect(self.dispense_init_mode)
+        self.actionShrinkMeniscus.triggered.connect(self.dispense_init_mode)
 
         self.pushButton_start_webcam.clicked.connect(self.start_webcam)
         self.pushButton_stop_webcam.clicked.connect(self.stop_webcam)
@@ -255,6 +263,15 @@ class MyMainWindow(QMainWindow):
         self.pushButton_connect_mvp_syringe_1.click()
         self.syn_valve_pos()
         #instances of operation modes
+
+    def hide_setting_frame(self):
+        size = self.frame_2.size()
+        self.frame_2.setVisible(False)
+        self.frame.resize(size)
+
+    def display_setting_frame(self):
+        #size = self.frame_2.size()
+        self.frame_2.setVisible(True)
 
     def start_pump_client_dialog(self):
         dlg = StartPumpClientDialog(self)
@@ -1052,10 +1069,11 @@ if __name__ == "__main__":
     myWin = MyMainWindow()
     if sys.argv[-1] == 'demo':
         myWin.demo = True
+        myWin.init_server_devices()
+        myWin.set_up_operations()
     else:
         myWin.demo = False
-    # myWin.init_server_devices()
-    # myWin.set_up_operations()
+        import psdrive as psd
     app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
     myWin.show()
     sys.exit(app.exec_())

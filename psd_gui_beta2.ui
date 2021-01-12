@@ -2324,10 +2324,21 @@
    </attribute>
    <addaction name="actionStartServer"/>
    <addaction name="actionStartPumpClient"/>
+   <addaction name="separator"/>
    <addaction name="actionStop_all_motions"/>
+   <addaction name="actionfillSyringe"/>
+   <addaction name="actioninitTubeLine"/>
+   <addaction name="actioninitExchange"/>
+   <addaction name="actionExchange"/>
+   <addaction name="actionPuffMeniscus"/>
+   <addaction name="actionShrinkMeniscus"/>
+   <addaction name="separator"/>
    <addaction name="actionReset_resevoir_and_waste_volume"/>
    <addaction name="actionReset_Cell_Vol"/>
    <addaction name="actioncleaner"/>
+   <addaction name="separator"/>
+   <addaction name="actionshowSettingFrame"/>
+   <addaction name="actionhideSettingFrame"/>
   </widget>
   <action name="actionStartPumpClient">
    <property name="icon">
@@ -2384,6 +2395,96 @@
    </property>
    <property name="text">
     <string>StartServer</string>
+   </property>
+  </action>
+  <action name="actionfillSyringe">
+   <property name="icon">
+    <iconset>
+     <normaloff>icons/refill1.png</normaloff>icons/refill1.png</iconset>
+   </property>
+   <property name="text">
+    <string>fillSyringe</string>
+   </property>
+   <property name="toolTip">
+    <string>fill a specified syringe</string>
+   </property>
+  </action>
+  <action name="actioninitTubeLine">
+   <property name="icon">
+    <iconset>
+     <normaloff>icons/init_tube3.png</normaloff>icons/init_tube3.png</iconset>
+   </property>
+   <property name="text">
+    <string>initTubeLine</string>
+   </property>
+   <property name="toolTip">
+    <string>fill the dead volume of tubings</string>
+   </property>
+  </action>
+  <action name="actioninitExchange">
+   <property name="icon">
+    <iconset>
+     <normaloff>icons/refill.png</normaloff>icons/refill.png</iconset>
+   </property>
+   <property name="text">
+    <string>initExchange</string>
+   </property>
+   <property name="toolTip">
+    <string>initialize the exchange</string>
+   </property>
+  </action>
+  <action name="actionExchange">
+   <property name="icon">
+    <iconset>
+     <normaloff>icons/exchange.png</normaloff>icons/exchange.png</iconset>
+   </property>
+   <property name="text">
+    <string>Exchange</string>
+   </property>
+   <property name="toolTip">
+    <string>exchange electrolyte</string>
+   </property>
+  </action>
+  <action name="actionPuffMeniscus">
+   <property name="icon">
+    <iconset>
+     <normaloff>icons/big_drop.png</normaloff>icons/big_drop.png</iconset>
+   </property>
+   <property name="text">
+    <string>PuffMeniscus</string>
+   </property>
+   <property name="toolTip">
+    <string>make meniscus larger</string>
+   </property>
+  </action>
+  <action name="actionShrinkMeniscus">
+   <property name="icon">
+    <iconset>
+     <normaloff>icons/small_drop.png</normaloff>icons/small_drop.png</iconset>
+   </property>
+   <property name="text">
+    <string>ShrinkMeniscus</string>
+   </property>
+   <property name="toolTip">
+    <string>make meniscus smaller</string>
+   </property>
+  </action>
+  <action name="actionshowSettingFrame">
+   <property name="icon">
+    <iconset>
+     <normaloff>icons/show.png</normaloff>icons/show.png</iconset>
+   </property>
+   <property name="text">
+    <string>showSettingFrame</string>
+   </property>
+  </action>
+  <action name="actionhideSettingFrame">
+   <property name="icon">
+    <iconset>
+     <normaloff>icons/hide.png</normaloff>icons/hide.png</iconset>
+   </property>
+   <property name="text">
+    <string>hideSettingFrame</string>
    </property>
   </action>
  </widget>
