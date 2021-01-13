@@ -58,9 +58,9 @@ class syringe_widget(QWidget):
         #either init_mode, auto_refilling mode or normal_mode
         self.operation_mode = 'not_ready_mode'
         #3-channel T valve position (either left, right or up)
-        self.connect_valve_port = {1:'left',2:'right',3:'up',4:'up'}
+        self.connect_valve_port = {1:'up',2:'up',3:'up',4:'up'}
         #connected status
-        self.connect_status = {1:'connected',2:'connected',3:'connected',4:'connected', 'mvp': 'connected'}
+        self.connect_status = {1:'disconnected',2:'disconnected',3:'disconnected',4:'disconnected', 'mvp': 'disconnected'}
         #The actived syringe index(only one) for operating in refill cell mode
         self.actived_syringe_fill_cell_mode = 1
         #either fill or dispense
@@ -419,7 +419,15 @@ class syringe_widget(QWidget):
                 qp.drawEllipse(current_pos[0],current_pos[1],current_dim[0],current_dim[1])
             else:
                 qp.drawArc(current_pos[0],current_pos[1],current_dim[0],current_dim[1],30*16,120*16)
-
+        color = 'white'
+        if msg in ['ready','No error']:
+            color = 'green'
+        elif msg in ['moving']:
+            color = 'magenta'
+        elif msg in ['disconnected']:
+            color = 'red'
+        qp.setPen(QPen(getattr(Qt,color), 2, Qt.SolidLine))
+        qp.setFont(QFont('Decorative', 12))
         offset = [-15,2][int(msg=='error')]
         qp.drawText(pos[0]+offset,pos[1]+vertical_spacing*num_arcs-10,msg)
 

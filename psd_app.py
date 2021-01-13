@@ -341,7 +341,10 @@ class MyMainWindow(QMainWindow):
             self.valve_server_S3 = self.syringe_server_S3
             self.valve_server_S4 = self.syringe_server_S4
             self.set_valve_pos_alias(valve_devices = [self.valve_server_S1,self.valve_server_S2,self.valve_server_S3,self.valve_server_S4])
-            [each.initSyringe('up',200) for each in [self.valve_server_S1,self.valve_server_S2,self.valve_server_S3,self.valve_server_S4]]
+            [each.initSyringe(2,200) for each in [self.valve_server_S1,self.valve_server_S2,self.valve_server_S3,self.valve_server_S4]]
+            for i in range(1,5):
+                exec("self.widget_psd.connect_status[i] = self.syringe_server_S{}.status['syringe'].__str__()".format(i))
+            self.widget_psd.update()
             self.mvp_valve_server = self.client.getValve(5)
             self.mvp_valve_server.initValve()
 
@@ -671,6 +674,7 @@ class MyMainWindow(QMainWindow):
             pass
 
     def stop_all_timers(self):
+        self.advanced_exchange_operation.resume = True
         for timer in self.timers:
             if timer.isActive():
                 timer.stop()
@@ -700,6 +704,7 @@ class MyMainWindow(QMainWindow):
     def init_start(self):
         if self.comboBox_exchange_mode.currentText() == 'Continuous':
             self.init_start_advance()
+            self.advanced_exchange_operation.resume = False
         elif self.comboBox_exchange_mode.currentText() == 'Intermittent':
             self.init_start_simple()
 
@@ -741,6 +746,7 @@ class MyMainWindow(QMainWindow):
     @check_any_timer
     def start_exchange_advance(self, onetime):
         self.textBrowser_error_msg.setText('')
+        #self.advanced_exchange_operation.resume = True
         self.advanced_exchange_operation.start_motion_timer(onetime)
 
     @check_any_timer
@@ -808,6 +814,7 @@ class MyMainWindow(QMainWindow):
             pass
 
     def stop_all_motion(self):
+        self.advanced_exchange_operation.resume = True
         for each in self.timers:
             try:
                 each.stop()
@@ -842,7 +849,10 @@ class MyMainWindow(QMainWindow):
         valve_position = eval('self.comboBox_valve_port_{}.currentText()'.format(syringe_no))
         self.widget_psd.connect_valve_port[self.widget_psd.actived_syringe_normal_mode] = valve_position
         key_for_pump_setting = 'S{}_{}'.format(syringe_no,valve_position)
-        key_for_mvp = 'S{}_mvp'.format(syringe_no)
+        if not self.demo:
+            exec("self.valve_server_S{}.valve = '{}'".format(syringe_no, valve_position))
+            exec('self.valve_server_S{}.join()'.format(syringe_no))
+        # key_for_mvp = 'S{}_mvp'.format(syringe_no)
         '''
         #update mvp channel if connecting to cell_inlet
         if self.pump_settings[key_for_pump_setting]=='cell_inlet':
@@ -862,6 +872,9 @@ class MyMainWindow(QMainWindow):
         self.connected_mvp_channel = self.pump_settings['S{}_mvp'.format(syringe_no)]
         self.widget_psd.mvp_channel = syringe_no
         self.widget_psd.mvp_connected_valve = 'S{}'.format(syringe_no)
+        if not self.demo:
+            self.mvp_valve_server.moveValve(syringe_no)
+            self.mvp_valve_server.join()
         self.widget_psd.update()
 
     def add_solution_to_cell(self, amount):

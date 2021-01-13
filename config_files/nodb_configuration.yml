@@ -1,0 +1,156 @@
+server:
+  tangoname: exp/ec/pump1
+  database: False # indicate whether Tango database is available
+  serialport: COM4
+  host: localhost #IP address or hostname; only required if no Tango database is set up
+  port: 50005 # only required if no Tango database is set up 
+  name: pump1 # only required when the server is started from python
+
+#possible valve types:
+#0: 3-way 120 degree Y valve
+#1: 4-way 90 degree T valve
+#2: 3-way 90 degree distribution valve
+#3: 8-way 45 degree valve
+#4: 4-way 90 degree valve
+#6: 6-way 45 degree valve
+
+# supported device types: PSD smooth flow, MVP
+
+devices:
+  1: #hardware address
+    name: Reservoir cell inlet 1
+    type: PSD
+    class: PSD4_smooth
+    valve type: 3-way 90 degree distribution valve
+    valve alias:
+      1: left
+      2: up
+      3: right
+    syringevolume: 12500 #muL
+    start rate: 20 #muL/s
+    stop rate: 20 #muL/s
+    return volume: 0 #muL
+    acceleration: 10000 #steps/s^2
+    backoff volume: 50 #muL
+    default init rate: 200 #muL/s
+    default rate: 50 #muL/s
+    # you can override rates with their motor steps:
+    #start velocity: 100
+    #stop velocity: 100
+    #return steps: 20
+    #backoff steps: 100
+    
+  3: #hardware address
+    name: Reservoir cell inlet 2
+    type: PSD
+    class: PSD4_smooth
+    valve type: 3-way 90 degree distribution valve
+    valve alias:
+      1: left
+      2: up
+      3: right
+    syringevolume: 12500 #muL
+    start rate: 20 #muL/s
+    stop rate: 20 #muL/s
+    return volume: 0 #muL
+    acceleration: 10000 #steps/s^2
+    backoff volume: 50 #muL
+    default init rate: 200 #muL/s
+    default rate: 50 #muL/s
+    
+  2: #hardware address
+    name: Cell outlet 1
+    type: PSD
+    class: PSD4_smooth
+    valve type: 3-way 90 degree distribution valve
+    valve alias:
+      1: left
+      2: up
+      3: right
+    syringevolume: 12500 #muL
+    start rate: 20 #muL/s
+    stop rate: 20 #muL/s
+    return volume: 0 #muL
+    acceleration: 10000 #steps/s^2
+    backoff volume: 50 #muL
+    default init rate: 200 #muL/s
+    default rate: 50 #muL/s
+    
+  4: #hardware address
+    name: Cell outlet 2
+    type: PSD
+    class: PSD4_smooth
+    valve type: 3-way 90 degree distribution valve
+    valve alias:
+      1: left
+      2: up
+      3: right
+    syringevolume: 12500 #muL
+    start rate: 20 #muL/s
+    stop rate: 20 #muL/s
+    return volume: 0 #muL
+    acceleration: 10000 #steps/s^2
+    backoff volume: 50 #muL
+    default init rate: 200 #muL/s
+    default rate: 50 #muL/s
+    
+  5: #hardware address
+    name: Distribution valve
+    type: MVP
+    class: Valve
+    valve type: 4-way 90 degree valve
+    valve alias:
+      1: Reservoir cell inlet 1 #for example...
+      2: Reservoir cell inlet 2
+      3: Cell outlet 1
+      4: Cell outlet 2
+
+operations:
+   
+   ExchangePair:
+      Exchanger 1: # name of the ExchangePair
+         args:
+            - Syringe 2 # pushSyr either syringe name or id
+            - Syringe 1 # pullSyr either syringe name or id
+         pushSyr: # valve connections
+            Reservoir: Reservoir #give valve position either numerical or valve alias
+            Cell: right 
+            Waste: Waste
+         pullSyr:
+            Cell: Cell #give valve position either numerical or valve alias
+            Waste: Waste
+         prePressure: 0 #muL, pushes amount when connecting the pushSyr syringe to Cell to exchange
+         prePressureRate: 60 #muL/s
+         underPressure: 50 #muL, pulls amount when connecting the pullSyr syringe to Cell to exchange
+         underPressureRate: 60 #muL/s
+         defaultFillRate: 400 #muL/s
+         defaultDrainRate: 400 #muL/s
+         defaultRate: 60 #muL/s
+         dispenseDelay: 0.0 #s
+         bubbleDispense: 500 # muL
+         
+      Exchanger 2: # name of the ExchangePair
+         args:
+            - Syringe 3 # pushSyr either syringe name or id
+            - Syringe 4 # pullSyr either syringe name or id
+         pushSyr: # valve connections
+            Reservoir: Reservoir #give valve position either numerical or valve alias
+            Cell: Cell 
+            Waste: Waste
+         pullSyr:
+            Cell: Cell #give valve position either numerical or valve alias
+            Waste: Waste
+         prePressure: 0 #muL, pushes amount when connecting the pushSyr syringe to Cell to exchange
+         prePressureRate: 60 #muL/s
+         underPressure: 50 #muL, pulls amount when connecting the pullSyr syringe to Cell to exchange
+         underPressureRate: 60 #muL/s
+         defaultFillRate: 400 #muL/s
+         defaultDrainRate: 400 #muL/s
+         defaultRate: 60 #muL/s
+         dispenseDelay: 0.0 #s
+         bubbleDispense: 500 # muL
+         
+         
+            
+    
+    

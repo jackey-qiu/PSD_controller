@@ -2307,7 +2307,7 @@
      <x>0</x>
      <y>0</y>
      <width>1920</width>
-     <height>24</height>
+     <height>21</height>
     </rect>
    </property>
   </widget>
@@ -2325,7 +2325,6 @@
    <addaction name="actionStartServer"/>
    <addaction name="actionStartPumpClient"/>
    <addaction name="separator"/>
-   <addaction name="actionStop_all_motions"/>
    <addaction name="actionfillSyringe"/>
    <addaction name="actioninitTubeLine"/>
    <addaction name="actioninitExchange"/>
@@ -2339,6 +2338,7 @@
    <addaction name="separator"/>
    <addaction name="actionshowSettingFrame"/>
    <addaction name="actionhideSettingFrame"/>
+   <addaction name="actionStop_all_motions"/>
   </widget>
   <action name="actionStartPumpClient">
    <property name="icon">
