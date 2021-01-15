@@ -302,8 +302,10 @@ class MyMainWindow(QMainWindow):
                     self.mongo_client = MongoClient(f.read().rstrip())
                     self.database = self.mongo_client[self.lineEdit_database_name.text()]
                     self.database.client_info.delete_one({'client_id':self.lineEdit_current_client.text()})
-                    self.database.cmd_info.drop()
-                    self.database.device_info.drop()
+                    if self.lineEdit_current_client.text()==self.lineEdit_main_client.text():
+                        self.database.device_info.drop()
+                    else:
+                        self.database.cmd_info.drop()
                     self.database.client_info.insert_one({'client_id':self.lineEdit_current_client.text(),
                                             'main_client':self.lineEdit_main_client.text()==self.lineEdit_current_client.text(),
                                             'paired_client_id':self.lineEdit_paired_client.text()
@@ -338,7 +340,7 @@ class MyMainWindow(QMainWindow):
         else:
             #self.timer_renew_device_info_gui.start(100)
             self.send_cmd_remotely = True
-            self.database.cmd_info.delete_one({'client_id':self.lineEdit_current_client.text()})
+            # self.database.cmd_info.delete_one({'client_id':self.lineEdit_current_client.text()})
             self.database.cmd_info.insert_one({'cmd':'','client_id':self.lineEdit_current_client.text()})
 
     def start_listening_cloud(self):
@@ -375,19 +377,18 @@ class MyMainWindow(QMainWindow):
             target = self.database.cmd_info.find_one({'client_id':self.lineEdit_paired_client.text()})
             if target == None:
                 pass
-            if target['cmd'] != '':
-                try:
-                    exec(target['cmd'])
-                    self.database.response_info.update_one({'client_id':self.lineEdit_current_client.text()},{"$set": {"response":'Success to execute cmd: {}'.format(cmd_string)}})
-                    self.textEdit_response.setPlainText('Success to execute cmd: {}'.format(target['cmd']))
-                except Exception as e:
-                    self.database.response_info.update_one({'client_id':self.lineEdit_current_client.text()},{"$set": {"response":str(e)}})
-                    self.textEdit_response.setPlainText(str(e))
-                else:
-                    self.database.cmd_info.update_one({'client_id':self.lineEdit_current_client.text()},{"$set": {"cmd":''}})
             else:
-                pass
-            #self.exec_cmd_from_cloud()
+                if target['cmd'] != '':
+                    try:
+                        exec(target['cmd'])
+                        self.database.response_info.update_one({'client_id':self.lineEdit_current_client.text()},{"$set": {"response":'Success to execute cmd: {}'.format(cmd_string)}})
+                        self.textEdit_response.setPlainText('Success to execute cmd: {}'.format(target['cmd']))
+                    except Exception as e:
+                        self.database.response_info.update_one({'client_id':self.lineEdit_current_client.text()},{"$set": {"response":str(e)}})
+                        self.textEdit_response.setPlainText(str(e))
+                    else:
+                        self.database.cmd_info.update_one({'client_id':self.lineEdit_current_client.text()},{"$set": {"cmd":''}})
+                #self.exec_cmd_from_cloud()
 
     def update_device_info_from_cloud(self):
         #pulling device info from mongo cloud
