@@ -96,7 +96,7 @@ class StartPumpClientDialog(QDialog):
         self.pushButton_open.clicked.connect(self.open_file)
         self.pushButton_update.clicked.connect(self.update_file)
         self.pushButton_load.clicked.connect(self.load_file)
-        self.pushButton_load_without_config.clicked.connect(self.load_file_without_config)
+        # self.pushButton_load_without_config.clicked.connect(self.load_file_without_config)
 
     def open_file(self):
         options = QFileDialog.Options()
@@ -120,6 +120,8 @@ class StartPumpClientDialog(QDialog):
     def load_file_without_config(self):
         self.parent.create_pump_client(config_file = self.lineEdit_config_path.text(), device_name = self.lineEdit_device_name.text(), config_use = False)
 
+    def initialize_device(self):
+        pass
 
 class MyMainWindow(QMainWindow):
     def __init__(self, parent = None):
