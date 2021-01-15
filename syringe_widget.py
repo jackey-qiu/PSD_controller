@@ -185,7 +185,9 @@ class syringe_widget(QWidget):
         self.draw_radio_signal(qp,[rects_3[8][0]-6,rects_3[8][1]+90],msg=self.connect_status[3])
         self.draw_radio_signal(qp,[rects_4[8][0]-6,rects_4[8][1]+90],msg=self.connect_status[4])
         # if self.operation_mode in ['auto_refilling','init_mode']:
-        self.draw_cell(qp,offset=[(19.5*0 + left_bound_cell)*self.ref_unit,(1.3)*self.ref_unit])
+        #Not showing the cell in the clean_mode
+        if not self.operation_mode == 'clean_mode':
+            self.draw_cell(qp,offset=[(19.5*0 + left_bound_cell)*self.ref_unit,(1.3)*self.ref_unit])
         rects_resevoir = self.draw_bottle(qp, fill_height = self.resevoir_volumn/self.resevoir_volumn_total*self.bottom_height_total, offset = [1*0+ left_bound_resevoir,8+2],volume=self.resevoir_volumn_total,label = self.label_resevoir)
         rects_waste = self.draw_bottle(qp, fill_height = self.waste_volumn/self.waste_volumn_total*self.bottom_height_total, offset = [36*0 + left_bound_waste,8+2], volume = self.waste_volumn_total,label = 'Waste')
         # self.draw_mvp_valve(qp,[rects_waste[0][0]+150, rects_waste[0][1]-150, 50, 50],connected_channel = self.mvp_channel)
@@ -497,9 +499,10 @@ class syringe_widget(QWidget):
         # qp.drawRect(*dim)
         return_coord_channel = None
         return_coord_cell = None
-        qp.drawEllipse(*dim)
-        qp.setPen(QPen(Qt.blue,  1, Qt.SolidLine))
-        qp.drawEllipse(*(coord_center+[2,2]))
+        if self.operation_mode !='clean_mode':
+            qp.drawEllipse(*dim)
+            qp.setPen(QPen(Qt.blue,  1, Qt.SolidLine))
+            qp.drawEllipse(*(coord_center+[2,2]))
         qp.setPen(QPen(Qt.blue,  4, Qt.SolidLine))
         for i in range(self.number_of_channel_mvp):
             if i in [0, connected_channel]:
@@ -513,12 +516,13 @@ class syringe_widget(QWidget):
                 return_coord_cell = coord_tmp
             if i == syringe_connected_channel:
                 return_coord_channel = coord_tmp
-            qp.drawLine(*(coord_tmp+coord_center))
+            if self.operation_mode !='clean_mode':
+                qp.drawLine(*(coord_tmp+coord_center))
         qp.setFont(QFont('Decorative', 12))
         qp.setPen(QPen(Qt.red,  4, Qt.SolidLine))
-        qp.drawText(dim[0],dim[1]+80,"{}-->MVP".format(self.mvp_connected_valve))
+        if self.operation_mode !='clean_mode':
+            qp.drawText(dim[0],dim[1]+80,"{}-->MVP".format(self.mvp_connected_valve))
         return return_coord_channel, return_coord_cell
-        
 
     def draw_markers(self,qp,rect,which_side = 'left',total_volume_in_ml = 12.5, marker_pos_in_ml = [2,4,6,8,10,12], inverse = True):
         if which_side in ['left','right']:

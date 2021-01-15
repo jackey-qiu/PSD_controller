@@ -1048,12 +1048,10 @@ class cleanOperationMode(baseOperationMode):
         self.psd_widget.update()
 
         if not self.demo:
-            while True:
-                if not self.server_devices['T_valve'][syringe].busy:
-                    if getattr(self.psd_widget,'filling_status_syringe_{}'.format(syringe)):
-                        self.server_devices['syringe'][syringe].fill(rate = self.settings['speed']*10*1000)
-                    else:
-                        self.server_devices['syringe'][syringe].drain(rate = self.settings['speed']*10*1000)
+            if getattr(self.psd_widget,'filling_status_syringe_{}'.format(syringe)):
+                self.server_devices['syringe'][syringe].fill(rate = self.settings['speed']*10*1000)
+            else:
+                self.server_devices['syringe'][syringe].drain(rate = self.settings['speed']*10*1000)
 
     def start_timer_motion(self,kwargs = 1):
         self.refill_times_already = 0
@@ -1071,12 +1069,10 @@ class cleanOperationMode(baseOperationMode):
         #switch motion state
         self.settings['syringe'+str(self.syringe_index)+'_status'] = 'moving'
         if not self.demo:
-            while True:
-                if not self.server_devices['T_valve'][self.syringe_index].busy:
-                    if getattr(self.psd_widget,'filling_status_syringe_{}'.format(self.syringe_index)):
-                        self.server_devices['syringe'][self.syringe_index].fill(rate = self.settings['speed']*10*1000)
-                    else:
-                        self.server_devices['syringe'][self.syringe_index].drain(rate = self.settings['speed']*10*1000)
+            if getattr(self.psd_widget,'filling_status_syringe_{}'.format(self.syringe_index)):
+                self.server_devices['syringe'][self.syringe_index].fill(rate = self.settings['speed']*10*1000)
+            else:
+                self.server_devices['syringe'][self.syringe_index].drain(rate = self.settings['speed']*10*1000)
 
     def start_motion(self):
         ready = self.check_synchronization()
@@ -1087,10 +1083,9 @@ class cleanOperationMode(baseOperationMode):
                     self.timer_motion.stop()
             else:#switch status
                 self.switch_state_during_exchange()
-                self.single_syringe_motion(self.syringe_index, speed_tag = 'speed', continual_exchange = True)
-                self.psd_widget.update()
+                self.single_syringe_motion(self.syringe_index, speed_tag = 'speed', continual_exchange = True, demo = self.demo)
         else:
-            self.single_syringe_motion(self.syringe_index, speed_tag = 'speed', continual_exchange = True)
+            self.single_syringe_motion(self.syringe_index, speed_tag = 'speed', continual_exchange = True, demo = self.demo)
 
 class fillCellOperationMode(baseOperationMode):
     def __init__(self, psd_server, psd_widget, error_widget, timer_premotion, timer_motion, timeout, pump_settings, settings, demo):
