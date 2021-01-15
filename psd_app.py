@@ -1,6 +1,6 @@
 from PyQt5 import QtCore
 from PyQt5.QtWidgets import QCheckBox, QRadioButton, QDialog, QTableWidgetItem, QHeaderView, QAbstractItemView, QInputDialog, QDialog,QShortcut
-from PyQt5.QtCore import Qt, QTimer
+from PyQt5.QtCore import Qt, QTimer, QEventLoop, QThread
 from PyQt5.QtGui import QTransform, QFont, QBrush, QColor, QIcon, QImage, QPixmap
 from pyqtgraph.Qt import QtGui
 from PyQt5.QtWidgets import QApplication, QMainWindow, QFileDialog, QMessageBox
@@ -19,6 +19,8 @@ import logging
 import time
 import functools
 import subprocess
+import threading
+from pymongo import MongoClient
 try:
     from . import locate_path
 except:
@@ -67,12 +69,23 @@ class StartServerDialog(QDialog):
         super().__init__(parent)
         self.parent = parent
         # Load the dialog's GUI
-        uic.loadUi(os.path.join(script_path,"start_pump_server.ui"), self)
-        self.pushButton_start.clicked.connect(lambda:self.parent.run_server(
-                                                     instance_name = self.lineEdit_server_instance.text(), 
-                                                     port = self.lineEdit_device_port.text(), 
-                                                     device_name = self.lineEdit_device_name.text(), 
-                                                     tango_db = self.checkBox_db_available.isChecked()))
+        uic.loadUi(os.path.join(script_path,"start_mongo_server.ui"), self)
+        self.pushButton_start.clicked.connect(self.setup_mongo_client_cloud)
+
+    def setup_mongo_client_cloud(self):
+        if (self.lineEdit_database_name.text()!='') and (self.lineEdit_client_id.text()!='') and (self.lineEdit_paired_client_id.text()!=''):
+            self.parent.lineEdit_database_name.setText(self.lineEdit_database_name.text())
+            self.parent.lineEdit_current_client.setText(self.lineEdit_client_id.text())
+            self.parent.lineEdit_paired_client.setText(self.lineEdit_paired_client_id.text())
+            main_client = self.checkBox_main_client.isChecked()
+            if main_client:
+                self.parent.lineEdit_main_client.setText(self.lineEdit_client_id.text())
+            else:
+                self.parent.lineEdit_main_client.setText(self.lineEdit_paired_client_id.text())
+            error_pop_up('Success setting up MongoDB clients. Now you can go back to main GUI and connect the Pymongo cloud!','Information')
+        else:
+            error_pop_up('Failure: some fields are not filled!','Error')
+
 
 class StartPumpClientDialog(QDialog):
     def __init__(self, parent=None):
@@ -118,6 +131,9 @@ class MyMainWindow(QMainWindow):
         self.fill_speed_syringe = 500 # global speed for filling syringe in ul/s
         self.client = None
         self.demo = True
+
+        # self.set_server_thread = QtCore.QThread()
+        # self.server_dialog.moveToThread(self.set_server_thread)
 
         self.pump_settings = {}
         self.pushButton_apply_settings.clicked.connect(self.apply_pump_settings)
@@ -182,6 +198,10 @@ class MyMainWindow(QMainWindow):
 
         self.actionStartPumpClient.triggered.connect(self.start_pump_client_dialog)
         self.actionStartServer.triggered.connect(self.start_server_dialog)
+        self.pushButton_connect_cloud.clicked.connect(self.start_mongo_client_cloud)
+        self.pushButton_listen.clicked.connect(self.start_listening_cloud)
+        self.listen = False
+        self.pushButton_stop_listen.clicked.connect(self.stop_listening_cloud)
 
         self.actionStop_all_motions.triggered.connect(self.stop_all_motion)
         self.shortcut_stop = QShortcut(QtGui.QKeySequence("Ctrl+C"), self)
@@ -217,6 +237,11 @@ class MyMainWindow(QMainWindow):
         self.pushButton_save_config.clicked.connect(self.save_setting_table)
 
         ###set timmers###
+        self.timer_renew_device_info_gui = QTimer(self)
+        self.timer_renew_device_info_cloud = QTimer(self)
+        self.timer_renew_device_info_cloud.timeout.connect(self.update_device_info_to_cloud)
+        self.timer_renew_device_info_gui.timeout.connect(self.update_device_info_from_cloud)
+
         #webcam timer
         self.timer_webcam = QTimer(self)
         self.timer_webcam.timeout.connect(self.viewCam)
@@ -263,6 +288,144 @@ class MyMainWindow(QMainWindow):
         self.pushButton_connect_mvp_syringe_1.click()
         self.syn_valve_pos()
         #instances of operation modes
+
+    def start_mongo_client_cloud(self):
+        if self.lineEdit_database_name.text()=='':
+            return
+        try:
+            if not os.path.exists(os.path.join(script_path,'private','atlas_password')):
+                error_pop_up('You should create a file named atlas_password under Project_Manager/private folder, where you save the password for your MongoDB atlas cloud account')
+            else:
+                with open(os.path.join(script_path,'private','atlas_password')) as f:
+                    self.mongo_client = MongoClient(f.read().rstrip())
+                    self.database = self.mongo_client[self.lineEdit_database_name.text()]
+                    self.database.client_info.delete_one({'client_id':self.lineEdit_current_client.text()})
+                    self.database.cmd_info.drop()
+                    self.database.device_info.drop()
+                    self.database.client_info.insert_one({'client_id':self.lineEdit_current_client.text(),
+                                            'main_client':self.lineEdit_main_client.text()==self.lineEdit_current_client.text(),
+                                            'paired_client_id':self.lineEdit_paired_client.text()
+                                            })
+                    self.init_mongo_DB()
+                    error_pop_up('Success connection to MongoDB atlas cloud!','Information')
+        except Exception as e:
+            error_pop_up('Fail to start mongo client.'+'\n{}'.format(str(e)),'Error')
+
+    def init_mongo_DB(self):
+        target = self.database.client_info.find_one({'client_id':self.lineEdit_current_client.text()})
+        if target['main_client']:
+            self.send_cmd_remotely = False
+            #self.timer_renew_device_info_cloud.start(1000)
+            #self.thread_exec_cmd_from_cloud = threading.Thread(target=self.exec_cmd_from_cloud, args=(), daemon = True)
+            #self.thread_exec_cmd_from_cloud.start()
+            device_info = {
+                           'client_id':self.lineEdit_current_client.text(),
+                           'S1_vol': str(self.widget_psd.volume_syringe_1),
+                           'valve_pos':str(self.widget_psd.connect_valve_port),
+                           'S2_vol': str(self.widget_psd.volume_syringe_2),
+                           'S3_vol': str(self.widget_psd.volume_syringe_3),
+                           'S4_vol': str(self.widget_psd.volume_syringe_4),
+                           'mvp_valve': str(self.widget_psd.mvp_channel),
+                           'resevoir_vol': str(self.widget_psd.resevoir_volumn),
+                           'waste_vol': str(self.widget_psd.waste_volumn),
+                           'operation_mode': self.widget_psd.operation_mode}
+            self.database.device_info.delete_one({'client_id':self.lineEdit_current_client.text()})
+            self.database.device_info.insert_one(device_info)
+            self.database.response_info.delete_one({'client_id':self.lineEdit_current_client.text()})
+            self.database.response_info.insert_one({'response':'','client_id':self.lineEdit_current_client.text()})
+        else:
+            #self.timer_renew_device_info_gui.start(100)
+            self.send_cmd_remotely = True
+            self.database.cmd_info.delete_one({'client_id':self.lineEdit_current_client.text()})
+            self.database.cmd_info.insert_one({'cmd':'','client_id':self.lineEdit_current_client.text()})
+
+    def start_listening_cloud(self):
+        self.listen = True
+        self.lineEdit_listen_status.setText('Listening now!')
+        if self.send_cmd_remotely:
+            self.thread_renew_device_info_gui = threading.Thread(target=self.update_device_info_from_cloud, args=(), daemon = True)
+            self.thread_renew_device_info_gui.start()
+        else:
+            self.thread_renew_device_info_cloud = threading.Thread(target=self.update_device_info_to_cloud, args=(), daemon = True)
+            self.thread_renew_device_info_cloud.start()
+
+    def stop_listening_cloud(self):
+        self.listen = False
+
+    def update_device_info_to_cloud(self):
+        #main client update device info to mongo cloud
+        #never end unless terminating the main_gui program
+        while True:
+            if not self.listen:
+                self.lineEdit_listen_status.setText('Listening is terminated!')
+                return
+            time.sleep(0.05)
+            self.database.device_info.update_one({'client_id':self.lineEdit_current_client.text()},{"$set": {"S1_vol":str(self.widget_psd.volume_syringe_1)}})
+            self.database.device_info.update_one({'client_id':self.lineEdit_current_client.text()},{"$set": {'valve_pos':str(self.widget_psd.connect_valve_port)}})
+            self.database.device_info.update_one({'client_id':self.lineEdit_current_client.text()},{"$set": {'S2_vol': str(self.widget_psd.volume_syringe_2)}})
+            self.database.device_info.update_one({'client_id':self.lineEdit_current_client.text()},{"$set": {"S3_vol":str(self.widget_psd.volume_syringe_3)}})
+            self.database.device_info.update_one({'client_id':self.lineEdit_current_client.text()},{"$set": {"S4_vol":str(self.widget_psd.volume_syringe_4)}})
+            self.database.device_info.update_one({'client_id':self.lineEdit_current_client.text()},{"$set": {'mvp_valve': str(self.widget_psd.mvp_channel)}})
+            self.database.device_info.update_one({'client_id':self.lineEdit_current_client.text()},{"$set": {'resevoir_vol': str(self.widget_psd.resevoir_volumn)}})
+            self.database.device_info.update_one({'client_id':self.lineEdit_current_client.text()},{"$set": {'waste_vol': str(self.widget_psd.waste_volumn)}})
+            self.database.device_info.update_one({'client_id':self.lineEdit_current_client.text()},{"$set": {'operation_mode': self.widget_psd.operation_mode}})
+            #cmds
+            target = self.database.cmd_info.find_one({'client_id':self.lineEdit_paired_client.text()})
+            if target == None:
+                pass
+            if target['cmd'] != '':
+                try:
+                    exec(target['cmd'])
+                    self.database.response_info.update_one({'client_id':self.lineEdit_current_client.text()},{"$set": {"response":'Success to execute cmd: {}'.format(cmd_string)}})
+                    self.textEdit_response.setPlainText('Success to execute cmd: {}'.format(target['cmd']))
+                except Exception as e:
+                    self.database.response_info.update_one({'client_id':self.lineEdit_current_client.text()},{"$set": {"response":str(e)}})
+                    self.textEdit_response.setPlainText(str(e))
+                else:
+                    self.database.cmd_info.update_one({'client_id':self.lineEdit_current_client.text()},{"$set": {"cmd":''}})
+            else:
+                pass
+            #self.exec_cmd_from_cloud()
+
+    def update_device_info_from_cloud(self):
+        #pulling device info from mongo cloud
+        #never end unless terminating the main_gui program
+        while True:
+            #time.sleep(0.01)
+            if not self.listen:
+                self.lineEdit_listen_status.setText('Listening is terminated!')
+                return
+            device_info = self.database.device_info.find_one()
+            self.widget_psd.volume_syringe_1 = float(device_info['S1_vol'])
+            self.widget_psd.volume_syringe_2 = float(device_info['S2_vol'])
+            self.widget_psd.volume_syringe_3 = float(device_info['S3_vol'])
+            self.widget_psd.volume_syringe_4 = float(device_info['S4_vol'])
+            self.widget_psd.connect_valve_port = eval(device_info['valve_pos'])
+            self.widget_psd.mvp_channel = int(device_info['mvp_valve'])
+            self.widget_psd.resevoir_volumn = float(device_info['resevoir_vol'])
+            self.widget_psd.waste_volumn = float(device_info['waste_vol'])
+            self.widget_psd.operation_mode = device_info['operation_mode']
+            self.widget_psd.update()
+
+    def send_cmd_to_cloud(self, cmd_string):
+        self.database.cmd_info.update_one({'client_id':self.lineEdit_current_client.text()},{"$set": {"cmd":cmd_string}})
+
+    def exec_cmd_from_cloud(self):
+        target = self.database.cmd_info.find_one({'client_id':self.lineEdit_paired_client.text()})
+        if target == None:
+            pass
+        if target['cmd'] != '':
+            try:
+                exec(target['cmd'])
+                self.database.response_info.update_one({'client_id':self.lineEdit_current_client.text()},{"$set": {"response":'Success to execute cmd: {}'.format(cmd_string)}})
+                self.textEdit_response.setPlainText('Success to execute cmd: {}'.format(target['cmd']))
+            except Exception as e:
+                self.database.response_info.update_one({'client_id':self.lineEdit_current_client.text()},{"$set": {"response":str(e)}})
+                self.textEdit_response.setPlainText(str(e))
+            else:
+                self.database.cmd_info.update_one({'client_id':self.lineEdit_current_client.text()},{"$set": {"cmd":''}})
+        else:
+            pass
 
     def hide_setting_frame(self):
         size = self.frame_2.size()
@@ -822,6 +985,9 @@ class MyMainWindow(QMainWindow):
                 pass
         if not self.demo:
             self.client.stop()
+        if hasattr(self,'send_cmd_remotely'):
+            if self.send_cmd_remotely:
+                self.send_cmd_to_cloud('self.stop_all_motion()')
 
     def update_to_autorefilling_mode(self):
         self.widget_psd.operation_mode = 'auto_refilling'
@@ -964,14 +1130,14 @@ class ConfigPumpSystem(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         # Load the dialog's GUI
-        uic.loadUi("config_pump_dialog.ui", self)
+        uic.loadUi(os.path.join(script_path,"config_pump_dialog.ui"), self)
 
 class RefillCellSetup(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.parent = parent
         # Load the dialog's GUI
-        uic.loadUi("refill_cell_dialog2.ui", self)
+        uic.loadUi(os.path.join(script_path,"refill_cell_dialog2.ui"), self)
         self.buttonBox.accepted.connect(self.start_refill)
 
     def start_refill(self):
@@ -996,7 +1162,7 @@ class Cleaner(QDialog):
         super().__init__(parent)
         self.parent = parent
         # Load the dialog's GUI
-        uic.loadUi("cleaner_dialog.ui", self)
+        uic.loadUi(os.path.join(script_path,"cleaner_dialog.ui"), self)
         self.pushButton_start_syringe_1.clicked.connect(lambda:self.start_motion(1))
         self.pushButton_start_syringe_2.clicked.connect(lambda:self.start_motion(2))
         self.pushButton_start_syringe_3.clicked.connect(lambda:self.start_motion(3))
@@ -1043,7 +1209,7 @@ class ResetResevoirWaste(QDialog):
         super().__init__(parent)
         self.parent = parent
         # Load the dialog's GUI
-        uic.loadUi("reset_resevoir_waste_dialog.ui", self)
+        uic.loadUi(os.path.join(script_path,"reset_resevoir_waste_dialog.ui"), self)
         # print(self.__dir__())
         self.get_info_from_parent()
         self.pushButton_apply.clicked.connect(self.apply)
