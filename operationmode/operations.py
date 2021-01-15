@@ -936,6 +936,13 @@ class advancedRefillingOperationMode(baseOperationMode):
                 if not self.check_server_devices_ready():
                     return
             '''
+            self.server_devices['client'].stop()
+            if self.check_device_status()=='error':
+                self.timer_motion.stop()
+                logging.getLogger().exception('Error: Something is wrong with the pump! The exchange is stopped!')
+                return
+            time.sleep(0.5)
+
             self.switch_state_during_exchange(syringe_index_list = [1, 2, 3, 4])
             self.set_status_to_moving()
             if self.settings['extra_amount_timer'].isActive():
@@ -949,6 +956,15 @@ class advancedRefillingOperationMode(baseOperationMode):
                 if not self.demo:
                     self.start_thread()
             self._syringe_motions(index = range(1,5), overshoot_amount = overshoot_amount)
+
+    def check_device_status(self):
+        syringes_codes = [self.server_devices['syringe'][i].status['syringe'].statuscode for i in [1,2,3,4]]
+        valves_codes = [self.server_devices['syringe'][i].status['valve'].statuscode for i in [1,2,3,4]]
+        mvp_valve_code = self.server_devices['mvp_valve'].status['valve'].statuscode
+        if sum(syringes_codes)+sum(valves_codes)+mvp_valve_code!=0:
+            return 'error'
+        else:
+            return 'no error'
 
     def check_synchronization(self):
         #whichever is ready, the valve positions of all syringes will switch over
