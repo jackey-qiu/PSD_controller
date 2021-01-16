@@ -458,7 +458,10 @@ class MyMainWindow(QMainWindow):
 
     #update response string from main client
     def _update_response(self):
-        self.textEdit_response.setPlainText(self.database.response_info.find_one({'client_id':self.lineEdit_paired_client.text()})['response'])
+        try:
+            self.textEdit_response.setPlainText(self.database.response_info.find_one({'client_id':self.lineEdit_paired_client.text()})['response'])
+        except:
+            pass
 
     def start_listening_cloud(self):
         self.listen = True
@@ -675,6 +678,8 @@ class MyMainWindow(QMainWindow):
                                                 settings = {'premotion_speed_handle':self.get_default_filling_speed,
                                                             'total_exchange_amount_handle':lambda:self.doubleSpinBox_exchange_amount.value()/1000,
                                                             'exchange_speed_handle':lambda:self.doubleSpinBox.value()/1000,
+                                                            'pre_pressure_volume_handle':lambda:500,
+                                                            'pre_pressure_speed_handle':lambda:100,
                                                             'refill_speed_handle':self.get_default_filling_speed,
                                                             'time_record_handle':self.display_exchange_time,
                                                             'volume_record_handle':self.display_exchange_volume,
@@ -1282,15 +1287,28 @@ class RefillCellSetup(QDialog):
         disposal_speed = float(self.lineEdit_waste_disposal_speed.text())/1000
         vol_to_cell = float(self.lineEdit_vol_cell_dispense.text())/1000
         vol_to_waste = float(self.lineEdit_vol_waste_disposal.text())/1000
-        assert syringe_index in [1,2,3,4], 'Warning: The syringe index is not set right. It should be integer from 1 to 4!'
-        assert type(refill_times)==int and refill_times>=1, 'Warning: The refill is not set right. It should be integer >1!'
-        self.parent.widget_psd.actived_syringe_fill_cell_mode = syringe_index
-        self.parent.widget_psd.refill_times_fill_cell_mode = refill_times*2 # in the script, one stroke filled or emptied is counted as one time, so need to mult by 2
-        self.parent.widget_psd.refill_speed_fill_cell_mode = refill_speed
-        self.parent.widget_psd.disposal_speed_fill_cell_mode = disposal_speed
-        self.parent.widget_psd.vol_to_cell_fill_cell_mode = vol_to_cell
-        self.parent.widget_psd.vol_to_waste_fill_cell_mode = vol_to_waste
-        self.parent.start_fill_cell()
+        if self.parent.main_client_cloud!=None:
+            if not self.parent.main_client_cloud:
+                cmd_list = ['self.widget_psd.actived_syringe_fill_cell_mode = {}'.format(syringe_index),
+                            'self.widget_psd.refill_times_fill_cell_mode = {}'.format(refill_times*2),
+                            'self.widget_psd.refill_speed_fill_cell_mode = {}'.format(refill_speed),
+                            'self.widget_psd.disposal_speed_fill_cell_mode = {}'.format(disposal_speed),
+                            'self.widget_psd.vol_to_cell_fill_cell_mode = {}'.format(vol_to_cell),
+                            'self.widget_psd.vol_to_waste_fill_cell_mode = {}'.format(vol_to_waste),
+                            'self.start_fill_cell()'
+                            ]
+                self.parent.send_cmd_to_cloud('\n'.join(cmd_list))
+                return
+        else:
+            assert syringe_index in [1,2,3,4], 'Warning: The syringe index is not set right. It should be integer from 1 to 4!'
+            assert type(refill_times)==int and refill_times>=1, 'Warning: The refill is not set right. It should be integer >1!'
+            self.parent.widget_psd.actived_syringe_fill_cell_mode = syringe_index
+            self.parent.widget_psd.refill_times_fill_cell_mode = refill_times*2 # in the script, one stroke filled or emptied is counted as one time, so need to mult by 2
+            self.parent.widget_psd.refill_speed_fill_cell_mode = refill_speed
+            self.parent.widget_psd.disposal_speed_fill_cell_mode = disposal_speed
+            self.parent.widget_psd.vol_to_cell_fill_cell_mode = vol_to_cell
+            self.parent.widget_psd.vol_to_waste_fill_cell_mode = vol_to_waste
+            self.parent.start_fill_cell()
 
 class Cleaner(QDialog):
     def __init__(self, parent=None):
