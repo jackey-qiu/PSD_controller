@@ -183,21 +183,21 @@ class StartPumpClientDialog(QDialog):
                 f.write(self.textEdit_config.toPlainText())
     
     def load_file(self):
-        self.parent.create_pump_client(config_file = self.lineEdit_config_path.text(), device_name = self.lineEdit_device_name.text(), config_use = True)
+        self.parent.create_pump_client(config_file = self.lineEdit_config_path.text(), device_name = 'exp/ec/pump1', config_use = True)
 
     def load_file_without_config(self):
         self.parent.create_pump_client(config_file = self.lineEdit_config_path.text(), device_name = self.lineEdit_device_name.text(), config_use = False)
 
     def initialize_device(self, device_id, device_type):
         if device_type == 'syringe':
-            valve = getattr(self,'comboBox_val_s{}'.format(device_id))
+            valve = getattr(self,'comboBox_val_s{}'.format(device_id)).currentText()
             syringe = getattr(self.parent,'syringe_server_S{}'.format(device_id))
             syringe.initSyringe(valve, 200)
             exec("self.parent.widget_psd.connect_status[device_id] = syringe.status['syringe'].__str__()")
             getattr(self,'lineEdit_status_s{}'.format(device_id)).setText(syringe.status['syringe'].__str__())
         elif device_type == 'mvp':
-            mvp = self.parent.mvp_valve_server.initValve()
-            self.lineEdit_status_mvp.setText(mvp.status['valve'].__str__())
+            self.parent.mvp_valve_server.initValve()
+            self.lineEdit_status_mvp.setText(self.parent.mvp_valve_server.status['valve'].__str__())
         else:
             pass
 
@@ -403,7 +403,6 @@ class MyMainWindow(QMainWindow):
             error_pop_up('Fail to start mongo client.'+'\n{}'.format(str(e)),'Error')
 
     def init_mongo_DB(self):
-        target = self.database.client_info.find_one({'client_id':self.lineEdit_current_client.text()})
         if self.main_client_cloud:
             self.send_cmd_remotely = False
             #self.timer_renew_device_info_cloud.start(1000)
@@ -1121,11 +1120,9 @@ class MyMainWindow(QMainWindow):
                 pass
         if not self.demo:
             self.client.stop()
-        if not self.main_client_cloud:
-            self.send_cmd_to_cloud('self.stop_all_motion()')
-            # time.sleep(0.5)
-            # print('Here',self.database.response_info.find_one({'client_id':self.lineEdit_paired_client.text()})['response'])
-            # self.textEdit_response.setPlainText(self.database.response_info.find_one({'client_id':self.lineEdit_paired_client.text()})['response'])
+        if self.main_client_cloud!=None:
+            if not self.main_client_cloud:
+                self.send_cmd_to_cloud('self.stop_all_motion()')
 
     def update_to_autorefilling_mode(self):
         self.widget_psd.operation_mode = 'auto_refilling'
