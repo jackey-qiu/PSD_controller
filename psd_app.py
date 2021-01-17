@@ -264,6 +264,8 @@ class MyMainWindow(QMainWindow):
         self.pushButton_exchange.clicked.connect(self.start_exchange)
         self.actionExchange.triggered.connect(self.start_exchange)
 
+        self.pushButton_apply.clicked.connect(self.apply_setting_during_exchange)
+
         self.pushButton_fill_syringe_1.clicked.connect(lambda:self.fill_syringe(1))
         self.pushButton_dispense_syringe_1.clicked.connect(lambda:self.dispense_syringe(1))
         self.pushButton_fill_syringe_2.clicked.connect(lambda:self.fill_syringe(2))
@@ -565,6 +567,17 @@ class MyMainWindow(QMainWindow):
         else:
             pass
 
+    def apply_setting_during_exchange(self):
+        if self.main_client_cloud!=None:
+            if not self.main_client_cloud:
+                cmd_list = [
+                            'self.doubleSpinBox.setValue({})'.format(self.doubleSpinBox.value()),
+                            'self.doubleSpinBox_exchange_amount.setValue({})'.format(self.doubleSpinBox_exchange_amount.value()),
+                            'self.spinBox_speed.setValue({})'.format(self.spinBox_speed.value()),
+                            'self.spinBox_amount.setValue({})'.format(self.spinBox_amount.value())
+                           ]
+                self.send_cmd_to_cloud('\n'.join(cmd_list))
+
     def hide_setting_frame(self):
         size = self.frame_2.size()
         self.frame_2.setVisible(False)
@@ -738,17 +751,26 @@ class MyMainWindow(QMainWindow):
         return float(self.lineEdit_default_speed.text())/1000
 
     def fill_specified_syringe(self):
-        syringe, done = QInputDialog.getInt(self, 'Pick the syringe', 'Enter the syringe_index (ingeter from 1 to 4):')
+        syringe, done = QInputDialog.getInt(self, 'Pick the syringe', 'Enter the syringe_index (integer from 1 to 4):')
         if not done:
             logging.getLogger().exception('Error in getting syringe index from pop-up dialog!')
         else:
             if syringe not in [1,2,3,4]:
-                logging.getLogger().exception('Invalid syringe index, must be an inteter from 1 to 4!')
+                logging.getLogger().exception('Invalid syringe index, must be an integer from 1 to 4!')
             else:
-                exec(f'self.doubleSpinBox_speed_normal_mode_{syringe}.setValue({float(self.lineEdit_default_speed.text())})')
-                exec(f'self.doubleSpinBox_stroke_factor_{syringe}.setValue(12500)')
-                exec(f"self.comboBox_valve_port_{syringe}.setCurrentText('left')")
-                exec(f'self.pushButton_fill_syringe_{syringe}.click()')
+                cmd_list = [
+                            f'self.doubleSpinBox_speed_normal_mode_{syringe}.setValue({float(self.lineEdit_default_speed.text())})',
+                            f'self.doubleSpinBox_stroke_factor_{syringe}.setValue(12500)',
+                            f"self.comboBox_valve_port_{syringe}.setCurrentText('left')",
+                            f'self.pushButton_fill_syringe_{syringe}.click()'
+                           ]
+
+                if self.main_client_cloud!=None:
+                    if not self.main_client_cloud:
+                        self.send_cmd_to_cloud('\n'.join(cmd_list))
+                else:
+                    for each in cmd_list:
+                        exec(each)
 
     #set the alias for three T valve channel, double check the correctness of the mapping relationship
     def set_valve_pos_alias(self, valve_devices):
@@ -1008,8 +1030,14 @@ class MyMainWindow(QMainWindow):
         if self.comboBox_exchange_mode.currentText() == 'Continuous':
             self.init_start_advance()
             self.advanced_exchange_operation.resume = False
+            if self.main_client_cloud!=None:
+                if not self.main_client_cloud:
+                    self.send_cmd_to_cloud('\n'.join(['self.init_start_advance()','self.advanced_exchange_operation.resume = False']))
         elif self.comboBox_exchange_mode.currentText() == 'Intermittent':
             self.init_start_simple()
+            if self.main_client_cloud!=None:
+                if not self.main_client_cloud:
+                    self.send_cmd_to_cloud('self.init_start_simple()')
 
     @check_any_timer
     def init_start_advance(self):
@@ -1040,11 +1068,18 @@ class MyMainWindow(QMainWindow):
         self.fill_cell_operation.start_timer_motion()
 
     def start_exchange(self):
+
         # self.init_start()
         if self.comboBox_exchange_mode.currentText() == 'Continuous':
             self.start_exchange_advance(not self.checkBox_auto.isChecked())
+            if self.main_client_cloud!=None:
+                if not self.main_client_cloud:
+                    self.send_cmd_to_cloud('self.start_exchange_advance(not self.checkBox_auto.isChecked())')
         elif self.comboBox_exchange_mode.currentText() == 'Intermittent':
             self.start_exchange_simple(not self.checkBox_auto.isChecked())
+            if self.main_client_cloud!=None:
+                if not self.main_client_cloud:
+                    self.send_cmd_to_cloud('self.start_exchange_simple(not self.checkBox_auto.isChecked())')
 
     @check_any_timer
     def start_exchange_advance(self, onetime):

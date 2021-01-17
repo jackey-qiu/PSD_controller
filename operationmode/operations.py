@@ -858,12 +858,12 @@ class advancedRefillingOperationMode(baseOperationMode):
             self.server_devices['exchange_pair']['S2_S4'].swap()
             if self.psd_widget.filling_status_syringe_1: #if pushing for S1, it is connected to cell for exchange
                 self.pre_pressure(syringe_index=2, volume = self.settings['pre_pressure_volume_handle'](), speed = self.settings['pre_pressure_speed_handle'](), pull = False, valve = 'up')
-                self.pre_pressure(syringe_index=4, volume = self.settings['pre_pressure_volume_handle'](), speed = self.settings['pre_pressure_speed_handle'](), pull = True, valve = 'right')
+                # self.pre_pressure(syringe_index=4, volume = self.settings['pre_pressure_volume_handle'](), speed = self.settings['pre_pressure_speed_handle'](), pull = True, valve = 'right')
                 self.server_devices['exchange_pair']['S1_S3'].exchange(volume = self.server_devices['exchange_pair']['S1_S3'].exchangeableVolume,rate = float(self.settings['refill_speed_handle']())*1000)
                 self.server_devices['exchange_pair']['S2_S4'].exchange(volume = self.server_devices['exchange_pair']['S2_S4'].exchangeableVolume,rate = float(self.settings['exchange_speed_handle']())*1000)
             else:
                 self.pre_pressure(syringe_index=1, volume = self.settings['pre_pressure_volume_handle'](), speed = self.settings['pre_pressure_speed_handle'](), pull = False, valve = 'up')
-                self.pre_pressure(syringe_index=3, volume = self.settings['pre_pressure_volume_handle'](), speed = self.settings['pre_pressure_speed_handle'](), pull = True, valve = 'right')
+                # self.pre_pressure(syringe_index=3, volume = self.settings['pre_pressure_volume_handle'](), speed = self.settings['pre_pressure_speed_handle'](), pull = True, valve = 'right')
                 self.server_devices['exchange_pair']['S1_S3'].exchange(volume = self.server_devices['exchange_pair']['S1_S3'].exchangeableVolume,rate = float(self.settings['exchange_speed_handle']())*1000)
                 self.server_devices['exchange_pair']['S2_S4'].exchange(volume = self.server_devices['exchange_pair']['S2_S4'].exchangeableVolume,rate = float(self.settings['refill_speed_handle']())*1000)
             #if the syringe start moving
