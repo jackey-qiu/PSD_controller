@@ -63,6 +63,7 @@ class MessageExchanger(QtCore.QObject):
             self.database.device_info.update_one({'client_id':self.parent.lineEdit_current_client.text()},{"$set": {'mvp_valve': str(self.parent.widget_psd.mvp_channel)}})
             self.database.device_info.update_one({'client_id':self.parent.lineEdit_current_client.text()},{"$set": {'resevoir_vol': str(self.parent.widget_psd.resevoir_volumn)}})
             self.database.device_info.update_one({'client_id':self.parent.lineEdit_current_client.text()},{"$set": {'waste_vol': str(self.parent.widget_psd.waste_volumn)}})
+            self.database.device_info.update_one({'client_id':self.parent.lineEdit_current_client.text()},{"$set": {'connect_status': str(self.parent.widget_psd.connect_status)}})
             self.database.device_info.update_one({'client_id':self.parent.lineEdit_current_client.text()},{"$set": {'operation_mode': self.parent.widget_psd.operation_mode}})
             #cmds
             target = self.database.cmd_info.find_one({'client_id':self.parent.lineEdit_paired_client.text()})
@@ -87,6 +88,7 @@ class MessageExchanger(QtCore.QObject):
             self.parent.widget_psd.volume_syringe_4 = float(device_info['S4_vol'])
             self.parent.widget_psd.volume_of_electrolyte_in_cell = float(device_info['cell_vol'])
             self.parent.widget_psd.connect_valve_port = eval(device_info['valve_pos'])
+            self.parent.widget_psd.connect_status = eval(device_info['connect_status'])
             self.parent.widget_psd.mvp_channel = int(device_info['mvp_valve'])
             self.parent.widget_psd.resevoir_volumn = float(device_info['resevoir_vol'])
             self.parent.widget_psd.waste_volumn = float(device_info['waste_vol'])
@@ -421,7 +423,8 @@ class MyMainWindow(QMainWindow):
                            'mvp_valve': str(self.widget_psd.mvp_channel),
                            'resevoir_vol': str(self.widget_psd.resevoir_volumn),
                            'waste_vol': str(self.widget_psd.waste_volumn),
-                           'operation_mode': self.widget_psd.operation_mode}
+                           'operation_mode': self.widget_psd.operation_mode,
+                           'connect_status':str(self.widget_psd.connect_status)}
             self.database.device_info.delete_one({'client_id':self.lineEdit_current_client.text()})
             self.database.device_info.insert_one(device_info)
             self.database.response_info.delete_one({'client_id':self.lineEdit_current_client.text()})
@@ -1071,24 +1074,30 @@ class MyMainWindow(QMainWindow):
         self.fill_cell_operation.start_timer_motion()
 
     def start_exchange(self):
-
         # self.init_start()
         if self.comboBox_exchange_mode.currentText() == 'Continuous':
-            self.start_exchange_advance(not self.checkBox_auto.isChecked())
             if self.main_client_cloud!=None:
                 if not self.main_client_cloud:
                     self.send_cmd_to_cloud('self.start_exchange_advance(not self.checkBox_auto.isChecked())')
+                else:
+                    self.start_exchange_advance(not self.checkBox_auto.isChecked())
+            else:
+                self.start_exchange_advance(not self.checkBox_auto.isChecked())
         elif self.comboBox_exchange_mode.currentText() == 'Intermittent':
-            self.start_exchange_simple(not self.checkBox_auto.isChecked())
             if self.main_client_cloud!=None:
                 if not self.main_client_cloud:
                     self.send_cmd_to_cloud('self.start_exchange_simple(not self.checkBox_auto.isChecked())')
+                else:
+                    self.start_exchange_simple(not self.checkBox_auto.isChecked())
+            else:
+                self.start_exchange_simple(not self.checkBox_auto.isChecked())
 
     @check_any_timer
     def start_exchange_advance(self, onetime):
         self.textBrowser_error_msg.setText('')
         #self.advanced_exchange_operation.resume = True
         self.advanced_exchange_operation.start_motion_timer(onetime)
+        self.widget_psd.operation_mode = 'autorefilling_mode'
 
     @check_any_timer
     def start_exchange_simple(self, onetime):
@@ -1155,8 +1164,11 @@ class MyMainWindow(QMainWindow):
             pass
 
     def stop_all_motion(self):
-        self.advanced_exchange_operation.resume = True
         for each in self.timers:
+            if each==self.timer_update and each.isActive():
+                self.advanced_exchange_operation.resume = True                
+            else:
+                pass
             try:
                 each.stop()
             except:

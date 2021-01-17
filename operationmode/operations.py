@@ -700,13 +700,11 @@ class advancedRefillingOperationMode(baseOperationMode):
     def start_motion_timer(self, onetime = False):
         if not self.resume:
             self.onetime = onetime
-            self.init_motion()
-            #self.timer_beginning = False
-            self.timer_motion.start(100)
+            if self.init_motion():
+                self.timer_motion.start(100)
         else:
-            self.init_motion_resume()
-            #self.timer_beginning = False
-            self.timer_motion.start(100) 
+            if self.init_motion_resume():
+                self.timer_motion.start(100) 
 
     def premotion(self):
         if self.check_synchronization_premotion():
@@ -723,6 +721,16 @@ class advancedRefillingOperationMode(baseOperationMode):
                 self.timer_beginning = False
 
     def init_motion_resume(self):
+        #you can reset the speed during exchange
+        speed = float(self.settings['exchange_speed_handle']())/(1000/self.timeout)
+        self.total_exchange_amount = float(self.settings['total_exchange_amount_handle']())
+        # self.total_exchange_amount = float(self.settings['exchange_speed_handle']())/(1000/self.timeout)
+        self.settings['exchange_speed'] = speed
+        refill_speed = float(self.settings['premotion_speed_handle']())/(1000/self.timeout)
+        self.settings['refill_speed'] = refill_speed
+        if speed>refill_speed:
+            logging.getLogger().exception('Error: Refill speed {} NOT larger than exchange speed {}! Reset one of them please!'.format(refill_speed, speed))
+            return False
         if not self.demo:
             '''
             while True:
@@ -743,7 +751,7 @@ class advancedRefillingOperationMode(baseOperationMode):
             else:
                 self.server_devices['exchange_pair']['S1_S3'].exchange(volume = self.server_devices['exchange_pair']['S1_S3'].exchangeableVolume,rate = float(self.settings['refill_speed_handle']())*1000)
                 self.server_devices['exchange_pair']['S2_S4'].exchange(volume = self.server_devices['exchange_pair']['S2_S4'].exchangeableVolume,rate = float(self.settings['exchange_speed_handle']())*1000)
-
+        return True
 
     def init_motion(self):
         self.psd_widget.operation_mode = 'auto_refilling'
@@ -754,7 +762,9 @@ class advancedRefillingOperationMode(baseOperationMode):
         self.settings['exchange_speed'] = speed
         refill_speed = float(self.settings['premotion_speed_handle']())/(1000/self.timeout)
         self.settings['refill_speed'] = refill_speed
-
+        if speed>refill_speed:
+            logging.getLogger().exception('Error: Refill speed {} NOT larger than exchange speed {}! Reset one of them please!'.format(refill_speed, speed))
+            return False
         #syringe_1 to syringe_4
         self.turn_valve(1,'left')
         setattr(self.psd_widget, 'filling_status_syringe_{}'.format(1), True)
@@ -794,6 +804,7 @@ class advancedRefillingOperationMode(baseOperationMode):
             # while, S2 and S4 are connected to cell for exchangeing
             self.server_devices['exchange_pair']['S1_S3'].exchange(volume = self.server_devices['exchange_pair']['S1_S3'].exchangeableVolume,rate = float(self.settings['refill_speed_handle']())*1000)
             self.server_devices['exchange_pair']['S2_S4'].exchange(volume = self.server_devices['exchange_pair']['S2_S4'].exchangeableVolume,rate = float(self.settings['exchange_speed_handle']())*1000)
+        return True
 
     def check_server_devices_busy(self):
         #If any device is busy, then return True

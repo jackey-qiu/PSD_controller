@@ -521,7 +521,8 @@ class syringe_widget(QWidget):
         qp.setFont(QFont('Decorative', 12))
         qp.setPen(QPen(Qt.red,  4, Qt.SolidLine))
         if self.operation_mode !='clean_mode':
-            qp.drawText(dim[0],dim[1]+80,"{}-->MVP".format(self.mvp_connected_valve))
+            # qp.drawText(dim[0],dim[1]+80,"{}-->MVP".format(self.mvp_connected_valve))
+            qp.drawText(dim[0],dim[1]+80,"S{}-->MVP".format(self.mvp_channel))
         return return_coord_channel, return_coord_cell
 
     def draw_markers(self,qp,rect,which_side = 'left',total_volume_in_ml = 12.5, marker_pos_in_ml = [2,4,6,8,10,12], inverse = True):
