@@ -751,7 +751,7 @@ class MyMainWindow(QMainWindow):
         return float(self.lineEdit_default_speed.text())/1000
 
     def fill_specified_syringe(self):
-        syringe, done = QInputDialog.getInt(self, 'Pick the syringe', 'Enter the syringe_index (integer from 1 to 4):')
+        syringe, done = QInputDialog.getInt(self, 'Pick the syringe', 'Enter the syringe_index (integer from 1 to 4):',value = 1)
         if not done:
             logging.getLogger().exception('Error in getting syringe index from pop-up dialog!')
         else:
@@ -768,6 +768,9 @@ class MyMainWindow(QMainWindow):
                 if self.main_client_cloud!=None:
                     if not self.main_client_cloud:
                         self.send_cmd_to_cloud('\n'.join(cmd_list))
+                    else:
+                        for each in cmd_list:
+                            exec(each)
                 else:
                     for each in cmd_list:
                         exec(each)
@@ -1333,7 +1336,16 @@ class RefillCellSetup(QDialog):
                             'self.start_fill_cell()'
                             ]
                 self.parent.send_cmd_to_cloud('\n'.join(cmd_list))
-                return
+            else:
+                assert syringe_index in [1,2,3,4], 'Warning: The syringe index is not set right. It should be integer from 1 to 4!'
+                assert type(refill_times)==int and refill_times>=1, 'Warning: The refill is not set right. It should be integer >1!'
+                self.parent.widget_psd.actived_syringe_fill_cell_mode = syringe_index
+                self.parent.widget_psd.refill_times_fill_cell_mode = refill_times*2 # in the script, one stroke filled or emptied is counted as one time, so need to mult by 2
+                self.parent.widget_psd.refill_speed_fill_cell_mode = refill_speed
+                self.parent.widget_psd.disposal_speed_fill_cell_mode = disposal_speed
+                self.parent.widget_psd.vol_to_cell_fill_cell_mode = vol_to_cell
+                self.parent.widget_psd.vol_to_waste_fill_cell_mode = vol_to_waste
+                self.parent.start_fill_cell()
         else:
             assert syringe_index in [1,2,3,4], 'Warning: The syringe index is not set right. It should be integer from 1 to 4!'
             assert type(refill_times)==int and refill_times>=1, 'Warning: The refill is not set right. It should be integer >1!'
