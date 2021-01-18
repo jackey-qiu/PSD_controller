@@ -187,6 +187,7 @@ class StartPumpClientDialog(QDialog):
     
     def load_file(self):
         self.parent.create_pump_client(config_file = self.lineEdit_config_path.text(), device_name = 'exp/ec/pump1', config_use = True)
+        self.parent.timer_syn_server_and_gui.start(100)
 
     def load_file_without_config(self):
         self.parent.create_pump_client(config_file = self.lineEdit_config_path.text(), device_name = self.lineEdit_device_name.text(), config_use = False)
@@ -197,6 +198,7 @@ class StartPumpClientDialog(QDialog):
             self.parent.client = psd.connect(cmd)
             self.parent.init_server_devices()
             self.parent.set_up_operations()
+            self.parent.timer_syn_server_and_gui.start(100)
         except Exception as e:
             error_pop_up('Fail to start start client.'+'\n{}'.format(str(e)),'Error')
 
@@ -343,6 +345,10 @@ class MyMainWindow(QMainWindow):
         self.timer_renew_device_info_cloud.timeout.connect(self.update_device_info_to_cloud)
         self.timer_renew_device_info_gui.timeout.connect(self.update_device_info_from_cloud)
 
+        ##timmer to syn gui meta status to client config
+        self.timer_syn_server_and_gui = QTimer(self)
+        self.timer_syn_server_and_gui.timeout.connect(self.syn_server_and_gui)
+
         #webcam timer
         self.timer_webcam = QTimer(self)
         self.timer_webcam.timeout.connect(self.viewCam)
@@ -389,6 +395,41 @@ class MyMainWindow(QMainWindow):
         self.pushButton_connect_mvp_syringe_1.click()
         self.syn_valve_pos()
         #instances of operation modes
+
+    def syn_server_and_gui(self):
+        running = False
+        for each_timer in self.timers:
+            if each_timer.isActive():
+                running = true
+                break
+        if running:#update gui info in the server config
+            gui_info = {
+                        'S1_vol': self.widget_psd.volume_syringe_1,
+                        'valve_pos':self.widget_psd.connect_valve_port,
+                        'S2_vol': self.widget_psd.volume_syringe_2,
+                        'S3_vol': self.widget_psd.volume_syringe_3,
+                        'S4_vol': self.widget_psd.volume_syringe_4,
+                        'cell_vol':self.widget_psd.volume_of_electrolyte_in_cell,
+                        'mvp_valve': self.widget_psd.mvp_channel,
+                        'resevoir_vol': self.widget_psd.resevoir_volumn,
+                        'waste_vol': self.widget_psd.waste_volumn,
+                        'operation_mode': self.widget_psd.operation_mode,
+                        'connect_status':self.widget_psd.connect_status
+                        }
+            self.client.configuration.update(gui_info)
+        else:#pull gui info from server config
+            self.widget_psd.volume_syringe_1 = self.client.configuration.get('S1_vol',0)
+            self.widget_psd.volume_syringe_2 = self.client.configuration.get('S2_vol',0)
+            self.widget_psd.volume_syringe_3 = self.client.configuration.get('S3_vol',0)
+            self.widget_psd.volume_syringe_4 = self.client.configuration.get('S4_vol',0)
+            self.widget_psd.connect_valve_port = self.client.configuration.get('valve_pos',{1:'up',2:'up',3:'up',4:'up'})
+            self.widget_psd.volume_of_electrolyte_in_cell = self.client.configuration.get('cell_vol',0)
+            self.widget_psd.mvp_channel = self.client.configuration.get('mvp_valve',1)
+            self.widget_psd.resevoir_volumn = self.client.configuration.get('resevoir_vol',250)
+            self.widget_psd.waste_volumn = self.client.configuration.get('waste_vol',0)
+            self.widget_psd.operation_mode = self.client.configuration.get('operation_mode','not_ready_mode')
+            self.widget_psd.connect_status = self.client.configuration.get('connect_status',{1:'disconnected',2:'disconnected',3:'disconnected',4:'disconnected', 'mvp': 'disconnected'})
+            self.widget_psd.update()
 
     def start_mongo_client_cloud(self):
         if self.lineEdit_database_name.text()=='':

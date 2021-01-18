@@ -106,7 +106,6 @@ devices:
       4: Cell outlet 2
 
 operations:
-   
    ExchangePair:
       Exchanger 1: # name of the ExchangePair
          args:
@@ -148,8 +147,7 @@ operations:
          defaultDrainRate: 400 #muL/s
          defaultRate: 60 #muL/s
          dispenseDelay: 0.0 #s
-         bubbleDispense: 500 # muL
-         
+         bubbleDispense: 500 # muL       
          
             
     
