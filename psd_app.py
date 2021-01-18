@@ -166,6 +166,7 @@ class StartPumpClientDialog(QDialog):
         self.pushButton_init_s4.clicked.connect(lambda:self.initialize_device(4,'syringe'))
         self.pushButton_init_mvp.clicked.connect(lambda:self.initialize_device(None,'mvp'))
         self.pushButton_init_all.clicked.connect(lambda:self.initialize_all_device([1,2,3,4,None],['syringe']*4+['mvp']))
+        self.pushButton_create_client.clicked.connect(self.create_client_without_config)
         # self.pushButton_load_without_config.clicked.connect(self.load_file_without_config)
 
     def open_file(self):
@@ -189,6 +190,15 @@ class StartPumpClientDialog(QDialog):
 
     def load_file_without_config(self):
         self.parent.create_pump_client(config_file = self.lineEdit_config_path.text(), device_name = self.lineEdit_device_name.text(), config_use = False)
+
+    def create_client_without_config(self):
+        cmd = '{}:{}{}#dbase=no'.format(self.lineEdit_ip.text(),self.lineEdit_port.text(),self.lineEdit_device_name.text())
+        try:
+            self.parent.client = psd.connect(cmd)
+            self.parent.init_server_devices()
+            self.parent.set_up_operations()
+        except Exception as e:
+            error_pop_up('Fail to start start client.'+'\n{}'.format(str(e)),'Error')
 
     def initialize_device(self, device_id, device_type):
         if device_type == 'syringe':
@@ -694,9 +704,9 @@ class MyMainWindow(QMainWindow):
                                                 settings = {'premotion_speed_handle':self.get_default_filling_speed,
                                                             'total_exchange_amount_handle':lambda:self.doubleSpinBox_exchange_amount.value()/1000,
                                                             'exchange_speed_handle':lambda:self.doubleSpinBox.value()/1000,
-                                                            'pre_pressure_volume_handle':lambda:self.doubleSpinBox_prepresure_vol()/1000.,
-                                                            'pre_pressure_speed_handle':lambda:self.doubleSpinBox_prepressure_rate()/1000.,
-                                                            'leftover_volume_handle':lambda:self.doubleSpinBox_leftover_vol()/1000.,
+                                                            'pre_pressure_volume_handle':lambda:self.doubleSpinBox_prepresure_vol.value()/1000.,
+                                                            'pre_pressure_speed_handle':lambda:self.doubleSpinBox_prepressure_rate.value()/1000.,
+                                                            'leftover_volume_handle':lambda:self.doubleSpinBox_leftover_vol.value()/1000.,
                                                             'refill_speed_handle':self.get_default_filling_speed,
                                                             'time_record_handle':self.display_exchange_time,
                                                             'volume_record_handle':self.display_exchange_volume,
@@ -1393,6 +1403,7 @@ class Cleaner(QDialog):
             self.start_motion(index)
 
     def stop_all(self,index_list = [1,2,3,4]):
+        self.parent.client.stop()
         for index in index_list:
             self.stop_motion(index)
 
