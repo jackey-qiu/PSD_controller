@@ -1,0 +1,2572 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1920</width>
+    <height>1027</height>
+   </rect>
+  </property>
+  <property name="sizePolicy">
+   <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
+    <horstretch>0</horstretch>
+    <verstretch>0</verstretch>
+   </sizepolicy>
+  </property>
+  <property name="maximumSize">
+   <size>
+    <width>16777215</width>
+    <height>10560</height>
+   </size>
+  </property>
+  <property name="windowTitle">
+   <string>MainWindow</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QVBoxLayout" name="verticalLayout_7">
+    <item>
+     <widget class="QFrame" name="frame">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="maximumSize">
+       <size>
+        <width>16777215</width>
+        <height>700000</height>
+       </size>
+      </property>
+      <property name="frameShape">
+       <enum>QFrame::StyledPanel</enum>
+      </property>
+      <property name="frameShadow">
+       <enum>QFrame::Raised</enum>
+      </property>
+      <layout class="QVBoxLayout" name="verticalLayout_3">
+       <item>
+        <widget class="QFrame" name="frame_5">
+         <property name="frameShape">
+          <enum>QFrame::StyledPanel</enum>
+         </property>
+         <property name="frameShadow">
+          <enum>QFrame::Raised</enum>
+         </property>
+         <layout class="QHBoxLayout" name="horizontalLayout_6">
+          <item>
+           <widget class="syringe_widget" name="widget_psd" native="true">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>16777215</width>
+              <height>6000</height>
+             </size>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QFrame" name="frame_4">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>500</width>
+              <height>400</height>
+             </size>
+            </property>
+            <property name="frameShape">
+             <enum>QFrame::StyledPanel</enum>
+            </property>
+            <property name="frameShadow">
+             <enum>QFrame::Raised</enum>
+            </property>
+            <layout class="QHBoxLayout" name="horizontalLayout_3">
+             <item>
+              <widget class="QTabWidget" name="tabWidget">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="minimumSize">
+                <size>
+                 <width>0</width>
+                 <height>0</height>
+                </size>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>500</width>
+                 <height>500</height>
+                </size>
+               </property>
+               <property name="currentIndex">
+                <number>0</number>
+               </property>
+               <widget class="QWidget" name="tab">
+                <attribute name="title">
+                 <string>CamViewer</string>
+                </attribute>
+                <layout class="QHBoxLayout" name="horizontalLayout_4">
+                 <item>
+                  <widget class="QLabel" name="label_cam">
+                   <property name="sizePolicy">
+                    <sizepolicy hsizetype="MinimumExpanding" vsizetype="Expanding">
+                     <horstretch>0</horstretch>
+                     <verstretch>0</verstretch>
+                    </sizepolicy>
+                   </property>
+                   <property name="minimumSize">
+                    <size>
+                     <width>500</width>
+                     <height>0</height>
+                    </size>
+                   </property>
+                   <property name="maximumSize">
+                    <size>
+                     <width>4000</width>
+                     <height>4000</height>
+                    </size>
+                   </property>
+                   <property name="text">
+                    <string>webcam</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="Line" name="line">
+                   <property name="orientation">
+                    <enum>Qt::Vertical</enum>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <layout class="QVBoxLayout" name="verticalLayout">
+                   <item>
+                    <widget class="QLabel" name="label_30">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <property name="text">
+                      <string>Camera index</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="QLineEdit" name="lineEdit_camera_index">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <property name="maximumSize">
+                      <size>
+                       <width>60</width>
+                       <height>16777215</height>
+                      </size>
+                     </property>
+                     <property name="text">
+                      <string>0</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="QPushButton" name="pushButton_start_webcam">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <property name="text">
+                      <string>start cam</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="QPushButton" name="pushButton_stop_webcam">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <property name="text">
+                      <string>stop cam</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="QPushButton" name="pushButton_catch_frame">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <property name="text">
+                      <string>Catch img</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <spacer name="verticalSpacer_2">
+                     <property name="orientation">
+                      <enum>Qt::Vertical</enum>
+                     </property>
+                     <property name="sizeHint" stdset="0">
+                      <size>
+                       <width>20</width>
+                       <height>40</height>
+                      </size>
+                     </property>
+                    </spacer>
+                   </item>
+                  </layout>
+                 </item>
+                </layout>
+               </widget>
+              </widget>
+             </item>
+            </layout>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <widget class="QFrame" name="frame_2">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>0</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>16777215</width>
+           <height>4000</height>
+          </size>
+         </property>
+         <property name="frameShape">
+          <enum>QFrame::StyledPanel</enum>
+         </property>
+         <property name="frameShadow">
+          <enum>QFrame::Raised</enum>
+         </property>
+         <layout class="QHBoxLayout" name="horizontalLayout">
+          <item>
+           <widget class="QFrame" name="frame_3">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>1000</width>
+              <height>6000</height>
+             </size>
+            </property>
+            <property name="frameShape">
+             <enum>QFrame::StyledPanel</enum>
+            </property>
+            <property name="frameShadow">
+             <enum>QFrame::Raised</enum>
+            </property>
+            <layout class="QVBoxLayout" name="verticalLayout_4">
+             <item>
+              <widget class="QGroupBox" name="groupBox_2">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>16777215</width>
+                 <height>7000</height>
+                </size>
+               </property>
+               <property name="font">
+                <font>
+                 <weight>75</weight>
+                 <bold>true</bold>
+                </font>
+               </property>
+               <property name="title">
+                <string/>
+               </property>
+               <layout class="QGridLayout" name="gridLayout_2">
+                <item row="4" column="0">
+                 <widget class="QLabel" name="label_23">
+                  <property name="text">
+                   <string>Pre-pressure Vol (ul)</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="4" column="6">
+                 <widget class="QLabel" name="label_25">
+                  <property name="text">
+                   <string>Leftover vol (ul)</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="0" column="9">
+                 <widget class="QPushButton" name="pushButton_dispense_init_mode">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="minimumSize">
+                   <size>
+                    <width>50</width>
+                    <height>50</height>
+                   </size>
+                  </property>
+                  <property name="maximumSize">
+                   <size>
+                    <width>50</width>
+                    <height>50</height>
+                   </size>
+                  </property>
+                  <property name="font">
+                   <font>
+                    <weight>50</weight>
+                    <bold>false</bold>
+                   </font>
+                  </property>
+                  <property name="text">
+                   <string/>
+                  </property>
+                 </widget>
+                </item>
+                <item row="0" column="0">
+                 <widget class="QLabel" name="label_14">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="font">
+                   <font>
+                    <pointsize>13</pointsize>
+                    <weight>50</weight>
+                    <bold>false</bold>
+                    <strikeout>false</strikeout>
+                   </font>
+                  </property>
+                  <property name="frameShape">
+                   <enum>QFrame::WinPanel</enum>
+                  </property>
+                  <property name="frameShadow">
+                   <enum>QFrame::Raised</enum>
+                  </property>
+                  <property name="text">
+                   <string>Adjust Droplet Size</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="0" column="10">
+                 <widget class="QPushButton" name="pushButton_exchange">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="minimumSize">
+                   <size>
+                    <width>50</width>
+                    <height>50</height>
+                   </size>
+                  </property>
+                  <property name="maximumSize">
+                   <size>
+                    <width>50</width>
+                    <height>50</height>
+                   </size>
+                  </property>
+                  <property name="font">
+                   <font>
+                    <weight>50</weight>
+                    <bold>false</bold>
+                   </font>
+                  </property>
+                  <property name="text">
+                   <string/>
+                  </property>
+                 </widget>
+                </item>
+                <item row="0" column="4">
+                 <widget class="QLabel" name="label_46">
+                  <property name="text">
+                   <string>amount (uL)</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="0" column="3">
+                 <widget class="QSpinBox" name="spinBox_speed">
+                  <property name="maximum">
+                   <number>1000</number>
+                  </property>
+                  <property name="value">
+                   <number>5</number>
+                  </property>
+                 </widget>
+                </item>
+                <item row="0" column="1">
+                 <widget class="QLabel" name="label_3">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="text">
+                   <string>speed (uL/s)</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="0" column="8">
+                 <widget class="QPushButton" name="pushButton_fill_init_mode">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="minimumSize">
+                   <size>
+                    <width>50</width>
+                    <height>50</height>
+                   </size>
+                  </property>
+                  <property name="maximumSize">
+                   <size>
+                    <width>50</width>
+                    <height>50</height>
+                   </size>
+                  </property>
+                  <property name="font">
+                   <font>
+                    <weight>50</weight>
+                    <bold>false</bold>
+                   </font>
+                  </property>
+                  <property name="toolTip">
+                   <string notr="true" comment="hello" extracomment="hello"/>
+                  </property>
+                  <property name="toolTipDuration">
+                   <number>4000</number>
+                  </property>
+                  <property name="statusTip">
+                   <string extracomment="hello"/>
+                  </property>
+                  <property name="whatsThis">
+                   <string extracomment="hello"/>
+                  </property>
+                  <property name="text">
+                   <string/>
+                  </property>
+                 </widget>
+                </item>
+                <item row="0" column="6">
+                 <widget class="QSpinBox" name="spinBox_amount">
+                  <property name="maximum">
+                   <number>10000</number>
+                  </property>
+                 </widget>
+                </item>
+                <item row="2" column="4">
+                 <widget class="QDoubleSpinBox" name="doubleSpinBox">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="minimumSize">
+                   <size>
+                    <width>80</width>
+                    <height>0</height>
+                   </size>
+                  </property>
+                  <property name="maximumSize">
+                   <size>
+                    <width>80</width>
+                    <height>16777215</height>
+                   </size>
+                  </property>
+                  <property name="font">
+                   <font>
+                    <weight>50</weight>
+                    <bold>false</bold>
+                   </font>
+                  </property>
+                  <property name="decimals">
+                   <number>1</number>
+                  </property>
+                  <property name="maximum">
+                   <double>5000.000000000000000</double>
+                  </property>
+                  <property name="singleStep">
+                   <double>1.000000000000000</double>
+                  </property>
+                  <property name="value">
+                   <double>100.000000000000000</double>
+                  </property>
+                 </widget>
+                </item>
+                <item row="4" column="3">
+                 <widget class="QLabel" name="label_24">
+                  <property name="text">
+                   <string>Pre-pressure rate (ul/s)</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="2" column="1">
+                 <widget class="QDoubleSpinBox" name="doubleSpinBox_exchange_amount">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="minimumSize">
+                   <size>
+                    <width>80</width>
+                    <height>0</height>
+                   </size>
+                  </property>
+                  <property name="font">
+                   <font>
+                    <weight>50</weight>
+                    <bold>false</bold>
+                   </font>
+                  </property>
+                  <property name="decimals">
+                   <number>1</number>
+                  </property>
+                  <property name="maximum">
+                   <double>250000.000000000000000</double>
+                  </property>
+                  <property name="singleStep">
+                   <double>1.000000000000000</double>
+                  </property>
+                  <property name="value">
+                   <double>250000.000000000000000</double>
+                  </property>
+                 </widget>
+                </item>
+                <item row="2" column="0">
+                 <widget class="QLabel" name="label_43">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="font">
+                   <font>
+                    <weight>50</weight>
+                    <bold>false</bold>
+                   </font>
+                  </property>
+                  <property name="text">
+                   <string>Exchange Vol (ul)</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="4" column="4">
+                 <widget class="QDoubleSpinBox" name="doubleSpinBox_prepressure_rate">
+                  <property name="minimum">
+                   <double>10.000000000000000</double>
+                  </property>
+                  <property name="maximum">
+                   <double>200.000000000000000</double>
+                  </property>
+                 </widget>
+                </item>
+                <item row="2" column="8">
+                 <widget class="QCheckBox" name="checkBox_auto">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="font">
+                   <font>
+                    <weight>50</weight>
+                    <bold>false</bold>
+                   </font>
+                  </property>
+                  <property name="text">
+                   <string>Auto</string>
+                  </property>
+                  <property name="checked">
+                   <bool>true</bool>
+                  </property>
+                 </widget>
+                </item>
+                <item row="2" column="6">
+                 <widget class="QComboBox" name="comboBox_exchange_mode">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="maximumSize">
+                   <size>
+                    <width>120</width>
+                    <height>16777215</height>
+                   </size>
+                  </property>
+                  <property name="font">
+                   <font>
+                    <weight>50</weight>
+                    <bold>false</bold>
+                   </font>
+                  </property>
+                  <item>
+                   <property name="text">
+                    <string>Continuous</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>Intermittent</string>
+                   </property>
+                  </item>
+                 </widget>
+                </item>
+                <item row="2" column="3">
+                 <widget class="QLabel" name="label">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="font">
+                   <font>
+                    <weight>50</weight>
+                    <bold>false</bold>
+                   </font>
+                  </property>
+                  <property name="text">
+                   <string>Exchange rate (ul/s)</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="4" column="1">
+                 <widget class="QDoubleSpinBox" name="doubleSpinBox_prepresure_vol">
+                  <property name="maximum">
+                   <double>1000.000000000000000</double>
+                  </property>
+                 </widget>
+                </item>
+                <item row="4" column="8">
+                 <widget class="QDoubleSpinBox" name="doubleSpinBox_leftover_vol">
+                  <property name="maximum">
+                   <double>2000.000000000000000</double>
+                  </property>
+                 </widget>
+                </item>
+                <item row="4" column="9">
+                 <widget class="QPushButton" name="pushButton_apply">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="font">
+                   <font>
+                    <weight>50</weight>
+                    <bold>false</bold>
+                   </font>
+                  </property>
+                  <property name="text">
+                   <string>Apply</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="4" column="10">
+                 <widget class="QPushButton" name="pushButton_stop">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="text">
+                   <string>stop</string>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </widget>
+             </item>
+             <item>
+              <widget class="QTabWidget" name="tabWidget_3">
+               <property name="tabPosition">
+                <enum>QTabWidget::West</enum>
+               </property>
+               <property name="currentIndex">
+                <number>0</number>
+               </property>
+               <property name="elideMode">
+                <enum>Qt::ElideRight</enum>
+               </property>
+               <widget class="QWidget" name="tab_7">
+                <attribute name="title">
+                 <string>WorkStation</string>
+                </attribute>
+                <layout class="QHBoxLayout" name="horizontalLayout_2">
+                 <item>
+                  <layout class="QGridLayout" name="gridLayout_5">
+                   <item row="5" column="4">
+                    <layout class="QHBoxLayout" name="horizontalLayout_10">
+                     <item>
+                      <widget class="QPushButton" name="pushButton_fill_syringe_4">
+                       <property name="text">
+                        <string>Pick.</string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <widget class="QPushButton" name="pushButton_dispense_syringe_4">
+                       <property name="text">
+                        <string>Disp.</string>
+                       </property>
+                      </widget>
+                     </item>
+                    </layout>
+                   </item>
+                   <item row="5" column="2">
+                    <layout class="QHBoxLayout" name="horizontalLayout_8">
+                     <item>
+                      <widget class="QPushButton" name="pushButton_fill_syringe_2">
+                       <property name="text">
+                        <string>Pick.</string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <widget class="QPushButton" name="pushButton_dispense_syringe_2">
+                       <property name="text">
+                        <string>Disp.</string>
+                       </property>
+                      </widget>
+                     </item>
+                    </layout>
+                   </item>
+                   <item row="5" column="3">
+                    <layout class="QHBoxLayout" name="horizontalLayout_9">
+                     <item>
+                      <widget class="QPushButton" name="pushButton_fill_syringe_3">
+                       <property name="text">
+                        <string>Pick.</string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <widget class="QPushButton" name="pushButton_dispense_syringe_3">
+                       <property name="text">
+                        <string>Disp.</string>
+                       </property>
+                      </widget>
+                     </item>
+                    </layout>
+                   </item>
+                   <item row="5" column="1">
+                    <layout class="QHBoxLayout" name="horizontalLayout_5">
+                     <item>
+                      <widget class="QPushButton" name="pushButton_fill_syringe_1">
+                       <property name="text">
+                        <string>Pick.</string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <widget class="QPushButton" name="pushButton_dispense_syringe_1">
+                       <property name="text">
+                        <string>Disp.</string>
+                       </property>
+                      </widget>
+                     </item>
+                    </layout>
+                   </item>
+                   <item row="4" column="1">
+                    <widget class="QPushButton" name="pushButton_connect_mvp_syringe_1">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <property name="text">
+                      <string>Connect</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="4" column="3">
+                    <widget class="QPushButton" name="pushButton_connect_mvp_syringe_3">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <property name="text">
+                      <string>Connect</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="4" column="2">
+                    <widget class="QPushButton" name="pushButton_connect_mvp_syringe_2">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <property name="text">
+                      <string>Connect</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="5" column="0">
+                    <widget class="QLabel" name="label_21">
+                     <property name="text">
+                      <string>Motions</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="2" column="0">
+                    <widget class="QLabel" name="label_22">
+                     <property name="text">
+                      <string>Volume (ul)</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="2" column="1">
+                    <widget class="QDoubleSpinBox" name="doubleSpinBox_stroke_factor_1">
+                     <property name="decimals">
+                      <number>1</number>
+                     </property>
+                     <property name="maximum">
+                      <double>12500.000000000000000</double>
+                     </property>
+                     <property name="singleStep">
+                      <double>1.000000000000000</double>
+                     </property>
+                     <property name="value">
+                      <double>12500.000000000000000</double>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="4" column="4">
+                    <widget class="QPushButton" name="pushButton_connect_mvp_syringe_4">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <property name="text">
+                      <string>Connect</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="3" column="1">
+                    <widget class="QComboBox" name="comboBox_valve_port_1">
+                     <item>
+                      <property name="text">
+                       <string>up</string>
+                      </property>
+                     </item>
+                     <item>
+                      <property name="text">
+                       <string>left</string>
+                      </property>
+                     </item>
+                     <item>
+                      <property name="text">
+                       <string>right</string>
+                      </property>
+                     </item>
+                    </widget>
+                   </item>
+                   <item row="3" column="0">
+                    <widget class="QLabel" name="label_18">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <property name="text">
+                      <string>Valve position</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="0" column="1">
+                    <widget class="QLabel" name="label_9">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <property name="text">
+                      <string>Syringe1</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="0" column="4">
+                    <widget class="QLabel" name="label_17">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <property name="text">
+                      <string>Syringe 4</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="0" column="3">
+                    <widget class="QLabel" name="label_16">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <property name="text">
+                      <string>Syringe 3</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="0" column="2">
+                    <widget class="QLabel" name="label_15">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <property name="text">
+                      <string>Syringe 2</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="3" column="2">
+                    <widget class="QComboBox" name="comboBox_valve_port_2">
+                     <item>
+                      <property name="text">
+                       <string>up</string>
+                      </property>
+                     </item>
+                     <item>
+                      <property name="text">
+                       <string>left</string>
+                      </property>
+                     </item>
+                     <item>
+                      <property name="text">
+                       <string>right</string>
+                      </property>
+                     </item>
+                    </widget>
+                   </item>
+                   <item row="3" column="3">
+                    <widget class="QComboBox" name="comboBox_valve_port_3">
+                     <item>
+                      <property name="text">
+                       <string>up</string>
+                      </property>
+                     </item>
+                     <item>
+                      <property name="text">
+                       <string>left</string>
+                      </property>
+                     </item>
+                     <item>
+                      <property name="text">
+                       <string>right</string>
+                      </property>
+                     </item>
+                    </widget>
+                   </item>
+                   <item row="2" column="2">
+                    <widget class="QDoubleSpinBox" name="doubleSpinBox_stroke_factor_2">
+                     <property name="decimals">
+                      <number>1</number>
+                     </property>
+                     <property name="maximum">
+                      <double>12500.000000000000000</double>
+                     </property>
+                     <property name="singleStep">
+                      <double>1.000000000000000</double>
+                     </property>
+                     <property name="value">
+                      <double>12500.000000000000000</double>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="4" column="0">
+                    <widget class="QLabel" name="label_20">
+                     <property name="text">
+                      <string>MVP connection</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="1" column="4">
+                    <widget class="QDoubleSpinBox" name="doubleSpinBox_speed_normal_mode_4">
+                     <property name="decimals">
+                      <number>1</number>
+                     </property>
+                     <property name="maximum">
+                      <double>5000.000000000000000</double>
+                     </property>
+                     <property name="value">
+                      <double>100.000000000000000</double>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="1" column="3">
+                    <widget class="QDoubleSpinBox" name="doubleSpinBox_speed_normal_mode_3">
+                     <property name="decimals">
+                      <number>1</number>
+                     </property>
+                     <property name="maximum">
+                      <double>5000.000000000000000</double>
+                     </property>
+                     <property name="value">
+                      <double>100.000000000000000</double>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="3" column="4">
+                    <widget class="QComboBox" name="comboBox_valve_port_4">
+                     <item>
+                      <property name="text">
+                       <string>up</string>
+                      </property>
+                     </item>
+                     <item>
+                      <property name="text">
+                       <string>left</string>
+                      </property>
+                     </item>
+                     <item>
+                      <property name="text">
+                       <string>right</string>
+                      </property>
+                     </item>
+                    </widget>
+                   </item>
+                   <item row="1" column="1">
+                    <widget class="QDoubleSpinBox" name="doubleSpinBox_speed_normal_mode_1">
+                     <property name="decimals">
+                      <number>1</number>
+                     </property>
+                     <property name="maximum">
+                      <double>5000.000000000000000</double>
+                     </property>
+                     <property name="value">
+                      <double>100.000000000000000</double>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="1" column="0">
+                    <widget class="QLabel" name="label_19">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <property name="text">
+                      <string>Speed (ul/s)</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="1" column="2">
+                    <widget class="QDoubleSpinBox" name="doubleSpinBox_speed_normal_mode_2">
+                     <property name="decimals">
+                      <number>1</number>
+                     </property>
+                     <property name="maximum">
+                      <double>5000.000000000000000</double>
+                     </property>
+                     <property name="value">
+                      <double>100.000000000000000</double>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="2" column="4">
+                    <widget class="QDoubleSpinBox" name="doubleSpinBox_stroke_factor_4">
+                     <property name="decimals">
+                      <number>1</number>
+                     </property>
+                     <property name="maximum">
+                      <double>12500.000000000000000</double>
+                     </property>
+                     <property name="singleStep">
+                      <double>1.000000000000000</double>
+                     </property>
+                     <property name="value">
+                      <double>12500.000000000000000</double>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="2" column="3">
+                    <widget class="QDoubleSpinBox" name="doubleSpinBox_stroke_factor_3">
+                     <property name="decimals">
+                      <number>1</number>
+                     </property>
+                     <property name="maximum">
+                      <double>12500.000000000000000</double>
+                     </property>
+                     <property name="singleStep">
+                      <double>1.000000000000000</double>
+                     </property>
+                     <property name="value">
+                      <double>12500.000000000000000</double>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="0" column="0">
+                    <widget class="QPushButton" name="pushButton_stop_normal">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <property name="text">
+                      <string>STOP</string>
+                     </property>
+                    </widget>
+                   </item>
+                  </layout>
+                 </item>
+                 <item>
+                  <spacer name="horizontalSpacer">
+                   <property name="orientation">
+                    <enum>Qt::Horizontal</enum>
+                   </property>
+                   <property name="sizeHint" stdset="0">
+                    <size>
+                     <width>40</width>
+                     <height>20</height>
+                    </size>
+                   </property>
+                  </spacer>
+                 </item>
+                </layout>
+               </widget>
+               <widget class="QWidget" name="tab_8">
+                <attribute name="title">
+                 <string>SettingsTable</string>
+                </attribute>
+                <layout class="QVBoxLayout" name="verticalLayout_2">
+                 <item>
+                  <layout class="QHBoxLayout" name="horizontalLayout_12">
+                   <item>
+                    <widget class="QPushButton" name="pushButton_load_config">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <property name="text">
+                      <string>LoadSettings</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="QPushButton" name="pushButton_save_config">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <property name="text">
+                      <string>SaveSettings</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="QPushButton" name="pushButton_apply_settings">
+                     <property name="text">
+                      <string>ApplySettings</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <spacer name="horizontalSpacer_5">
+                     <property name="orientation">
+                      <enum>Qt::Horizontal</enum>
+                     </property>
+                     <property name="sizeType">
+                      <enum>QSizePolicy::MinimumExpanding</enum>
+                     </property>
+                     <property name="sizeHint" stdset="0">
+                      <size>
+                       <width>40</width>
+                       <height>25</height>
+                      </size>
+                     </property>
+                    </spacer>
+                   </item>
+                  </layout>
+                 </item>
+                 <item>
+                  <layout class="QGridLayout" name="gridLayout">
+                   <property name="leftMargin">
+                    <number>0</number>
+                   </property>
+                   <property name="topMargin">
+                    <number>0</number>
+                   </property>
+                   <property name="horizontalSpacing">
+                    <number>0</number>
+                   </property>
+                   <item row="1" column="5">
+                    <widget class="QLineEdit" name="lineEdit_sol_1">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <property name="maximumSize">
+                      <size>
+                       <width>90</width>
+                       <height>16777215</height>
+                      </size>
+                     </property>
+                     <property name="text">
+                      <string>NaOH</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="0" column="5">
+                    <widget class="QLabel" name="label_45">
+                     <property name="text">
+                      <string>Solution</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="2" column="5">
+                    <widget class="QLineEdit" name="lineEdit_sol_2">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <property name="maximumSize">
+                      <size>
+                       <width>90</width>
+                       <height>16777215</height>
+                      </size>
+                     </property>
+                     <property name="text">
+                      <string>NaOH</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="3" column="1">
+                    <widget class="QComboBox" name="comboBox_S3_left">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <item>
+                      <property name="text">
+                       <string>cell_outlet</string>
+                      </property>
+                     </item>
+                     <item>
+                      <property name="text">
+                       <string>not_used</string>
+                      </property>
+                     </item>
+                     <item>
+                      <property name="text">
+                       <string>waste</string>
+                      </property>
+                     </item>
+                     <item>
+                      <property name="text">
+                       <string>resevoir</string>
+                      </property>
+                     </item>
+                     <item>
+                      <property name="text">
+                       <string>cell_inlet</string>
+                      </property>
+                     </item>
+                    </widget>
+                   </item>
+                   <item row="2" column="3">
+                    <widget class="QComboBox" name="comboBox_S2_right">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <item>
+                      <property name="text">
+                       <string>cell_inlet</string>
+                      </property>
+                     </item>
+                     <item>
+                      <property name="text">
+                       <string>not_used</string>
+                      </property>
+                     </item>
+                     <item>
+                      <property name="text">
+                       <string>waste</string>
+                      </property>
+                     </item>
+                     <item>
+                      <property name="text">
+                       <string>resevoir</string>
+                      </property>
+                     </item>
+                     <item>
+                      <property name="text">
+                       <string>cell_outlet</string>
+                      </property>
+                     </item>
+                    </widget>
+                   </item>
+                   <item row="2" column="1">
+                    <widget class="QComboBox" name="comboBox_S2_left">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <item>
+                      <property name="text">
+                       <string>resevoir</string>
+                      </property>
+                     </item>
+                     <item>
+                      <property name="text">
+                       <string>not_used</string>
+                      </property>
+                     </item>
+                     <item>
+                      <property name="text">
+                       <string>waste</string>
+                      </property>
+                     </item>
+                     <item>
+                      <property name="text">
+                       <string>cell_inlet</string>
+                      </property>
+                     </item>
+                     <item>
+                      <property name="text">
+                       <string>cell_outlet</string>
+                      </property>
+                     </item>
+                    </widget>
+                   </item>
+                   <item row="0" column="1">
+                    <widget class="QLabel" name="label_6">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <property name="text">
+                      <string>left</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="1" column="0">
+                    <widget class="QLabel" name="label_5">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <property name="text">
+                      <string>Syringe_1</string>
+                     </property>
+                     <property name="alignment">
+                      <set>Qt::AlignCenter</set>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="2" column="0">
+                    <widget class="QLabel" name="label_11">
+                     <property name="text">
+                      <string>Syringe_2</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="0" column="3">
+                    <widget class="QLabel" name="label_8">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <property name="text">
+                      <string>right</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="3" column="0">
+                    <widget class="QLabel" name="label_12">
+                     <property name="text">
+                      <string>Syringe_3</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="4" column="0">
+                    <widget class="QLabel" name="label_13">
+                     <property name="text">
+                      <string>Syringe_4</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="1" column="3">
+                    <widget class="QComboBox" name="comboBox_S1_right">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <item>
+                      <property name="text">
+                       <string>cell_inlet</string>
+                      </property>
+                     </item>
+                     <item>
+                      <property name="text">
+                       <string>not_used</string>
+                      </property>
+                     </item>
+                     <item>
+                      <property name="text">
+                       <string>waste</string>
+                      </property>
+                     </item>
+                     <item>
+                      <property name="text">
+                       <string>resevoir</string>
+                      </property>
+                     </item>
+                     <item>
+                      <property name="text">
+                       <string>cell_outlet</string>
+                      </property>
+                     </item>
+                    </widget>
+                   </item>
+                   <item row="1" column="2">
+                    <widget class="QComboBox" name="comboBox_S1_up">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <item>
+                      <property name="text">
+                       <string>waste</string>
+                      </property>
+                     </item>
+                     <item>
+                      <property name="text">
+                       <string>not_used</string>
+                      </property>
+                     </item>
+                     <item>
+                      <property name="text">
+                       <string>resevoir</string>
+                      </property>
+                     </item>
+                     <item>
+                      <property name="text">
+                       <string>cell_inlet</string>
+                      </property>
+                     </item>
+                     <item>
+                      <property name="text">
+                       <string>cell_outlet</string>
+                      </property>
+                     </item>
+                    </widget>
+                   </item>
+                   <item row="2" column="2">
+                    <widget class="QComboBox" name="comboBox_S2_up">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <item>
+                      <property name="text">
+                       <string>waste</string>
+                      </property>
+                     </item>
+                     <item>
+                      <property name="text">
+                       <string>not_used</string>
+                      </property>
+                     </item>
+                     <item>
+                      <property name="text">
+                       <string>resevoir</string>
+                      </property>
+                     </item>
+                     <item>
+                      <property name="text">
+                       <string>cell_inlet</string>
+                      </property>
+                     </item>
+                     <item>
+                      <property name="text">
+                       <string>cell_outlet</string>
+                      </property>
+                     </item>
+                    </widget>
+                   </item>
+                   <item row="1" column="1">
+                    <widget class="QComboBox" name="comboBox_S1_left">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <item>
+                      <property name="text">
+                       <string>resevoir</string>
+                      </property>
+                     </item>
+                     <item>
+                      <property name="text">
+                       <string>not_used</string>
+                      </property>
+                     </item>
+                     <item>
+                      <property name="text">
+                       <string>waste</string>
+                      </property>
+                     </item>
+                     <item>
+                      <property name="text">
+                       <string>cell_inlet</string>
+                      </property>
+                     </item>
+                     <item>
+                      <property name="text">
+                       <string>cell_outlet</string>
+                      </property>
+                     </item>
+                    </widget>
+                   </item>
+                   <item row="3" column="2">
+                    <widget class="QComboBox" name="comboBox_S3_up">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <item>
+                      <property name="text">
+                       <string>waste</string>
+                      </property>
+                     </item>
+                     <item>
+                      <property name="text">
+                       <string>not_used</string>
+                      </property>
+                     </item>
+                     <item>
+                      <property name="text">
+                       <string>resevoir</string>
+                      </property>
+                     </item>
+                     <item>
+                      <property name="text">
+                       <string>cell_inlet</string>
+                      </property>
+                     </item>
+                     <item>
+                      <property name="text">
+                       <string>cell_outlet</string>
+                      </property>
+                     </item>
+                    </widget>
+                   </item>
+                   <item row="4" column="1">
+                    <widget class="QComboBox" name="comboBox_S4_left">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <item>
+                      <property name="text">
+                       <string>cell_outlet</string>
+                      </property>
+                     </item>
+                     <item>
+                      <property name="text">
+                       <string>not_used</string>
+                      </property>
+                     </item>
+                     <item>
+                      <property name="text">
+                       <string>waste</string>
+                      </property>
+                     </item>
+                     <item>
+                      <property name="text">
+                       <string>resevoir</string>
+                      </property>
+                     </item>
+                     <item>
+                      <property name="text">
+                       <string>cell_inlet</string>
+                      </property>
+                     </item>
+                    </widget>
+                   </item>
+                   <item row="4" column="2">
+                    <widget class="QComboBox" name="comboBox_S4_up">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <item>
+                      <property name="text">
+                       <string>waste</string>
+                      </property>
+                     </item>
+                     <item>
+                      <property name="text">
+                       <string>not_used</string>
+                      </property>
+                     </item>
+                     <item>
+                      <property name="text">
+                       <string>resevoir</string>
+                      </property>
+                     </item>
+                     <item>
+                      <property name="text">
+                       <string>cell_inlet</string>
+                      </property>
+                     </item>
+                     <item>
+                      <property name="text">
+                       <string>cell_outlet</string>
+                      </property>
+                     </item>
+                    </widget>
+                   </item>
+                   <item row="1" column="4">
+                    <widget class="QComboBox" name="comboBox_S1_mvp">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <item>
+                      <property name="text">
+                       <string>channel_1</string>
+                      </property>
+                     </item>
+                     <item>
+                      <property name="text">
+                       <string>not_used</string>
+                      </property>
+                     </item>
+                     <item>
+                      <property name="text">
+                       <string>channel_2</string>
+                      </property>
+                     </item>
+                     <item>
+                      <property name="text">
+                       <string>channel_3</string>
+                      </property>
+                     </item>
+                     <item>
+                      <property name="text">
+                       <string>channel_4</string>
+                      </property>
+                     </item>
+                    </widget>
+                   </item>
+                   <item row="2" column="4">
+                    <widget class="QComboBox" name="comboBox_S2_mvp">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <item>
+                      <property name="text">
+                       <string>channel_2</string>
+                      </property>
+                     </item>
+                     <item>
+                      <property name="text">
+                       <string>not_used</string>
+                      </property>
+                     </item>
+                     <item>
+                      <property name="text">
+                       <string>channel_1</string>
+                      </property>
+                     </item>
+                     <item>
+                      <property name="text">
+                       <string>channel_3</string>
+                      </property>
+                     </item>
+                     <item>
+                      <property name="text">
+                       <string>channel_4</string>
+                      </property>
+                     </item>
+                    </widget>
+                   </item>
+                   <item row="3" column="4">
+                    <widget class="QComboBox" name="comboBox_S3_mvp">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <item>
+                      <property name="text">
+                       <string>not_used</string>
+                      </property>
+                     </item>
+                     <item>
+                      <property name="text">
+                       <string>channel_1</string>
+                      </property>
+                     </item>
+                     <item>
+                      <property name="text">
+                       <string>channel_2</string>
+                      </property>
+                     </item>
+                     <item>
+                      <property name="text">
+                       <string>channel_3</string>
+                      </property>
+                     </item>
+                     <item>
+                      <property name="text">
+                       <string>channel_4</string>
+                      </property>
+                     </item>
+                    </widget>
+                   </item>
+                   <item row="4" column="4">
+                    <widget class="QComboBox" name="comboBox_S4_mvp">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <item>
+                      <property name="text">
+                       <string>not_used</string>
+                      </property>
+                     </item>
+                     <item>
+                      <property name="text">
+                       <string>channel_1</string>
+                      </property>
+                     </item>
+                     <item>
+                      <property name="text">
+                       <string>channel_2</string>
+                      </property>
+                     </item>
+                     <item>
+                      <property name="text">
+                       <string>channel_3</string>
+                      </property>
+                     </item>
+                     <item>
+                      <property name="text">
+                       <string>channel_4</string>
+                      </property>
+                     </item>
+                    </widget>
+                   </item>
+                   <item row="0" column="0">
+                    <widget class="QLabel" name="label_4">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <property name="text">
+                      <string>Syringe #</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="0" column="2">
+                    <widget class="QLabel" name="label_7">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <property name="text">
+                      <string>up</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="0" column="4">
+                    <widget class="QLabel" name="label_10">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <property name="text">
+                      <string>MVP</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="4" column="3">
+                    <widget class="QComboBox" name="comboBox_S4_right">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <item>
+                      <property name="text">
+                       <string>not_used</string>
+                      </property>
+                     </item>
+                     <item>
+                      <property name="text">
+                       <string>waste</string>
+                      </property>
+                     </item>
+                     <item>
+                      <property name="text">
+                       <string>resevoir</string>
+                      </property>
+                     </item>
+                     <item>
+                      <property name="text">
+                       <string>cell_inlet</string>
+                      </property>
+                     </item>
+                     <item>
+                      <property name="text">
+                       <string>cell_outlet</string>
+                      </property>
+                     </item>
+                    </widget>
+                   </item>
+                   <item row="3" column="3">
+                    <widget class="QComboBox" name="comboBox_S3_right">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <item>
+                      <property name="text">
+                       <string>not_used</string>
+                      </property>
+                     </item>
+                     <item>
+                      <property name="text">
+                       <string>waste</string>
+                      </property>
+                     </item>
+                     <item>
+                      <property name="text">
+                       <string>resevoir</string>
+                      </property>
+                     </item>
+                     <item>
+                      <property name="text">
+                       <string>cell_inlet</string>
+                      </property>
+                     </item>
+                     <item>
+                      <property name="text">
+                       <string>cell_outlet</string>
+                      </property>
+                     </item>
+                    </widget>
+                   </item>
+                   <item row="3" column="5">
+                    <widget class="QLineEdit" name="lineEdit_sol_3">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <property name="maximumSize">
+                      <size>
+                       <width>90</width>
+                       <height>16777215</height>
+                      </size>
+                     </property>
+                     <property name="text">
+                      <string>waste</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="4" column="5">
+                    <widget class="QLineEdit" name="lineEdit_sol_4">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <property name="maximumSize">
+                      <size>
+                       <width>90</width>
+                       <height>16777215</height>
+                      </size>
+                     </property>
+                     <property name="text">
+                      <string>waste</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="0" column="6">
+                    <widget class="QLabel" name="label_2">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <property name="text">
+                      <string>Volume (ml)</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="1" column="6">
+                    <widget class="QLineEdit" name="lineEdit_vol_1">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <property name="maximumSize">
+                      <size>
+                       <width>90</width>
+                       <height>16777215</height>
+                      </size>
+                     </property>
+                     <property name="text">
+                      <string>250</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="2" column="6">
+                    <widget class="QLineEdit" name="lineEdit_vol_2">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <property name="maximumSize">
+                      <size>
+                       <width>90</width>
+                       <height>16777215</height>
+                      </size>
+                     </property>
+                     <property name="text">
+                      <string>250</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="3" column="6">
+                    <widget class="QLineEdit" name="lineEdit_vol_3">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <property name="maximumSize">
+                      <size>
+                       <width>90</width>
+                       <height>16777215</height>
+                      </size>
+                     </property>
+                     <property name="text">
+                      <string>None</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="4" column="6">
+                    <widget class="QLineEdit" name="lineEdit_vol_4">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <property name="maximumSize">
+                      <size>
+                       <width>90</width>
+                       <height>16777215</height>
+                      </size>
+                     </property>
+                     <property name="text">
+                      <string>None</string>
+                     </property>
+                    </widget>
+                   </item>
+                  </layout>
+                 </item>
+                 <item>
+                  <layout class="QHBoxLayout" name="horizontalLayout_14">
+                   <item>
+                    <widget class="QLabel" name="label_27">
+                     <property name="text">
+                      <string>Default refilling speed</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="QLineEdit" name="lineEdit_default_speed">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <property name="text">
+                      <string>500</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="QLabel" name="label_28">
+                     <property name="text">
+                      <string>ul/s</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <spacer name="horizontalSpacer_2">
+                     <property name="orientation">
+                      <enum>Qt::Horizontal</enum>
+                     </property>
+                     <property name="sizeHint" stdset="0">
+                      <size>
+                       <width>40</width>
+                       <height>20</height>
+                      </size>
+                     </property>
+                    </spacer>
+                   </item>
+                  </layout>
+                 </item>
+                 <item>
+                  <spacer name="verticalSpacer">
+                   <property name="orientation">
+                    <enum>Qt::Vertical</enum>
+                   </property>
+                   <property name="sizeHint" stdset="0">
+                    <size>
+                     <width>20</width>
+                     <height>40</height>
+                    </size>
+                   </property>
+                  </spacer>
+                 </item>
+                </layout>
+               </widget>
+              </widget>
+             </item>
+            </layout>
+           </widget>
+          </item>
+          <item>
+           <widget class="QFrame" name="frame_6">
+            <property name="frameShape">
+             <enum>QFrame::StyledPanel</enum>
+            </property>
+            <property name="frameShadow">
+             <enum>QFrame::Raised</enum>
+            </property>
+            <layout class="QHBoxLayout" name="horizontalLayout_7">
+             <item>
+              <widget class="QTabWidget" name="tabWidget_2">
+               <property name="currentIndex">
+                <number>2</number>
+               </property>
+               <widget class="QWidget" name="tab_4">
+                <attribute name="title">
+                 <string>Message</string>
+                </attribute>
+                <layout class="QHBoxLayout" name="horizontalLayout_11">
+                 <item>
+                  <widget class="QTextBrowser" name="textBrowser_error_msg"/>
+                 </item>
+                </layout>
+               </widget>
+               <widget class="QWidget" name="tab_5">
+                <attribute name="title">
+                 <string>Terminal</string>
+                </attribute>
+                <layout class="QHBoxLayout" name="horizontalLayout_13">
+                 <item>
+                  <widget class="TerminalWidget" name="widget_terminal" native="true"/>
+                 </item>
+                </layout>
+               </widget>
+               <widget class="QWidget" name="tab_2">
+                <attribute name="title">
+                 <string>ClientPairing</string>
+                </attribute>
+                <layout class="QVBoxLayout" name="verticalLayout_5">
+                 <item>
+                  <layout class="QFormLayout" name="formLayout">
+                   <item row="1" column="0">
+                    <widget class="QLabel" name="label_29">
+                     <property name="text">
+                      <string>Current client ID</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="1" column="1">
+                    <widget class="QLineEdit" name="lineEdit_current_client">
+                     <property name="readOnly">
+                      <bool>true</bool>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="2" column="0">
+                    <widget class="QLabel" name="label_31">
+                     <property name="text">
+                      <string>Paired client ID</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="2" column="1">
+                    <widget class="QLineEdit" name="lineEdit_paired_client">
+                     <property name="readOnly">
+                      <bool>true</bool>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="3" column="0">
+                    <widget class="QLabel" name="label_32">
+                     <property name="text">
+                      <string>Main client ID</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="3" column="1">
+                    <widget class="QLineEdit" name="lineEdit_main_client">
+                     <property name="readOnly">
+                      <bool>true</bool>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="0" column="0">
+                    <widget class="QLabel" name="label_36">
+                     <property name="text">
+                      <string>Database name</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="0" column="1">
+                    <widget class="QLineEdit" name="lineEdit_database_name">
+                     <property name="readOnly">
+                      <bool>true</bool>
+                     </property>
+                    </widget>
+                   </item>
+                  </layout>
+                 </item>
+                 <item>
+                  <layout class="QHBoxLayout" name="horizontalLayout_18">
+                   <item>
+                    <widget class="QPushButton" name="pushButton_connect_cloud">
+                     <property name="text">
+                      <string>Connect to Cloud</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="QPushButton" name="pushButton_listen">
+                     <property name="text">
+                      <string>Listening</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="QPushButton" name="pushButton_stop_listen">
+                     <property name="text">
+                      <string>StopListening</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <spacer name="horizontalSpacer_3">
+                     <property name="orientation">
+                      <enum>Qt::Horizontal</enum>
+                     </property>
+                     <property name="sizeHint" stdset="0">
+                      <size>
+                       <width>40</width>
+                       <height>20</height>
+                      </size>
+                     </property>
+                    </spacer>
+                   </item>
+                  </layout>
+                 </item>
+                 <item>
+                  <layout class="QHBoxLayout" name="horizontalLayout_16">
+                   <item>
+                    <widget class="QLabel" name="label_34">
+                     <property name="text">
+                      <string>Current status</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="QLineEdit" name="lineEdit_listen_status">
+                     <property name="text">
+                      <string>Not listening!</string>
+                     </property>
+                     <property name="readOnly">
+                      <bool>true</bool>
+                     </property>
+                    </widget>
+                   </item>
+                  </layout>
+                 </item>
+                 <item>
+                  <widget class="QLabel" name="label_35">
+                   <property name="text">
+                    <string>Response from paired client</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QTextEdit" name="textEdit_response"/>
+                 </item>
+                </layout>
+               </widget>
+              </widget>
+             </item>
+            </layout>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>1920</width>
+     <height>24</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+  <widget class="QToolBar" name="toolBar">
+   <property name="windowTitle">
+    <string>toolBar</string>
+   </property>
+   <attribute name="toolBarArea">
+    <enum>TopToolBarArea</enum>
+   </attribute>
+   <attribute name="toolBarBreak">
+    <bool>false</bool>
+   </attribute>
+   <addaction name="actionStartServer"/>
+   <addaction name="actionStartPumpClient"/>
+   <addaction name="separator"/>
+   <addaction name="actionfillSyringe"/>
+   <addaction name="actioninitTubeLine"/>
+   <addaction name="actioninitExchange"/>
+   <addaction name="actionExchange"/>
+   <addaction name="actionPuffMeniscus"/>
+   <addaction name="actionShrinkMeniscus"/>
+   <addaction name="separator"/>
+   <addaction name="actionReset_resevoir_and_waste_volume"/>
+   <addaction name="actionReset_Cell_Vol"/>
+   <addaction name="actioncleaner"/>
+   <addaction name="separator"/>
+   <addaction name="actionshowSettingFrame"/>
+   <addaction name="actionhideSettingFrame"/>
+   <addaction name="actionStop_all_motions"/>
+  </widget>
+  <action name="actionStartPumpClient">
+   <property name="icon">
+    <iconset>
+     <normaloff>icons/calibration7.png</normaloff>icons/calibration7.png</iconset>
+   </property>
+   <property name="text">
+    <string>StartPumpClient</string>
+   </property>
+   <property name="toolTip">
+    <string>Calibrate Syringes and MVP pumps</string>
+   </property>
+  </action>
+  <action name="actionStop_all_motions">
+   <property name="icon">
+    <iconset>
+     <normaloff>icons/stop4.png</normaloff>icons/stop4.png</iconset>
+   </property>
+   <property name="text">
+    <string>Stop all motions</string>
+   </property>
+  </action>
+  <action name="actionReset_resevoir_and_waste_volume">
+   <property name="icon">
+    <iconset>
+     <normaloff>icons/reset_resevoir_waste3.png</normaloff>icons/reset_resevoir_waste3.png</iconset>
+   </property>
+   <property name="text">
+    <string>Reset resevoir and waste volume</string>
+   </property>
+  </action>
+  <action name="actioncleaner">
+   <property name="icon">
+    <iconset>
+     <normaloff>icons/cleaner2.png</normaloff>icons/cleaner2.png</iconset>
+   </property>
+   <property name="text">
+    <string>cleaner</string>
+   </property>
+  </action>
+  <action name="actionReset_Cell_Vol">
+   <property name="icon">
+    <iconset>
+     <normaloff>icons/reset4.png</normaloff>icons/reset4.png</iconset>
+   </property>
+   <property name="text">
+    <string>Reset Cell Vol. to 0</string>
+   </property>
+  </action>
+  <action name="actionStartServer">
+   <property name="icon">
+    <iconset>
+     <normaloff>icons/cloud.png</normaloff>icons/cloud.png</iconset>
+   </property>
+   <property name="text">
+    <string>Setup_MongoDB_Server</string>
+   </property>
+  </action>
+  <action name="actionfillSyringe">
+   <property name="icon">
+    <iconset>
+     <normaloff>icons/refill1.png</normaloff>icons/refill1.png</iconset>
+   </property>
+   <property name="text">
+    <string>fillSyringe</string>
+   </property>
+   <property name="toolTip">
+    <string>fill a specified syringe</string>
+   </property>
+  </action>
+  <action name="actioninitTubeLine">
+   <property name="icon">
+    <iconset>
+     <normaloff>icons/init_tube3.png</normaloff>icons/init_tube3.png</iconset>
+   </property>
+   <property name="text">
+    <string>initTubeLine</string>
+   </property>
+   <property name="toolTip">
+    <string>fill the dead volume of tubings</string>
+   </property>
+  </action>
+  <action name="actioninitExchange">
+   <property name="icon">
+    <iconset>
+     <normaloff>icons/refill.png</normaloff>icons/refill.png</iconset>
+   </property>
+   <property name="text">
+    <string>initExchange</string>
+   </property>
+   <property name="toolTip">
+    <string>initialize the exchange</string>
+   </property>
+  </action>
+  <action name="actionExchange">
+   <property name="icon">
+    <iconset>
+     <normaloff>icons/exchange.png</normaloff>icons/exchange.png</iconset>
+   </property>
+   <property name="text">
+    <string>Exchange</string>
+   </property>
+   <property name="toolTip">
+    <string>exchange electrolyte</string>
+   </property>
+  </action>
+  <action name="actionPuffMeniscus">
+   <property name="icon">
+    <iconset>
+     <normaloff>icons/big_drop.png</normaloff>icons/big_drop.png</iconset>
+   </property>
+   <property name="text">
+    <string>PuffMeniscus</string>
+   </property>
+   <property name="toolTip">
+    <string>make meniscus larger</string>
+   </property>
+  </action>
+  <action name="actionShrinkMeniscus">
+   <property name="icon">
+    <iconset>
+     <normaloff>icons/small_drop.png</normaloff>icons/small_drop.png</iconset>
+   </property>
+   <property name="text">
+    <string>ShrinkMeniscus</string>
+   </property>
+   <property name="toolTip">
+    <string>make meniscus smaller</string>
+   </property>
+  </action>
+  <action name="actionshowSettingFrame">
+   <property name="icon">
+    <iconset>
+     <normaloff>icons/show.png</normaloff>icons/show.png</iconset>
+   </property>
+   <property name="text">
+    <string>showSettingFrame</string>
+   </property>
+  </action>
+  <action name="actionhideSettingFrame">
+   <property name="icon">
+    <iconset>
+     <normaloff>icons/hide.png</normaloff>icons/hide.png</iconset>
+   </property>
+   <property name="text">
+    <string>hideSettingFrame</string>
+   </property>
+  </action>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>TerminalWidget</class>
+   <extends>QWidget</extends>
+   <header>terminal_widget.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>syringe_widget</class>
+   <extends>QWidget</extends>
+   <header>syringe_widget.h</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections/>
+</ui>

@@ -211,7 +211,7 @@ class MyMainWindow(QMainWindow):
     def __init__(self, parent = None):
         super(MyMainWindow, self).__init__(parent)
         #load GUI ui file made by qt designer
-        ui_path = os.path.join(script_path,'psd_gui_beta2.ui')
+        ui_path = os.path.join(script_path,'psd_gui_beta4.ui')
         uic.loadUi(ui_path,self)
         self.connected_mvp_channel = None #like 'channel_1'
         self.fill_speed_syringe = 500 # global speed for filling syringe in ul/s
@@ -244,19 +244,19 @@ class MyMainWindow(QMainWindow):
         self.frame_number = 0
         self.pushButton_catch_frame.clicked.connect(self.catch_frame)
 
-        self.pushButton_fill_syringe.setIcon(QtGui.QIcon(os.path.join(script_path,'icons','refill1.png')))
-        self.pushButton_fill_syringe.setIconSize(QtCore.QSize(60,60))
-        self.pushButton_fill_syringe.clicked.connect(self.fill_specified_syringe)
+        # self.pushButton_fill_syringe.setIcon(QtGui.QIcon(os.path.join(script_path,'icons','refill1.png')))
+        # self.pushButton_fill_syringe.setIconSize(QtCore.QSize(60,60))
+        # self.pushButton_fill_syringe.clicked.connect(self.fill_specified_syringe)
         self.actionfillSyringe.triggered.connect(self.fill_specified_syringe)
 
-        self.pushButton_init_line.setIcon(QtGui.QIcon(os.path.join(script_path,'icons','init_tube3.png')))
-        self.pushButton_init_line.setIconSize(QtCore.QSize(60,60))
-        self.pushButton_init_line.clicked.connect(self.open_refill_dialog)
+        # self.pushButton_init_line.setIcon(QtGui.QIcon(os.path.join(script_path,'icons','init_tube3.png')))
+        # self.pushButton_init_line.setIconSize(QtCore.QSize(60,60))
+        # self.pushButton_init_line.clicked.connect(self.open_refill_dialog)
         self.actioninitTubeLine.triggered.connect(self.open_refill_dialog)
 
-        self.pushButton_start.setIcon(QtGui.QIcon(os.path.join(script_path,'icons','refill.png')))
-        self.pushButton_start.setIconSize(QtCore.QSize(60,60))
-        self.pushButton_start.clicked.connect(self.init_start)
+        # self.pushButton_start.setIcon(QtGui.QIcon(os.path.join(script_path,'icons','refill.png')))
+        # self.pushButton_start.setIconSize(QtCore.QSize(60,60))
+        # self.pushButton_start.clicked.connect(self.init_start)
         self.actioninitExchange.triggered.connect(self.init_start)
 
         self.pushButton_stop.clicked.connect(self.stop)
@@ -694,8 +694,9 @@ class MyMainWindow(QMainWindow):
                                                 settings = {'premotion_speed_handle':self.get_default_filling_speed,
                                                             'total_exchange_amount_handle':lambda:self.doubleSpinBox_exchange_amount.value()/1000,
                                                             'exchange_speed_handle':lambda:self.doubleSpinBox.value()/1000,
-                                                            'pre_pressure_volume_handle':lambda:500,
-                                                            'pre_pressure_speed_handle':lambda:100,
+                                                            'pre_pressure_volume_handle':lambda:self.doubleSpinBox_prepresure_vol()/1000.,
+                                                            'pre_pressure_speed_handle':lambda:self.doubleSpinBox_prepressure_rate()/1000.,
+                                                            'leftover_volume_handle':lambda:self.doubleSpinBox_leftover_vol()/1000.,
                                                             'refill_speed_handle':self.get_default_filling_speed,
                                                             'time_record_handle':self.display_exchange_time,
                                                             'volume_record_handle':self.display_exchange_volume,
