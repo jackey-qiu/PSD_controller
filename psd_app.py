@@ -187,7 +187,7 @@ class StartPumpClientDialog(QDialog):
     
     def load_file(self):
         self.parent.create_pump_client(config_file = self.lineEdit_config_path.text(), device_name = 'exp/ec/pump1', config_use = True)
-        self.parent.timer_syn_server_and_gui.start(100)
+        # self.parent.timer_syn_server_and_gui.start(100)
 
     def load_file_without_config(self):
         self.parent.create_pump_client(config_file = self.lineEdit_config_path.text(), device_name = self.lineEdit_device_name.text(), config_use = False)
@@ -198,7 +198,7 @@ class StartPumpClientDialog(QDialog):
             self.parent.client = psd.connect(cmd)
             self.parent.init_server_devices()
             self.parent.set_up_operations()
-            self.parent.timer_syn_server_and_gui.start(100)
+            # self.parent.timer_syn_server_and_gui.start(100)
         except Exception as e:
             error_pop_up('Fail to start start client.'+'\n{}'.format(str(e)),'Error')
 
@@ -347,7 +347,7 @@ class MyMainWindow(QMainWindow):
 
         ##timmer to syn gui meta status to client config
         self.timer_syn_server_and_gui = QTimer(self)
-        self.timer_syn_server_and_gui.timeout.connect(self.syn_server_and_gui)
+        # self.timer_syn_server_and_gui.timeout.connect(self.syn_server_and_gui)
 
         #webcam timer
         self.timer_webcam = QTimer(self)
@@ -400,7 +400,7 @@ class MyMainWindow(QMainWindow):
         running = False
         for each_timer in self.timers:
             if each_timer.isActive():
-                running = true
+                running = True
                 break
         if running:#update gui info in the server config
             gui_info = {
@@ -1444,7 +1444,8 @@ class Cleaner(QDialog):
             self.start_motion(index)
 
     def stop_all(self,index_list = [1,2,3,4]):
-        self.parent.client.stop()
+        if not self.parent.demo:
+            self.parent.client.stop()
         for index in index_list:
             self.stop_motion(index)
 
