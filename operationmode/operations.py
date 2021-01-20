@@ -630,6 +630,7 @@ class advancedRefillingOperationMode(baseOperationMode):
         self.exchange_t0 = 0
         self.fill_or_dispense_extra_amount = 0 
         self.extra_amount_fill = True
+        self.times_prepresssure = 0
         self.thread_fill_or_dispense_extra_amount = threading.Thread(target=self.start_extra_amount_server, args=(), daemon = True)
 
     def append_valve_info(self):
@@ -956,6 +957,7 @@ class advancedRefillingOperationMode(baseOperationMode):
         ready = self.check_synchronization()
         # print('Ready or not:',ready)
         if ready:
+            self.times_prepresssure = 0
             if not self.timer_motion.isActive():
                 return
             if self.onetime:
@@ -1009,13 +1011,15 @@ class advancedRefillingOperationMode(baseOperationMode):
         if 1 in self.psd_widget.get_exchange_syringes_advance_exchange_mode():
             #syringe 1 and syringe 3 are exchanging solution now
             #syringe 2 is refilling solution
-            if self.settings['syringe{}_status'.format(2)]=='ready':
+            if self.settings['syringe{}_status'.format(2)]=='ready' and self.times_prepresssure==0:
                 self.pre_pressure(syringe_index=2, volume = self.settings['pre_pressure_volume_handle']()*1000, speed = self.settings['pre_pressure_speed_handle']()*1000, pull = False, valve = 'up')
+                self.times_prepresssure = 1
         elif 2 in self.psd_widget.get_exchange_syringes_advance_exchange_mode():
             #syringe 2 and syringe 4 are exchanging solution now
             #syringe 1 is refilling solution
-            if self.settings['syringe{}_status'.format(1)]=='ready':
+            if self.settings['syringe{}_status'.format(1)]=='ready' and and self.times_prepresssure==0:
                 self.pre_pressure(syringe_index=1, volume = self.settings['pre_pressure_volume_handle']()*1000, speed = self.settings['pre_pressure_speed_handle']()*1000, pull = False, valve = 'up')
+                self.times_prepresssure = 1
 
         if self.exchange_amount_already>=self.total_exchange_amount:
             self.timer_motion.stop()
