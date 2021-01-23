@@ -1008,13 +1008,13 @@ class advancedRefillingOperationMode(baseOperationMode):
             if self.settings['syringe{}_status'.format(i)]=='ready':
                 gui_ready = True
                 break
-        if 1 in self.psd_widget.get_exchange_syringes_advance_exchange_mode():
+        if 1 in self.psd_widget.get_exchange_syringes_advance_exchange_mode() and (not self.demo):
             #syringe 1 and syringe 3 are exchanging solution now
             #syringe 2 is refilling solution
             if self.settings['syringe{}_status'.format(2)]=='ready' and self.times_prepresssure==0:
                 self.pre_pressure(syringe_index=2, volume = self.settings['pre_pressure_volume_handle']()*1000, speed = self.settings['pre_pressure_speed_handle']()*1000, pull = False, valve = 'up')
                 self.times_prepresssure = 1
-        elif 2 in self.psd_widget.get_exchange_syringes_advance_exchange_mode():
+        elif 2 in self.psd_widget.get_exchange_syringes_advance_exchange_mode() and (not self.demo):
             #syringe 2 and syringe 4 are exchanging solution now
             #syringe 1 is refilling solution
             if self.settings['syringe{}_status'.format(1)]=='ready' and self.times_prepresssure==0:
