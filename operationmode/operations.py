@@ -624,13 +624,33 @@ class advancedRefillingOperationMode(baseOperationMode):
         self.timer_beginning = False
         self.timer_premotion.timeout.connect(self.premotion)
         self.timer_motion.timeout.connect(self.start_motion)
+        #timer to do prepressure for syringe 1, make miniscus larger or dispense air column
+        self.timer_prepressure_S1 = QTimer(self)
+        self.timer_prepressure_S1.timeout.connect(lambda:self.update_widget_prepressure(1))
+        #timer to do prepressure for syringe 2, make miniscus larger or dispense air column
+        self.timer_prepressure_S2 = QTimer(self)
+        self.timer_prepressure_S2.timeout.connect(lambda:self.update_widget_prepressure(2))
+        #timer to do droplet adjustment for syringe 1, make miniscus smaller
+        self.timer_droplet_adjustment_S1 = QTimer(self)
+        self.timer_droplet_adjustment_S1.timeout.connect(lambda:self.update_widget_droplet_adjustment(1))
+        #timer to do droplet adjustment for syringe 2, make miniscus smaller
+        self.timer_droplet_adjustment_S2 = QTimer(self)
+        self.timer_droplet_adjustment_S2.timeout.connect(lambda:self.update_widget_droplet_adjustment(2))
+        #timer to do droplet adjustment for syringe 3, make miniscus smaller
+        self.timer_droplet_adjustment_S3 = QTimer(self)
+        self.timer_droplet_adjustment_S3.timeout.connect(lambda:self.update_widget_droplet_adjustment(3))
+        #timer to do droplet adjustment for syringe 4, make miniscus smaller
+        self.timer_droplet_adjustment_S4 = QTimer(self)
+        self.timer_droplet_adjustment_S4.timeout.connect(lambda:self.update_widget_droplet_adjustment(4))
+
         self.check_settings()
         self.append_valve_info()
         self.waste_volume_t0 = 0
         self.exchange_t0 = 0
         self.fill_or_dispense_extra_amount = 0 
         self.extra_amount_fill = True
-        self.times_prepresssure = 0
+        self.times_prepresssure_S1 = 0
+        self.times_prepresssure_S2 = 0
         self.thread_fill_or_dispense_extra_amount = threading.Thread(target=self.start_extra_amount_server, args=(), daemon = True)
 
     def append_valve_info(self):
@@ -682,31 +702,6 @@ class advancedRefillingOperationMode(baseOperationMode):
                             pass
             self.settings['syringe{}_status'.format(i)] ='moving'
 
-    def start_premotion_timer(self):
-        self.init_premotion()
-        #t0 = time.time()
-        #waiting for the server devices(valves) to be ready
-        '''
-        if not self.demo:
-            while True:
-                if self.check_server_devices_busy():
-                    #logging.getLogger().exception('Server devices are busy, waiting now: {} seconds have elapsed!'.format(round(time.time()-t0,1)))
-                    #time.sleep(0.5)
-                    break
-                else:
-                    pass
-        '''
-        self.timer_premotion.start(100)
-
-    def start_motion_timer(self, onetime = False):
-        if not self.resume:
-            self.onetime = onetime
-            if self.init_motion():
-                self.timer_motion.start(100)
-        else:
-            if self.init_motion_resume():
-                self.timer_motion.start(100) 
-
     def premotion(self):
         if self.check_synchronization_premotion():
             if self.timer_premotion.isActive():
@@ -721,6 +716,25 @@ class advancedRefillingOperationMode(baseOperationMode):
             if self.timer_beginning:
                 self.timer_beginning = False
 
+    def check_synchronization_premotion(self):
+        #whichever is ready, the valve positions of all syringes will switch over
+        gui_ready = True
+        for i in [1,2,3,4]:
+            if self.settings['syringe{}_status'.format(i)]!='ready':
+                gui_ready = False
+                break
+        return gui_ready
+
+    def set_status_to_moving(self):
+        for i in [1,2,3,4]:
+            self.settings['syringe{}_status'.format(i)] = 'moving'
+
+    def start_premotion_timer(self):
+        self.init_premotion()
+        #t0 = time.time()
+        #waiting for the server devices(valves) to be ready
+        self.timer_premotion.start(100)
+
     def init_motion_resume(self):
         #you can reset the speed during exchange
         speed = float(self.settings['exchange_speed_handle']())/(1000/self.timeout)
@@ -729,17 +743,11 @@ class advancedRefillingOperationMode(baseOperationMode):
         self.settings['exchange_speed'] = speed
         refill_speed = float(self.settings['premotion_speed_handle']())/(1000/self.timeout)
         self.settings['refill_speed'] = refill_speed
+        self.settings['prepressure_speed'] = float(self.settings['pre_pressure_speed_handle']())/(1000/self.timeout)
         if speed>refill_speed:
             logging.getLogger().exception('Error: Refill speed {} NOT larger than exchange speed {}! Reset one of them please!'.format(refill_speed, speed))
             return False
         if not self.demo:
-            '''
-            while True:
-                if not self.check_server_devices_busy():
-                    break
-                else:
-                    pass
-            '''
             #launch electrolyte exchange
             # at the beginning, S1 and S3 are connected to resevoir and waste, respectively
             # while, S2 and S4 are connected to cell for exchangeing
@@ -755,25 +763,35 @@ class advancedRefillingOperationMode(baseOperationMode):
         return True
 
     def init_motion(self):
+        self.init_motion_stage = True
+        self.resume = False
         self.psd_widget.operation_mode = 'auto_refilling'
+        #set speeds: refill_speed and exchange_speed
         speed = float(self.settings['exchange_speed_handle']())/(1000/self.timeout)
         self.total_exchange_amount = float(self.settings['total_exchange_amount_handle']())
-        # self.total_exchange_amount = float(self.settings['exchange_speed_handle']())/(1000/self.timeout)
         self.exchange_amount_already = 0
         self.settings['exchange_speed'] = speed
         refill_speed = float(self.settings['premotion_speed_handle']())/(1000/self.timeout)
         self.settings['refill_speed'] = refill_speed
+        self.settings['prepressure_speed'] = float(self.settings['pre_pressure_speed_handle']())/(1000/self.timeout)
         if speed>refill_speed:
             logging.getLogger().exception('Error: Refill speed {} NOT larger than exchange speed {}! Reset one of them please!'.format(refill_speed, speed))
             return False
-        #syringe_1 to syringe_4
+
+        #valve pos of syringe_1 to syringe_4
         self.turn_valve(1,'left')
         setattr(self.psd_widget, 'filling_status_syringe_{}'.format(1), True)
         self.settings['syringe{}_status'.format(1)] ='moving'
-
         self.turn_valve(2,'right')
         setattr(self.psd_widget, 'filling_status_syringe_{}'.format(2), False)
         self.settings['syringe{}_status'.format(2)] ='moving'
+        self.turn_valve(3,'up')
+        setattr(self.psd_widget, 'filling_status_syringe_{}'.format(3), False)
+        self.settings['syringe{}_status'.format(3)] ='moving'
+        self.turn_valve(4,'left')
+        setattr(self.psd_widget, 'filling_status_syringe_{}'.format(4), True)
+        self.settings['syringe{}_status'.format(4)] ='moving'
+
         #set mvp channel
         self.psd_widget.mvp_channel = int(self.pump_settings['S{}_mvp'.format(2)].rsplit('_')[1])
         self.psd_widget.mvp_connected_valve = 'S2_right'
@@ -782,32 +800,143 @@ class advancedRefillingOperationMode(baseOperationMode):
             self.server_devices['mvp_valve'].moveValve(self.psd_widget.mvp_channel)
             self.server_devices['mvp_valve'].join()
 
-        self.turn_valve(3,'up')
-        setattr(self.psd_widget, 'filling_status_syringe_{}'.format(3), False)
-        self.settings['syringe{}_status'.format(3)] ='moving'
-
-        self.turn_valve(4,'left')
-        setattr(self.psd_widget, 'filling_status_syringe_{}'.format(4), True)
-        self.settings['syringe{}_status'.format(4)] ='moving'
-
-        #waiting for the server devices(valves) to be ready
-        
         if not self.demo:
-            '''
-            while True:
-                if not self.check_server_devices_busy():
-                    break
-                else:
-                    pass
-            '''
             #launch electrolyte exchange
             # at the beginning, S1 and S3 are connected to resevoir and waste, respectively
             # while, S2 and S4 are connected to cell for exchangeing
-            self.server_devices['exchange_pair']['S1_S3'].exchange(volume = self.server_devices['exchange_pair']['S1_S3'].exchangeableVolume,rate = float(self.settings['refill_speed_handle']())*1000)
-            #dispense prepressure volume first
-            self.pre_pressure(syringe_index=2, volume = self.settings['pre_pressure_volume_handle']()*1000, speed = self.settings['pre_pressure_speed_handle']()*1000, pull = False, valve = 'up')
-            self.server_devices['exchange_pair']['S2_S4'].exchange(volume = self.server_devices['exchange_pair']['S2_S4'].exchangeableVolume-float(self.settings['leftover_volume_handle']())*1000,rate = float(self.settings['exchange_speed_handle']())*1000)
+            #dispense prepresure volume first
+            self.pair_key_connect_to_cell = 'S2_S4'
+            self.valve_pos_before_S2 = self.pre_pressure(syringe_index=2, volume = self.settings['pre_pressure_volume_handle']()*1000, speed = self.settings['pre_pressure_speed_handle']()*1000, pull = False, valve = 'up')
+            self.timer_prepressure_S2.start()
         return True
+
+    def update_widget_prepressure(self, syringe_no):
+        self.single_syringe_motion(syringe_no, speed_tag = 'prepressure_speed', continual_exchange = False, demo = self.demo)
+        if not self.server_devices["client"].getSyringe(syringe_no).busy:
+            getattr(self,"timer_prepressure_S{}".format(syringe_no)).stop()
+            self.turn_valve(syringe_no,getattr(self,"valve_pos_before_S{}".format(syringe_no)))
+            if self.init_motion_stage:
+                self.start_exchange_server_device()
+                self.timer_motion.start()
+                self.init_motion_stage = False
+            else:
+                pass
+
+    def update_widget_droplet_adjustment(self, syringe_no):
+        self.single_syringe_motion(syringe_no, speed_tag = None, continual_exchange = False, demo = self.demo)
+        if not self.server_devices["client"].getSyringe(syringe_no).busy:
+            getattr(self,"timer_droplet_adjustment_S{}".format(syringe_no)).stop()
+            self.resume = True
+            self.timer_motion.start()
+
+    def start_exchange_server_device(self):
+        if self.pair_key_connect_to_cell == "S2_S4":
+            self.server_devices['exchange_pair']['S1_S3'].exchange(volume = self.server_devices['exchange_pair']['S1_S3'].exchangeableVolume,rate = float(self.settings['refill_speed_handle']())*1000)
+            self.server_devices['exchange_pair']['S2_S4'].exchange(volume = self.server_devices['exchange_pair']['S2_S4'].exchangeableVolume-float(self.settings['leftover_volume_handle']())*1000,rate = float(self.settings['exchange_speed_handle']())*1000)
+        else:
+            self.server_devices['exchange_pair']['S2_S4'].exchange(volume = self.server_devices['exchange_pair']['S2_S4'].exchangeableVolume,rate = float(self.settings['refill_speed_handle']())*1000)
+            self.server_devices['exchange_pair']['S1_S3'].exchange(volume = self.server_devices['exchange_pair']['S1_S3'].exchangeableVolume-float(self.settings['leftover_volume_handle']())*1000,rate = float(self.settings['exchange_speed_handle']())*1000)
+
+    def start_motion(self):
+        self.settings['volume_record_handle'](round(self.exchange_amount_already*1000,0))
+        overshoot_amount = 0
+        ready = self.check_synchronization()
+        # print('Ready or not:',ready)
+        if ready:
+            self.times_prepresssure_S1 = 0
+            self.times_prepresssure_S2 = 0
+            if not self.timer_motion.isActive():
+                return
+            if self.onetime:
+                self.timer_motion.stop()
+                return
+            if not self.demo:
+                self.server_devices['client'].stop()
+                if self.check_device_status()=='error':
+                    self.timer_motion.stop()
+                    logging.getLogger().exception('Error: Something is wrong with the pump! The exchange is stopped!')
+                    return
+            time.sleep(0.5)
+            self.switch_state_during_exchange(syringe_index_list = [1, 2, 3, 4])
+            self.set_status_to_moving()
+            self._syringe_motions(index = range(1,5), overshoot_amount = overshoot_amount)
+        else:
+            self._syringe_motions(index = range(1,5), overshoot_amount = overshoot_amount)
+
+    def check_synchronization(self):
+        gui_ready = False
+        #check the droplet adjustment first
+        if self.timer_droplet_adjustment_S1.isActive() and (not self.timer_prepressure_S1.isActive()) and (not self.timer_prepressure_S2.isActive()):
+            self.settings['client'].stop()
+            self.timer_motion.stop()
+            gui_ready = True
+            try:
+                self.pre_pressure(syringe_index = 1, volume = self._volume(), speed = self._rate(), pull = False, valve = 'right')
+            except Exception as e:
+                logging.getLogger().exception(f"Error: {e}")
+            return gui_ready
+        elif self.timer_droplet_adjustment_S2.isActive() and (not self.timer_prepressure_S1.isActive()) and (not self.timer_prepressure_S2.isActive()):
+            self.settings['client'].stop()
+            self.timer_motion.stop()
+            gui_ready = True
+            try:
+                self.pre_pressure(syringe_index = 2, volume = self._volume(), speed = self._rate(), pull = False, valve = 'right')
+            except Exception as e:
+                logging.getLogger().exception(f"Error: {e}")
+            return gui_ready
+        elif self.timer_droplet_adjustment_S3.isActive():
+            self.settings['client'].stop()
+            self.timer_motion.stop()
+            gui_ready = True
+            try:
+                self.pre_pressure(syringe_index = 3, volume = self._volume(), speed = self._rate(), pull = True, valve = 'left')
+            except Exception as e:
+                logging.getLogger().exception(f"Error: {e}")
+            return gui_ready
+        elif self.timer_droplet_adjustment_S4.isActive():
+            self.settings['client'].stop()
+            self.timer_motion.stop()
+            gui_ready = True
+            try:
+                self.pre_pressure(syringe_index = 4, volume = self._volume(), speed = self._rate(), pull = True, valve = 'left')
+            except Exception as e:
+                logging.getLogger().exception(f"Error: {e}")
+            return gui_ready
+
+        #whichever is ready, the valve positions of all syringes will switch over
+        for i in self.psd_widget.get_exchange_syringes_advance_exchange_mode():
+            #here you should also guarantee that the prepressure action is completed
+            if self.settings['syringe{}_status'.format(i)]=='ready' and (not self.timer_prepressure_S1.isActive()) and (not self.timer_prepressure_S2.isActive()):
+                gui_ready = True
+                break
+        if 1 in self.psd_widget.get_exchange_syringes_advance_exchange_mode():
+            #syringe 1 and syringe 3 are exchanging solution now
+            #syringe 2 is refilling solution
+            if self.settings['syringe{}_status'.format(2)]=='ready' and self.times_prepresssure_S2==0:
+                self.valve_pos_before_S2 = self.pre_pressure(syringe_index=2, volume = self.settings['pre_pressure_volume_handle']()*1000, speed = self.settings['pre_pressure_speed_handle']()*1000, pull = False, valve = 'up')
+                self.times_prepresssure_S2 = 1
+                self.timer_prepressure_S2.start()
+        elif 2 in self.psd_widget.get_exchange_syringes_advance_exchange_mode():
+            #syringe 2 and syringe 4 are exchanging solution now
+            #syringe 1 is refilling solution
+            if self.settings['syringe{}_status'.format(1)]=='ready' and self.times_prepresssure_S1==0:
+                self.valve_pos_before_S1 = self.pre_pressure(syringe_index=1, volume = self.settings['pre_pressure_volume_handle']()*1000, speed = self.settings['pre_pressure_speed_handle']()*1000, pull = False, valve = 'up')
+                self.times_prepresssure_S1 = 1
+                self.timer_prepressure_S1.start()
+        if self.exchange_amount_already>=self.total_exchange_amount:
+            self.timer_motion.stop()
+            gui_ready = True
+        return gui_ready
+
+    def start_motion_timer(self, onetime = False):
+        if not self.resume:
+            self.onetime = onetime
+            self.init_motion()
+            # if self.init_motion():
+                # self.timer_motion.start(100)
+        else:
+            if self.init_motion_resume():
+                self.timer_motion.start(100) 
 
     def check_server_devices_busy(self):
         #If any device is busy, then return True
@@ -816,90 +945,44 @@ class advancedRefillingOperationMode(baseOperationMode):
                 return True
         return False
 
-    def check_server_devices_ready(self):
-        #one of the exchanging syringe stop moving, then return True
-        pass
-
+    #dispense(pull = False) to or pickup (pull = True) solution from the component connected to the valve channel
     def pre_pressure(self,syringe_index, volume, speed, pull, valve = 'up'):
         syringe = self.server_devices['syringe'][syringe_index]
         valve_pos_before = syringe.valve
         self.turn_valve(syringe_index,'up')
         if pull:
             syringe.pickup(volume, speed)
-            syringe.join()
         else:
             syringe.dispense(volume, speed)
-            syringe.join()
-        setattr(self.psd_widget,'volume_syringe_{}'.format(syringe_index),syringe.volume/1000)
-        self.turn_valve(syringe_index,valve_pos_before)
+        return valve_pos_before
 
     def switch_state_during_exchange(self, syringe_index_list):
         for syringe_index in syringe_index_list:
             self.turn_valve(syringe_index)
-            '''
-            if not self.demo:
-                while True:
-                    if not self.check_server_devices_busy():
-                        break 
-            '''
             setattr(self.psd_widget, 'filling_status_syringe_{}'.format(syringe_index), not getattr(self.psd_widget, 'filling_status_syringe_{}'.format(syringe_index)))
             if self.pump_settings['S{}_{}'.format(syringe_index, self.psd_widget.connect_valve_port[syringe_index])] == 'cell_inlet':
                 print('switch mvp now!')
                 self.psd_widget.mvp_connected_valve = 'S{}_{}'.format(syringe_index, self.psd_widget.connect_valve_port[syringe_index])
                 self.psd_widget.mvp_channel = int(self.pump_settings['S{}_mvp'.format(syringe_index)].rsplit('_')[1])
                 if not self.demo:  
-                    '''          
-                    while True:
-                        if not self.check_server_devices_busy():
-                            break 
-                    '''
                     self.server_devices['mvp_valve'].moveValve(self.psd_widget.mvp_channel)
                     self.server_devices['mvp_valve'].join()
-        '''
-        while True:
-            if not self.check_server_devices_busy():
-                break
-            else:
-                pass
-        '''
         if not self.demo:
             #make sure the mvp vale is switched succesfully
-            '''
-            while True:
-                if not self.check_server_devices_busy():
-                    break
-            '''
             self.server_devices['exchange_pair']['S1_S3'].swap()
             self.server_devices['exchange_pair']['S2_S4'].swap()
             if self.psd_widget.filling_status_syringe_1: #if pulling for S1, S2 is connected to cell for exchange
-                # self.pre_pressure(syringe_index=2, volume = self.settings['pre_pressure_volume_handle']()*1000, speed = self.settings['pre_pressure_speed_handle']()*1000, pull = False, valve = 'up')
                 self.server_devices['exchange_pair']['S1_S3'].pushSyr.drain(rate = float(self.settings['refill_speed_handle']())*1000)
                 self.server_devices['exchange_pair']['S1_S3'].pullSyr.fill(rate = float(self.settings['refill_speed_handle']())*1000)
                 self.server_devices['exchange_pair']['S2_S4'].exchange(volume = self.server_devices['exchange_pair']['S2_S4'].exchangeableVolume-float(self.settings['leftover_volume_handle']())*1000,rate = float(self.settings['exchange_speed_handle']())*1000)
             else:
-                # self.pre_pressure(syringe_index=1, volume = self.settings['pre_pressure_volume_handle']()*1000, speed = self.settings['pre_pressure_speed_handle']()*1000, pull = False, valve = 'up')
                 self.server_devices['exchange_pair']['S1_S3'].exchange(volume = self.server_devices['exchange_pair']['S1_S3'].exchangeableVolume-float(self.settings['leftover_volume_handle']())*1000,rate = float(self.settings['exchange_speed_handle']())*1000)
                 self.server_devices['exchange_pair']['S2_S4'].pushSyr.drain(rate = float(self.settings['refill_speed_handle']())*1000)
                 self.server_devices['exchange_pair']['S2_S4'].pullSyr.fill(rate = float(self.settings['refill_speed_handle']())*1000)
-            #if the syringe start moving
-            #self.server_devices['exchange_pair']['S1_S3'].join()
-            #self.server_devices['exchange_pair']['S2_S4'].join()
             while True:
                 if self.check_server_devices_busy():
                     break
         
-    #set addup_speed when clicking fill or dispense during exchange
-    def set_addup_speed(self, overshoot = 0):
-        self.settings['addup_speed'] = self.settings['exchange_speed'] + self.settings['extra_amount_speed_handle']()/1000/(1000/self.timeout)*[-1,1][int(self.extra_amount_fill)] - overshoot
-
-    def update_extra_amount(self):
-        self.fill_or_dispense_extra_amount = self.fill_or_dispense_extra_amount - self.settings['extra_amount_speed_handle']()/1000/(1000/self.timeout)
-        if self.fill_or_dispense_extra_amount < 0:
-            self.settings['extra_amount_timer'].stop()
-            return abs(self.fill_or_dispense_extra_amount)
-        else:
-            return 0
-
     def _pair_key(self):
         for syringe_index in [1,2,3,4]:
             if self.pump_settings['S{}_{}'.format(syringe_index, self.psd_widget.connect_valve_port[syringe_index])] == 'cell_inlet':
@@ -914,80 +997,12 @@ class advancedRefillingOperationMode(baseOperationMode):
     def _rate(self):
         return self.settings['exchange_speed_handle']()*1000
 
-    def _increase_or_decrease_check(self):
-        return self.extra_amount_fill
-
-    def start_extra_amount_server(self):
-        pair_key = self._pair_key()
-        volume = self._volume()
-        rate = self._rate()
-        if self._increase_or_decrease_check():
-            self.psd_server['exchange_pair'][pair_key].increaseVolume(volume, rate)
-        else:
-            self.psd_server['exchange_pair'][pair_key].decreaseVolume(volume, rate)
-
-    def start_thread(self):
-        if self.thread_fill_or_dispense_extra_amount.is_alive():
-            #self.thread_fill_or_dispense_extra_amount.start()
-            pass
-        else:
-            self.thread_fill_or_dispense_extra_amount = threading.Thread(target=self.start_extra_amount_server, args=(), daemon = True)
-            self.thread_fill_or_dispense_extra_amount.start()
-
     def _syringe_motions(self, index = [1,2,3,4],overshoot_amount = 0):
         for i in index:
-            if self.settings['extra_amount_timer'].isActive():
-                if i == self.psd_widget.get_syringe_index_mvp_connection():
-                    self.set_addup_speed(overshoot_amount)
-                    self.single_syringe_motion(i, speed_tag = 'addup_speed', continual_exchange = True, demo = self.demo)
-                else:
-                    if i in self.psd_widget.get_refill_syringes_advance_exchange_mode():
-                        self.single_syringe_motion(i, speed_tag = 'refill_speed', continual_exchange = True, demo = self.demo)
-                    else:
-                        self.single_syringe_motion(i, speed_tag = 'exchange_speed', continual_exchange = True, demo = self.demo)
+            if i in self.psd_widget.get_refill_syringes_advance_exchange_mode():
+                self.single_syringe_motion(i, speed_tag = 'refill_speed', continual_exchange = True, demo = self.demo)
             else:
-                if i in self.psd_widget.get_refill_syringes_advance_exchange_mode():
-                    self.single_syringe_motion(i, speed_tag = 'refill_speed', continual_exchange = True, demo = self.demo)
-                else:
-                    self.single_syringe_motion(i, speed_tag = 'exchange_speed', continual_exchange = True, demo = self.demo)
-
-    def start_motion(self):
-        self.settings['volume_record_handle'](round(self.exchange_amount_already*1000,0))
-        overshoot_amount = 0
-        ready = self.check_synchronization()
-        # print('Ready or not:',ready)
-        if ready:
-            self.times_prepresssure = 0
-            if not self.timer_motion.isActive():
-                return
-            if self.onetime:
-                self.timer_motion.stop()
-                return
-            '''
-            if not self.demo:
-                if not self.check_server_devices_ready():
-                    return
-            '''
-            if not self.demo:
-                self.server_devices['client'].stop()
-                if self.check_device_status()=='error':
-                    self.timer_motion.stop()
-                    logging.getLogger().exception('Error: Something is wrong with the pump! The exchange is stopped!')
-                    return
-            time.sleep(0.5)
-            self.switch_state_during_exchange(syringe_index_list = [1, 2, 3, 4])
-            self.set_status_to_moving()
-            if self.settings['extra_amount_timer'].isActive():
-                overshoot_amount = self.update_extra_amount()
-                if not self.demo:
-                    self.start_thread()
-            self._syringe_motions(index = range(1,5), overshoot_amount = overshoot_amount)
-        else:
-            if self.settings['extra_amount_timer'].isActive():
-                overshoot_amount = self.update_extra_amount()
-                if not self.demo:
-                    self.start_thread()
-            self._syringe_motions(index = range(1,5), overshoot_amount = overshoot_amount)
+                self.single_syringe_motion(i, speed_tag = 'exchange_speed', continual_exchange = True, demo = self.demo)
 
     def check_device_status(self):
         syringes_codes = [self.server_devices['syringe'][i].status['syringe'].statuscode for i in [1,2,3,4]]
@@ -998,58 +1013,6 @@ class advancedRefillingOperationMode(baseOperationMode):
         else:
             return 'no error'
 
-    def check_synchronization(self):
-        #whichever is ready, the valve positions of all syringes will switch over
-        gui_ready = False
-        # print('Exchange syringe no:',self.psd_widget.get_exchange_syringes_advance_exchange_mode())
-        # for i in self.psd_widget.get_exchange_syringes_advance_exchange_mode():
-            # print(i, self.settings['syringe{}_status'.format(i)])
-        for i in self.psd_widget.get_exchange_syringes_advance_exchange_mode():
-            if self.settings['syringe{}_status'.format(i)]=='ready':
-                gui_ready = True
-                break
-        if 1 in self.psd_widget.get_exchange_syringes_advance_exchange_mode():
-            #syringe 1 and syringe 3 are exchanging solution now
-            #syringe 2 is refilling solution
-            if self.settings['syringe{}_status'.format(2)]=='ready' and self.times_prepresssure==0:
-                self.pre_pressure(syringe_index=2, volume = self.settings['pre_pressure_volume_handle']()*1000, speed = self.settings['pre_pressure_speed_handle']()*1000, pull = False, valve = 'up')
-                self.times_prepresssure = 1
-        elif 2 in self.psd_widget.get_exchange_syringes_advance_exchange_mode():
-            #syringe 2 and syringe 4 are exchanging solution now
-            #syringe 1 is refilling solution
-            if self.settings['syringe{}_status'.format(1)]=='ready' and self.times_prepresssure==0:
-                self.pre_pressure(syringe_index=1, volume = self.settings['pre_pressure_volume_handle']()*1000, speed = self.settings['pre_pressure_speed_handle']()*1000, pull = False, valve = 'up')
-                self.times_prepresssure = 1
-
-        if self.exchange_amount_already>=self.total_exchange_amount:
-            self.timer_motion.stop()
-            gui_ready = True
-        '''    
-        if not self.demo:
-            server_ready = self.check_server_devices_ready()
-        else:
-            server_ready = True
-        '''
-        return gui_ready
-
-    def check_synchronization_premotion(self):
-        #whichever is ready, the valve positions of all syringes will switch over
-        gui_ready = True
-        for i in [1,2,3,4]:
-            if self.settings['syringe{}_status'.format(i)]!='ready':
-                gui_ready = False
-                break
-        '''    
-        if not self.demo:
-            server_ready = self.check_server_devices_ready()
-        else:
-            server_ready = True
-        '''    
-        return gui_ready
-
-    def set_status_to_moving(self):
-        for i in [1,2,3,4]:
-            self.settings['syringe{}_status'.format(i)] = 'moving'
 
 class cleanOperationMode(baseOperationMode):
     def __init__(self, psd_server, psd_widget, error_widget, timer_premotion, timer_motion, timeout, pump_settings, settings, demo):
