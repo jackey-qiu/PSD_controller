@@ -1227,6 +1227,8 @@ class MyMainWindow(QMainWindow):
                 pass
         if not self.demo:
             self.client.stop()
+            for i in range(1,5):
+                self.widget_psd[i] = 'ready'
         if self.main_client_cloud!=None:
             if not self.main_client_cloud:
                 self.send_cmd_to_cloud('self.stop_all_motion()')
