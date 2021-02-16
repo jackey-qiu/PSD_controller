@@ -758,6 +758,8 @@ class MyMainWindow(QMainWindow):
         self.simple_exchange_operation = simpleRefillingOperationMode(self.server_devices, self.widget_psd,self.textBrowser_error_msg, self.timer_update_simple_pre, self.timer_update_simple, 100, self.pump_settings, \
                                                 settings = {'pull_syringe_handle':self.get_pulling_syringe_simple_exchange_mode,
                                                             'total_exchange_amount_handle':lambda:self.doubleSpinBox_exchange_amount.value()/1000,
+                                                            'pre_pressure_volume_handle':lambda:self.doubleSpinBox_prepresure_vol.value()/1000.,
+                                                            'pre_pressure_speed_handle':lambda:self.doubleSpinBox_prepressure_rate.value()/1000.,
                                                             'push_syringe_handle':self.get_pushing_syringe_simple_exchange_mode,
                                                             'refill_speed_handle':self.get_default_filling_speed,
                                                             'exchange_speed_handle':lambda:self.doubleSpinBox.value()/1000}, demo = self.demo)
@@ -1229,6 +1231,7 @@ class MyMainWindow(QMainWindow):
             self.client.stop()
             for i in range(1,5):
                 self.widget_psd[i] = 'ready'
+            self.widget_psd.update()
         if self.main_client_cloud!=None:
             if not self.main_client_cloud:
                 self.send_cmd_to_cloud('self.stop_all_motion()')
@@ -1301,9 +1304,12 @@ class MyMainWindow(QMainWindow):
     def fill_init_mode(self,kwargs = None):
         self.textBrowser_error_msg.setText('')
         if self.timer_update.isActive() or self.timer_update_simple.isActive():
-            self.advanced_exchange_operation.extra_amount_fill = True
-            self.advanced_exchange_operation.fill_or_dispense_extra_amount = self.advanced_exchange_operation.settings['extra_amount_handle']()/1000
-            self.timer_extra_amount.start(1000)
+            syringe_index = self.widget_psd.get_actived_pushing_syringe_init_mode()
+            if syringe_index in [1,2]:
+                timer_name = f"timer_droplet_adjustment_S{syringe_index}"
+                getattr(self.advanced_exchange_operation,timer_name).start(100)
+        elif self.timer_update_simple.isActive():#if simple exchange mode actived
+            pass
         else:
             self.widget_psd.actived_syringe_motion_init_mode = 'fill'
             self.stop_all_timers()
@@ -1312,10 +1318,14 @@ class MyMainWindow(QMainWindow):
     @check_any_timer_except_exchange
     def dispense_init_mode(self, kwargs = None):
         self.textBrowser_error_msg.setText('')
-        if self.timer_update.isActive() or self.timer_update_simple.isActive():
-            self.advanced_exchange_operation.extra_amount_fill = False
-            self.advanced_exchange_operation.fill_or_dispense_extra_amount = self.advanced_exchange_operation.settings['extra_amount_handle']()/1000
-            self.timer_extra_amount.start(1000)
+        #shrink droplet during advanced exchange
+        if self.timer_update.isActive():
+            syringe_index = self.widget_psd.get_actived_pulling_syringe_init_mode()
+            if syringe_index in [3,4]:
+                timer_name = f"timer_droplet_adjustment_S{syringe_index}"
+                getattr(self.advanced_exchange_operation,timer_name).start(100)
+        elif self.timer_update_simple.isActive():#if simple exchange mode actived
+            pass
         else:
             self.widget_psd.actived_syringe_motion_init_mode = 'dispense'
             self.stop_all_timers()
