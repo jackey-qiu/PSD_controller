@@ -371,6 +371,7 @@ class simpleRefillingOperationMode(baseOperationMode):
         self.demo = demo
         self.operation_mode = 'simple_exchange_mode'
         self.onetime = False
+        self.resume = False
         self.timer_begin = False
         self.timer_prepressure = QTimer(self)
         self.timer_prepressure.timeout.connect(self.update_widget_prepressure)
@@ -395,6 +396,7 @@ class simpleRefillingOperationMode(baseOperationMode):
 
     def init_premotion(self):
         self.premotion_stage = True
+        self.resume = False
         pull_syringe_index = int(self.settings['pull_syringe_handle']())
         push_syringe_index = int(self.settings['push_syringe_handle']())
         self.append_valve_info(pull_syringe_index, pushing_syringe = False)
@@ -448,6 +450,7 @@ class simpleRefillingOperationMode(baseOperationMode):
         return True
 
     def start_motion_timer(self,onetime):
+        self.psd_widget.operation_mode = 'simple_exchange_mode'
         self.onetime = onetime
         self.init_motion()
         self.timer_motion.start(100)
@@ -505,6 +508,7 @@ class simpleRefillingOperationMode(baseOperationMode):
                 self.server_devices['exchange_pair'][label].exchange(volume = self.server_devices['exchange_pair'][label].exchangeableVolume,rate = float(self.settings['exchange_speed_handle']())*1000)
                 self.psd_widget.connect_status[pull_syringe_index] = 'moving'
                 self.psd_widget.connect_status[push_syringe_index] = 'moving'
+                self.resume = True
 
     def exchange_motion(self):
         if self.check_synchronization():
@@ -696,6 +700,7 @@ class advancedRefillingOperationMode(baseOperationMode):
 
     def init_motion_resume(self):
         #you can reset the speed during exchange
+        self.psd_widget.operation_mode = 'auto_refilling'
         speed = float(self.settings['exchange_speed_handle']())/(1000/self.timeout)
         self.total_exchange_amount = float(self.settings['total_exchange_amount_handle']())
         # self.total_exchange_amount = float(self.settings['exchange_speed_handle']())/(1000/self.timeout)

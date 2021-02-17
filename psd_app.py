@@ -345,6 +345,12 @@ class MyMainWindow(QMainWindow):
         self.timer_renew_device_info_cloud.timeout.connect(self.update_device_info_to_cloud)
         self.timer_renew_device_info_gui.timeout.connect(self.update_device_info_from_cloud)
 
+        #timer to check whether or not the server devices are busy
+        #if not busy, stop the init mode and resume the simple exchange mode
+        #used to perform droplet adjustment during simple exchange mode
+        self.timer_check_device_busy = QTimer(self)
+        self.timer_check_device_busy.timeout.connect(self.check_server_devices_busy_init_mode_to_simple_mode)
+
         ##timmer to syn gui meta status to client config
         self.timer_syn_server_and_gui = QTimer(self)
         # self.timer_syn_server_and_gui.timeout.connect(self.syn_server_and_gui)
@@ -1309,11 +1315,30 @@ class MyMainWindow(QMainWindow):
                 timer_name = f"timer_droplet_adjustment_S{syringe_index}"
                 getattr(self.advanced_exchange_operation,timer_name).start(100)
         elif self.timer_update_simple.isActive():#if simple exchange mode actived
-            pass
+            self.stop_all_timers()
+            time.sleep(0.1)
+            self.widget_psd.actived_syringe_motion_init_mode = 'fill'
+            self.init_operation.start_exchange_timer()
+            self.timer_check_device_busy.start(50)
         else:
             self.widget_psd.actived_syringe_motion_init_mode = 'fill'
             self.stop_all_timers()
             self.init_operation.start_exchange_timer()
+
+    def check_server_devices_busy_init_mode_to_simple_mode(self):
+        #If any device is busy, then the device busy state is True
+        this_timer = self.timer_check_device_busy
+        connect_timer = self.init_operation.timer_motion
+        post_action = lambda:self.simple_exchange_operation.start_motion_timer(not self.checkBox_auto.isChecked())
+        busy = False
+        for each in list(self.server_devices['syringe'].values()) + [self.server_devices['mvp_valve']]:
+            if each.busy:
+                busy = True
+                break
+        if not busy:
+            this_timer.stop()
+            connect_timer.stop()
+            post_action()
 
     @check_any_timer_except_exchange
     def dispense_init_mode(self, kwargs = None):
@@ -1325,7 +1350,11 @@ class MyMainWindow(QMainWindow):
                 timer_name = f"timer_droplet_adjustment_S{syringe_index}"
                 getattr(self.advanced_exchange_operation,timer_name).start(100)
         elif self.timer_update_simple.isActive():#if simple exchange mode actived
-            pass
+            self.stop_all_timers()
+            time.sleep(0.1)
+            self.widget_psd.actived_syringe_motion_init_mode = 'dispense'
+            self.init_operation.start_exchange_timer()
+            self.timer_check_device_busy.start(50)
         else:
             self.widget_psd.actived_syringe_motion_init_mode = 'dispense'
             self.stop_all_timers()
