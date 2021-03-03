@@ -109,8 +109,27 @@ class syringe_widget(QWidget):
         return index_list
 
     def get_exchange_syringes_advance_exchange_mode(self):
-        index_list = self.get_refill_syringes_advance_exchange_mode()
-        return [each for each in self.connect_valve_port if each not in index_list]
+        index_list = []
+        for ix, direction in self.connect_valve_port.items():
+            if self.pump_settings['S{}_{}'.format(ix,direction)] in ['cell_inlet', 'cell_outlet']:
+                index_list.append(ix)
+        return index_list
+        #index_list = self.get_refill_syringes_advance_exchange_mode()
+        #return [each for each in self.connect_valve_port if each not in index_list]
+
+    def get_actived_pulling_syringe_init_mode(self):
+        for ix, direction in self.connect_valve_port.items():
+            if self.pump_settings['S{}_{}'.format(ix,direction)] == 'cell_outlet':
+                self.actived_pulling_syringe_init_mode = ix
+                return ix
+        return None
+
+    def get_actived_pushing_syringe_init_mode(self):
+        for ix, direction in self.connect_valve_port.items():
+            if self.pump_settings['S{}_{}'.format(ix,direction)] == 'cell_inlet':
+                self.actived_pushing_syringe_init_mode = ix
+                return ix
+        return None
 
     def get_syringe_mvp_cell_inlet_channel(self):
         line_index = [1,2,3,4]
