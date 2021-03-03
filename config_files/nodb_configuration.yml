@@ -106,7 +106,7 @@ devices:
       4: Cell outlet 2
 
 operations:
-   ExchangePair:
+  ExchangePair:
       Exchanger 1: # name of the ExchangePair
          args:
             - Syringe 2 # pushSyr either syringe name or id
@@ -147,8 +147,26 @@ operations:
          defaultDrainRate: 400 #muL/s
          defaultRate: 60 #muL/s
          dispenseDelay: 0.0 #s
-         bubbleDispense: 500 # muL       
+         bubbleDispense: 500 # muL 
          
-            
-    
-    
+  psd_widget:
+    S1_vol: 0
+    S2_vol: 0
+    S3_vol: 0
+    S4_vol: 0
+    valve_pos:
+      1: 'up'
+      2: 'up'
+      3: 'up'
+      4: 'up'
+    cell_vol: 0
+    mvp_valve: 1
+    resevoir_vol: 250
+    waste_vol: 0
+    operation_mode: 'not_ready_mode'
+    connect_status:
+      1: 'disconnected'
+      2: 'disconnected'
+      3: 'disconnected'
+      4: 'disconnected'
+      mvp: 'disconnected'

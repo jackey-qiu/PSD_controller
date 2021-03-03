@@ -400,7 +400,7 @@ class MyMainWindow(QMainWindow):
         running = False
         for each_timer in self.timers:
             if each_timer.isActive():
-                running = true
+                running = True
                 break
         if running:#update gui info in the server config
             gui_info = {
