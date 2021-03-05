@@ -325,13 +325,13 @@ class MyMainWindow(QMainWindow):
         #fill the button with icon
         self.pushButton_fill_init_mode.setIcon(QtGui.QIcon(os.path.join(script_path,'icons','big_drop.png')))
         self.pushButton_fill_init_mode.setIconSize(QtCore.QSize(50,50))
-        self.pushButton_fill_init_mode.clicked.connect(self.fill_init_mode)
-        self.actionPuffMeniscus.triggered.connect(self.fill_init_mode)
+        self.pushButton_fill_init_mode.clicked.connect(self.dispense_init_mode)
+        self.actionPuffMeniscus.triggered.connect(self.dispense_init_mode)
 
         self.pushButton_dispense_init_mode.setIcon(QtGui.QIcon(os.path.join(script_path,'icons','small_drop.png')))
         self.pushButton_dispense_init_mode.setIconSize(QtCore.QSize(50,50)) 
-        self.pushButton_dispense_init_mode.clicked.connect(self.dispense_init_mode)
-        self.actionShrinkMeniscus.triggered.connect(self.dispense_init_mode)
+        self.pushButton_dispense_init_mode.clicked.connect(self.pickup_init_mode)
+        self.actionShrinkMeniscus.triggered.connect(self.pickup_init_mode)
 
         self.pushButton_start_webcam.clicked.connect(self.start_webcam)
         self.pushButton_stop_webcam.clicked.connect(self.stop_webcam)
@@ -735,8 +735,8 @@ class MyMainWindow(QMainWindow):
 
     def set_up_operations(self):
         self.init_operation = initOperationMode(self.server_devices, self.widget_psd,self.textBrowser_error_msg, None, self.timer_update_init_mode, 100, self.pump_settings, \
-                                                settings = {'pull_syringe_handle':self.get_pulling_syringe_simple_exchange_mode,
-                                                            'push_syringe_handle':self.get_pushing_syringe_simple_exchange_mode,
+                                                settings = {'pull_syringe_handle':self.get_pulling_syringe_init_mode,
+                                                            'push_syringe_handle':self.get_pushing_syringe_init_mode,
                                                             'vol_handle':self.spinBox_amount.value,
                                                             'speed_handle':self.spinBox_speed.value}, demo = self.demo)
 
@@ -759,7 +759,14 @@ class MyMainWindow(QMainWindow):
                                                             'volume_record_handle':self.display_exchange_volume,
                                                             'extra_amount_timer':self.timer_extra_amount,
                                                             'extra_amount_handle':self.spinBox_amount.value,
-                                                            'extra_amount_speed_handle':self.spinBox_speed.value}, demo = self.demo)
+                                                            'extra_amount_speed_handle':self.spinBox_speed.value,
+                                                            'timer_prepressure_S1':QTimer(self),
+                                                            'timer_prepressure_S2':QTimer(self),
+                                                            'timer_droplet_adjustment_S1':QTimer(self),
+                                                            'timer_droplet_adjustment_S2':QTimer(self),
+                                                            'timer_droplet_adjustment_S3':QTimer(self),
+                                                            'timer_droplet_adjustment_S4':QTimer(self),
+                                                            }, demo = self.demo)
 
         self.simple_exchange_operation = simpleRefillingOperationMode(self.server_devices, self.widget_psd,self.textBrowser_error_msg, self.timer_update_simple_pre, self.timer_update_simple, 100, self.pump_settings, \
                                                 settings = {'pull_syringe_handle':self.get_pulling_syringe_simple_exchange_mode,
@@ -768,6 +775,7 @@ class MyMainWindow(QMainWindow):
                                                             'pre_pressure_speed_handle':lambda:self.doubleSpinBox_prepressure_rate.value()/1000.,
                                                             'push_syringe_handle':self.get_pushing_syringe_simple_exchange_mode,
                                                             'refill_speed_handle':self.get_default_filling_speed,
+                                                            'timer_prepressure':QTimer(self),
                                                             'exchange_speed_handle':lambda:self.doubleSpinBox.value()/1000}, demo = self.demo)
 
         self.fill_cell_operation = fillCellOperationMode(self.server_devices, self.widget_psd,self.textBrowser_error_msg, None, self.timer_update_fill_cell, 100, self.pump_settings, \
@@ -956,6 +964,22 @@ class MyMainWindow(QMainWindow):
         if times<0:
             times = 0
         return times
+
+    def get_pulling_syringe_init_mode(self):
+        for i in [3,4]:
+            current_valve = self.widget_psd.connect_valve_port[i]
+            name_of_key = 'S{}_{}'.format(i,current_valve)
+            if self.widget_psd.pump_settings[name_of_key]=='cell_outlet':
+                return i
+        error_pop_up('One of the valve postion should switch to cell_outlet to allow pulling!','error')
+        return None
+
+    def get_pushing_syringe_init_mode(self):
+        if self.widget_psd.mvp_channel not in [1,2]:
+            error_pop_up('MVP not in the right position, should be either 1 or 2!','error')
+            return None
+        else:
+            return self.widget_psd.mvp_channel
 
     def get_pulling_syringe_simple_exchange_mode(self):
         syringe = None
@@ -1236,7 +1260,7 @@ class MyMainWindow(QMainWindow):
         if not self.demo:
             self.client.stop()
             for i in range(1,5):
-                self.widget_psd[i] = 'ready'
+                self.widget_psd.connect_status[i] = 'ready'
             self.widget_psd.update()
         if self.main_client_cloud!=None:
             if not self.main_client_cloud:
@@ -1299,7 +1323,7 @@ class MyMainWindow(QMainWindow):
     def add_solution_to_cell(self, amount):
         self.spinBox_speed_init_mode.setValue(int(self.spinBox_speed.value()))
         self.spinBox_volume_init_mode.setValue(int(amount))
-        self.fill_init_mode()
+        self.pickup_init_mode()
 
     def remove_solution_from_cell(self, amount):
         self.spinBox_speed_init_mode.setValue(int(self.spinBox_speed.value()))
@@ -1307,11 +1331,12 @@ class MyMainWindow(QMainWindow):
         self.dispense_init_mode()
 
     @check_any_timer_except_exchange
-    def fill_init_mode(self,kwargs = None):
+    def pickup_init_mode(self,kwargs = None):
         self.textBrowser_error_msg.setText('')
         if self.timer_update.isActive() or self.timer_update_simple.isActive():
-            syringe_index = self.widget_psd.get_actived_pushing_syringe_init_mode()
-            if syringe_index in [1,2]:
+            self.widget_psd.actived_syringe_motion_init_mode = 'fill'
+            syringe_index = self.get_pulling_syringe_init_mode()
+            if syringe_index in [3,4]:
                 timer_name = f"timer_droplet_adjustment_S{syringe_index}"
                 getattr(self.advanced_exchange_operation,timer_name).start(100)
         elif self.timer_update_simple.isActive():#if simple exchange mode actived
@@ -1345,8 +1370,10 @@ class MyMainWindow(QMainWindow):
         self.textBrowser_error_msg.setText('')
         #shrink droplet during advanced exchange
         if self.timer_update.isActive():
-            syringe_index = self.widget_psd.get_actived_pulling_syringe_init_mode()
-            if syringe_index in [3,4]:
+            syringe_index = self.get_pushing_syringe_init_mode()
+            self.widget_psd.actived_syringe_motion_init_mode = 'dispense'
+            if syringe_index in [1,2]:
+                # self.server_devices['syringe'][syringe_index].dispense(volume= self.init_operation.settings['vol_handle'](), rate = self.init_operation.settings['speed_handle']())
                 timer_name = f"timer_droplet_adjustment_S{syringe_index}"
                 getattr(self.advanced_exchange_operation,timer_name).start(100)
         elif self.timer_update_simple.isActive():#if simple exchange mode actived

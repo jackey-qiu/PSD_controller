@@ -31,7 +31,7 @@ devices:
     stop rate: 20 #muL/s
     return volume: 0 #muL
     acceleration: 10000 #steps/s^2
-    backoff volume: 50 #muL
+    backoff volume: 500 #muL
     default init rate: 200 #muL/s
     default rate: 50 #muL/s
     # you can override rates with their motor steps:
@@ -54,7 +54,7 @@ devices:
     stop rate: 20 #muL/s
     return volume: 0 #muL
     acceleration: 10000 #steps/s^2
-    backoff volume: 50 #muL
+    backoff volume: 500 #muL
     default init rate: 200 #muL/s
     default rate: 50 #muL/s
     
@@ -72,7 +72,7 @@ devices:
     stop rate: 20 #muL/s
     return volume: 0 #muL
     acceleration: 10000 #steps/s^2
-    backoff volume: 50 #muL
+    backoff volume: 500 #muL
     default init rate: 200 #muL/s
     default rate: 50 #muL/s
     
@@ -90,7 +90,7 @@ devices:
     stop rate: 20 #muL/s
     return volume: 0 #muL
     acceleration: 10000 #steps/s^2
-    backoff volume: 50 #muL
+    backoff volume: 500 #muL
     default init rate: 200 #muL/s
     default rate: 50 #muL/s
     
@@ -149,24 +149,24 @@ operations:
          dispenseDelay: 0.0 #s
          bubbleDispense: 500 # muL 
          
-  psd_widget:
-    S1_vol: 0
-    S2_vol: 0
-    S3_vol: 0
-    S4_vol: 0
-    valve_pos:
-      1: 'up'
-      2: 'up'
-      3: 'up'
-      4: 'up'
-    cell_vol: 0
-    mvp_valve: 1
-    resevoir_vol: 250
-    waste_vol: 0
-    operation_mode: 'not_ready_mode'
-    connect_status:
-      1: 'disconnected'
-      2: 'disconnected'
-      3: 'disconnected'
-      4: 'disconnected'
-      mvp: 'disconnected'
+psd_widget:
+  S1_vol: 0
+  S2_vol: 0
+  S3_vol: 0
+  S4_vol: 0
+  valve_pos:
+    1: 'up'
+    2: 'up'
+    3: 'up'
+    4: 'up'
+  cell_vol: 0
+  mvp_valve: 1
+  resevoir_vol: 250
+  waste_vol: 0
+  operation_mode: 'not_ready_mode'
+  connect_status:
+    1: 'disconnected'
+    2: 'disconnected'
+    3: 'disconnected'
+    4: 'disconnected'
+    mvp: 'disconnected'
