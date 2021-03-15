@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>801</width>
+    <width>808</width>
     <height>364</height>
    </rect>
   </property>
@@ -238,52 +238,52 @@
      <item row="1" column="1">
       <widget class="QSpinBox" name="spinBox_speed_syringe_1">
        <property name="minimum">
-        <number>5</number>
+        <number>30</number>
        </property>
        <property name="maximum">
         <number>10000</number>
        </property>
        <property name="value">
-        <number>10</number>
+        <number>30</number>
        </property>
       </widget>
      </item>
      <item row="1" column="2">
       <widget class="QSpinBox" name="spinBox_speed_syringe_2">
        <property name="minimum">
-        <number>5</number>
+        <number>30</number>
        </property>
        <property name="maximum">
         <number>10000</number>
        </property>
        <property name="value">
-        <number>10</number>
+        <number>30</number>
        </property>
       </widget>
      </item>
      <item row="1" column="3">
       <widget class="QSpinBox" name="spinBox_speed_syringe_3">
        <property name="minimum">
-        <number>5</number>
+        <number>30</number>
        </property>
        <property name="maximum">
         <number>10000</number>
        </property>
        <property name="value">
-        <number>10</number>
+        <number>30</number>
        </property>
       </widget>
      </item>
      <item row="1" column="4">
       <widget class="QSpinBox" name="spinBox_speed_syringe_4">
        <property name="minimum">
-        <number>5</number>
+        <number>30</number>
        </property>
        <property name="maximum">
         <number>10000</number>
        </property>
        <property name="value">
-        <number>10</number>
+        <number>30</number>
        </property>
       </widget>
      </item>
