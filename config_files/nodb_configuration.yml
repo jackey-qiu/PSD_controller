@@ -1,7 +1,7 @@
 server:
   tangoname: exp/ec/pump1
   database: False # indicate whether Tango database is available
-  serialport: COM4
+  serialport: COM5
   host: localhost #IP address or hostname; only required if no Tango database is set up
   port: 50005 # only required if no Tango database is set up 
   name: pump1 # only required when the server is started from python
@@ -90,7 +90,7 @@ devices:
     stop rate: 20 #muL/s
     return volume: 0 #muL
     acceleration: 10000 #steps/s^2
-    backoff volume: 500 #muL
+    backoff volume: 1000 #muL
     default init rate: 200 #muL/s
     default rate: 50 #muL/s
     
@@ -150,15 +150,15 @@ operations:
          bubbleDispense: 500 # muL 
          
 psd_widget:
-  S1_vol: 0
-  S2_vol: 0
-  S3_vol: 0
-  S4_vol: 0
-  valve_pos:
-    1: 'up'
-    2: 'up'
-    3: 'up'
-    4: 'up'
+  #S1_vol: 0
+  #S2_vol: 0
+  #S3_vol: 0
+  #S4_vol: 0
+  #valve_pos:
+  #  1: 'up'
+  #  2: 'up'
+  #  3: 'up'
+  #  4: 'up'
   cell_vol: 0
   mvp_valve: 1
   resevoir_vol: 250
@@ -170,3 +170,16 @@ psd_widget:
     3: 'disconnected'
     4: 'disconnected'
     mvp: 'disconnected'
+  filling_status:
+    1: True
+    2: False
+    3: True
+    4: False
+  resume_advance_exchange: False
+  init_motion_stage: False
+  prepressure_S2_ready: False
+  prepressure_S1_ready: False
+  times_prepresssure_S1: 0
+  times_prepresssure_S2: 0
+  S1_S3_pull_syringe_id: 4
+  S2_S4_pull_syringe_id: 1
