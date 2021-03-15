@@ -141,8 +141,6 @@ class baseOperationMode(object):
         #update waste, cell volume or resevoir volume, do the safety check before
         if direction_sign == -1:#the syringe dispensing solution
             if connection not in ['waste', 'cell_inlet']:
-                logging.getLogger().exception('Pump setting Error:YOU ARE ONLY allowed to dispense solution to WASTE or CELL_INLET')
-                error_pop_up('Pump setting Error:YOU ARE ONLY allowed to dispense solution to WASTE or CELL_INLET','error')
                 try:
                     self.timer_motion.stop()
                     self.timer_premotion.stop()
@@ -150,6 +148,8 @@ class baseOperationMode(object):
                     pass
                 finally:
                     self.server_devices['client'].stop()
+                logging.getLogger().exception('Pump setting Error:YOU ARE ONLY allowed to dispense solution to WASTE or CELL_INLET')
+                error_pop_up('Pump setting Error:YOU ARE ONLY allowed to dispense solution to WASTE or CELL_INLET','error')
             elif connection == 'waste':
                 self.psd_widget.waste_volumn = self.psd_widget.waste_volumn - (value_after_motion - value_before_motion)
             elif connection == 'cell_inlet':
@@ -157,8 +157,6 @@ class baseOperationMode(object):
                 self.exchange_amount_already = self.exchange_amount_already - (value_after_motion - value_before_motion)
         elif direction_sign == 1:
             if connection not in ['resevoir', 'cell_outlet', 'not_used']:
-                logging.getLogger().exception('Pump setting Error:YOU ARE ONLY allowed to withdraw solution from RESEVOIR or CELL_OUTLET')
-                error_pop_up('Pump setting Error:YOU ARE ONLY allowed to withdraw solution from RESEVOIR or CELL_OUTLET','error')
                 try:
                     self.timer_motion.stop()
                     self.timer_premotion.stop()
@@ -166,6 +164,8 @@ class baseOperationMode(object):
                     pass
                 finally:
                     self.server_devices['client'].stop()
+                logging.getLogger().exception('Pump setting Error:YOU ARE ONLY allowed to withdraw solution from RESEVOIR or CELL_OUTLET')
+                error_pop_up('Pump setting Error:YOU ARE ONLY allowed to withdraw solution from RESEVOIR or CELL_OUTLET','error')
             elif connection == 'resevoir':
                 resevoir_volumn = getattr(self.psd_widget, 'resevoir_volumn_S{}'.format(index))
                 self.psd_widget.resevoir_volumn = resevoir_volumn - (value_after_motion - value_before_motion)
@@ -850,6 +850,7 @@ class advancedRefillingOperationMode(baseOperationMode):
             if not self.timer_motion.isActive():
                 return
             if self.onetime:
+                self.server_devices['client'].stop()
                 self.timer_motion.stop()
                 return
             self.times_prepresssure_S1 = 0

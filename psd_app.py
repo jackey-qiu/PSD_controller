@@ -767,19 +767,21 @@ class MyMainWindow(QMainWindow):
         self.widget_terminal.update_name_space('server_devices',self.server_devices)
 
     def set_up_operations(self):
+        #pushing electrolyte to cell or pulling it out (miniscus size adjustment)
         self.init_operation = initOperationMode(self.server_devices, self.widget_psd,self.textBrowser_error_msg, None, self.timer_update_init_mode, 100, self.pump_settings, \
                                                 settings = {'pull_syringe_handle':self.get_pulling_syringe_init_mode,
                                                             'push_syringe_handle':self.get_pushing_syringe_init_mode,
                                                             'vol_handle':self.spinBox_amount.value,
                                                             'speed_handle':self.spinBox_speed.value}, demo = self.demo)
 
+        #operation of single syringe pump in reasonable way (e.g. NOT reasonable: you are not allowed to withdraw electrolyte from waste)
         self.normal_operation = normalOperationMode(self.server_devices, self.widget_psd,self.textBrowser_error_msg, None, self.timer_update_normal_mode, 100, self.pump_settings, \
                                                 settings = {'syringe_handle':self.get_syringe_index_handle_normal_mode,
                                                             'valve_position_handle':self.get_valve_position_handle_normal_mode,
                                                             'valve_connection_handle':self.get_valve_connection_handle_normal_mode,
                                                             'vol_handle':self.get_vol_handle_normal_mode,
                                                             'speed_handle':self.get_speed_handle_normal_mode}, demo = self.demo)
-
+        #automatically exchange mode (two pairs of pumps alternate to fill the cell)
         self.advanced_exchange_operation = advancedRefillingOperationMode(self.server_devices, self.widget_psd, self.textBrowser_error_msg, self.timer_update_fill_half_mode, self.timer_update, 100, self.pump_settings, \
                                                 settings = {'premotion_speed_handle':self.get_default_filling_speed,
                                                             'total_exchange_amount_handle':lambda:self.doubleSpinBox_exchange_amount.value()/1000,
@@ -801,6 +803,7 @@ class MyMainWindow(QMainWindow):
                                                             'timer_droplet_adjustment_S4':self.timer_droplet_adjustment_S4,
                                                             }, demo = self.demo)
 
+        #only one pair of pumps responsible for electrolyte eschange (will automatically refill the syringe once empty)
         self.simple_exchange_operation = simpleRefillingOperationMode(self.server_devices, self.widget_psd,self.textBrowser_error_msg, self.timer_update_simple_pre, self.timer_update_simple, 100, self.pump_settings, \
                                                 settings = {'pull_syringe_handle':self.get_pulling_syringe_simple_exchange_mode,
                                                             'total_exchange_amount_handle':lambda:self.doubleSpinBox_exchange_amount.value()/1000,
@@ -811,6 +814,7 @@ class MyMainWindow(QMainWindow):
                                                             'timer_prepressure':QTimer(self),
                                                             'exchange_speed_handle':lambda:self.doubleSpinBox.value()/1000}, demo = self.demo)
 
+        #fill the tubing line (to waste then to cell for specified cycles)
         self.fill_cell_operation = fillCellOperationMode(self.server_devices, self.widget_psd,self.textBrowser_error_msg, None, self.timer_update_fill_cell, 100, self.pump_settings, \
                                                 settings = {'push_syringe_handle':self.get_pushing_syringe_fill_cell_mode,
                                                             'refill_speed_handle':self.get_refill_speed_fill_cell_mode,
@@ -820,6 +824,7 @@ class MyMainWindow(QMainWindow):
                                                             'cell_dispense_vol_handle':self.get_vol_to_cell_fill_cell_mode},
                                                             demo = self.demo)
 
+        #the following four modes are for cleaning purpose for each pump
         self.clean_operation_S1 = cleanOperationMode(self.server_devices, self.widget_psd,self.textBrowser_error_msg, None, self.timer_clean_S1, 100, self.pump_settings, \
                                                 settings = {'syringe_handle':lambda:1,
                                                             'refill_speed_handle':lambda:self.get_refill_speed_clean_mode(1),
@@ -944,8 +949,13 @@ class MyMainWindow(QMainWindow):
                         f.write(','.join(items)+'\n')
 
     def reset_cell_vol(self):
-        self.widget_psd.volume_of_electrolyte_in_cell = 0
-        self.widget_psd.update()
+        volume, done = QInputDialog.getInt(self, 'Reset the cell volume', 'Enter the cell volume (ul) you want to set to:',value = 100)
+        if not done:
+            logging.getLogger().exception('Error in setting the cell volume!')
+        else:
+            self.syn_server_and_gui_init(attrs = {'cell_vol':volume/1000})
+            self.widget_psd.volume_of_electrolyte_in_cell = volume/1000
+            self.widget_psd.update()
 
     def onCleanerClicked(self):
         dlg = Cleaner(self)
@@ -1169,7 +1179,7 @@ class MyMainWindow(QMainWindow):
         #check the cell volume first
         if self.widget_psd.volume_of_electrolyte_in_cell < 0.1:
             logging.getLogger().exception('Error: Not enough electrolyte in cell. Please fill some solution in the cell first!')
-            self.tabWidget.setCurrentIndex(2) 
+            self.tabWidget.setCurrentIndex(1) 
         else:
             if self.check_connection_for_advanced_auto_refilling():
                 self.advanced_exchange_operation.start_premotion_timer()
@@ -1244,7 +1254,7 @@ class MyMainWindow(QMainWindow):
         for each in _setting:
             if self.pump_settings[each]!=_setting[each]:
                 logging.getLogger().exception('Connections error: something is not properly set up in your valve port connection for auto_refilling purpose\n{} must be connected to {} rather than {}'.format(each,_setting[each], self.pump_settings[each]))
-                self.tabWidget.setCurrentIndex(2) 
+                self.tabWidget.setCurrentIndex(1) 
                 return False
         return True
 
