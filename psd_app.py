@@ -1035,14 +1035,14 @@ class MyMainWindow(QMainWindow):
             return int(''.join(syringe.rsplit('_')[0][1:]))
         else:
             logging.getLogger().exception('Error: Could not find syringe to pull electrolyte from cell. Check your setting table!')
-            self.tabWidget.setCurrentIndex(2)
+            self.tabWidget.setCurrentIndex(1)
 
     def get_pushing_syringe_simple_exchange_mode(self):
         for each in self.pump_settings:
             if self.pump_settings[each] == self.connected_mvp_channel:
                 return int(''.join(each.rsplit('_')[0][1:]))
         logging.getLogger().exception('No MVP channel is actived now. Connect it first!')
-        self.tabWidget.setCurrentIndex(2) 
+        self.tabWidget.setCurrentIndex(1) 
 
     def update_cell_volume(self):
         self.widget_psd.cell_volume_in_total = self.spinBox_cell_volume.value()

@@ -561,6 +561,7 @@ class simpleRefillingOperationMode(baseOperationMode):
         assert len(syringe_index_list)==2, 'Error during switching: Provide only two syringe index prease. But you have {}'.format(len(syringe_index_list))
         push_syringe_index, pull_syringe_index = syringe_index_list
         label = f"S{push_syringe_index}_S{pull_syringe_index}"
+        assert label in ['S1_S3','S2_S4'], 'Error: you can only choose S1_S3 pair or S2_S4 pair'
         for syringe_index in syringe_index_list:
             self.turn_valve(syringe_index)
             setattr(self.psd_widget, 'filling_status_syringe_{}'.format(syringe_index), not getattr(self.psd_widget, 'filling_status_syringe_{}'.format(syringe_index)))
