@@ -1,0 +1,37 @@
+server:
+  tangoname: exp/ec/pump1
+  database: False # indicate whether Tango database is available
+  serialport: COM5
+  host: localhost #IP address or hostname; only required if no Tango database is set up
+  port: 50005 # only required if no Tango database is set up 
+  name: pump1 # only required when the server is started from python
+
+#possible valve types:
+#0: 3-way 120 degree Y valve
+#1: 4-way 90 degree T valve
+#2: 3-way 90 degree distribution valve
+#3: 8-way 45 degree valve
+#4: 4-way 90 degree valve
+#6: 6-way 45 degree valve
+
+# supported device types: PSD smooth flow, MVP
+
+devices:
+#example device config for a PSD/4 Smooth Flow device:
+  #1: #hardware address
+    #name: Reservoir cell inlet 1
+    #type: PSD
+    #class: PSD4_smooth
+    #valve type: 3-way 90 degree distribution valve
+    #valve alias:
+    #  1: Reservoir
+    #  2: Waste
+    #  3: Cell
+    #syringevolume: 12500 #muL
+    #start rate: 20 #muL/s
+    #stop rate: 20 #muL/s
+    #return volume: 0 #muL
+    #acceleration: 10000 #steps/s^2
+    #backoff volume: 5 #muL
+    #default init rate: 200 #muL/s
+    #default rate: 50 #muL/s

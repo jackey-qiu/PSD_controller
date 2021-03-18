@@ -1,0 +1,4 @@
+numpy >= 1.12
+pyserial >= 3.4
+pytango >= 9.2
+pyyaml

@@ -1,0 +1,24 @@
+PumpServer/pump1/DEVICE/PumpServer: "exp/ec/pump1"
+
+#############################################
+# CLASS PumpServer
+
+
+# CLASS PumpServer attribute properties
+
+
+
+# DEVICE exp/ec/pump1 properties 
+
+exp/ec/pump1->baudrate: 38400
+exp/ec/pump1->bytesize: 8
+exp/ec/pump1->dsrdtr: False
+exp/ec/pump1->parity: N
+exp/ec/pump1->port: COM3
+exp/ec/pump1->rtscts: False
+exp/ec/pump1->stopbits: 1
+exp/ec/pump1->timeout: 0.05
+exp/ec/pump1->xonxoff: False
+
+# DEVICE exp/ec/pump1 attribute properties
+
