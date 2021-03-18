@@ -167,6 +167,7 @@ class StartPumpClientDialog(QDialog):
         self.pushButton_init_mvp.clicked.connect(lambda:self.initialize_device(None,'mvp'))
         self.pushButton_init_all.clicked.connect(lambda:self.initialize_all_device([1,2,3,4,None],['syringe']*4+['mvp']))
         self.pushButton_create_client.clicked.connect(self.create_client_without_config)
+        self.pushButton_server_cmd.clicked.connect(self.generate_server_cmd)
         # self.pushButton_load_without_config.clicked.connect(self.load_file_without_config)
 
     def open_file(self):
@@ -191,6 +192,14 @@ class StartPumpClientDialog(QDialog):
 
     def load_file_without_config(self):
         self.parent.create_pump_client(config_file = self.lineEdit_config_path.text(), device_name = self.lineEdit_device_name.text(), config_use = False)
+
+    def generate_server_cmd(self):
+        if len(self.lineEdit_config_path.text())==0:
+            return
+        import yaml
+        data = yaml.safe_load(open(self.lineEdit_config_path.text(),'r'))
+        bashCommand = "PumpServer {} -ORBendPoint giop:tcp::{} -nodb -dlist {}".format(data['server']['name'], data['server']['port'], data['server']['tangoname'])
+        self.lineEdit_server_cmd.setText(bashCommand)
 
     def create_client_without_config(self):
         cmd = '{}:{}{}#dbase=no'.format(self.lineEdit_ip.text(),self.lineEdit_port.text(),self.lineEdit_device_name.text())

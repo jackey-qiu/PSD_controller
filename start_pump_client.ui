@@ -77,6 +77,20 @@
     </layout>
    </item>
    <item>
+    <layout class="QHBoxLayout" name="horizontalLayout_5">
+     <item>
+      <widget class="QPushButton" name="pushButton_server_cmd">
+       <property name="text">
+        <string>Generate Server CMD</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLineEdit" name="lineEdit_server_cmd"/>
+     </item>
+    </layout>
+   </item>
+   <item>
     <widget class="QLabel" name="label_13">
      <property name="text">
       <string>Create client without config file</string>

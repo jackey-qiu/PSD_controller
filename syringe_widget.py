@@ -268,6 +268,11 @@ class syringe_widget(QWidget):
                 qp.drawLine(*(each_line[ii]+each_line[ii+1]))
         self.line_style=self.line_style*-1
         
+        #Not showing the cell in the clean_mode
+        #redraw cell and mvp valve to make crossed lines shown underneath
+        if not self.operation_mode == 'clean_mode':
+            self.draw_cell(qp,offset=[(19.5*0 + left_bound_cell)*self.ref_unit,(1.3)*self.ref_unit])
+        mvp_connect_coord_channel, mvp_connect_coord_cell = self.draw_mvp_valve(qp,[self.cell_rect[0] - (50 - self.cell_rect[2])/2, self.cell_rect[1]+20, 50, 50],connected_channel = self.mvp_channel, syringe_connected_channel = self.get_syringe_mvp_cell_inlet_channel())
         qp.end()
 
     def cal_ref_pos(self,width,hight,x_ref,y_ref,width_ref,hight_ref,align = 'left',offset = 0):

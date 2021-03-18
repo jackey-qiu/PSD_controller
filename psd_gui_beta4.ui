@@ -529,9 +529,6 @@
                   <property name="maximum">
                    <number>10000</number>
                   </property>
-                  <property name="value">
-                   <number>10</number>
-                  </property>
                  </widget>
                 </item>
                 <item row="2" column="4">
@@ -1129,6 +1126,9 @@
                      <property name="maximum">
                       <double>5000.000000000000000</double>
                      </property>
+                     <property name="singleStep">
+                      <double>100.000000000000000</double>
+                     </property>
                      <property name="value">
                       <double>100.000000000000000</double>
                      </property>
@@ -1141,6 +1141,9 @@
                      </property>
                      <property name="maximum">
                       <double>5000.000000000000000</double>
+                     </property>
+                     <property name="singleStep">
+                      <double>100.000000000000000</double>
                      </property>
                      <property name="value">
                       <double>100.000000000000000</double>
@@ -1174,6 +1177,9 @@
                      <property name="maximum">
                       <double>5000.000000000000000</double>
                      </property>
+                     <property name="singleStep">
+                      <double>100.000000000000000</double>
+                     </property>
                      <property name="value">
                       <double>100.000000000000000</double>
                      </property>
@@ -1199,6 +1205,9 @@
                      </property>
                      <property name="maximum">
                       <double>5000.000000000000000</double>
+                     </property>
+                     <property name="singleStep">
+                      <double>100.000000000000000</double>
                      </property>
                      <property name="value">
                       <double>100.000000000000000</double>
@@ -2204,7 +2213,7 @@
              <item>
               <widget class="QTabWidget" name="tabWidget_2">
                <property name="currentIndex">
-                <number>2</number>
+                <number>0</number>
                </property>
                <widget class="QWidget" name="tab_4">
                 <attribute name="title">
@@ -2381,7 +2390,7 @@
      <x>0</x>
      <y>0</y>
      <width>1920</width>
-     <height>24</height>
+     <height>21</height>
     </rect>
    </property>
   </widget>
