@@ -360,7 +360,7 @@ class MyMainWindow(QMainWindow):
 
         ##timmer to syn gui meta status to client config
         self.timer_syn_server_and_gui = QTimer(self)
-        self.timer_syn_server_and_gui.timeout.connect(self.syn_server_and_gui)
+        # self.timer_syn_server_and_gui.timeout.connect(self.syn_server_and_gui)
 
         #webcam timer
         self.timer_webcam = QTimer(self)
@@ -809,6 +809,7 @@ class MyMainWindow(QMainWindow):
                                                             'total_exchange_amount_handle':lambda:self.doubleSpinBox_exchange_amount.value()/1000,
                                                             'pre_pressure_volume_handle':lambda:self.doubleSpinBox_prepresure_vol.value()/1000.,
                                                             'pre_pressure_speed_handle':lambda:self.doubleSpinBox_prepressure_rate.value()/1000.,
+                                                            'leftover_volume_handle':lambda:self.doubleSpinBox_leftover_vol.value()/1000.,
                                                             'push_syringe_handle':self.get_pushing_syringe_simple_exchange_mode,
                                                             'refill_speed_handle':self.get_default_filling_speed,
                                                             'timer_prepressure':QTimer(self),
@@ -1009,6 +1010,8 @@ class MyMainWindow(QMainWindow):
         return times
 
     def get_pulling_syringe_init_mode(self):
+        return self.get_pulling_syringe_simple_exchange_mode()
+        '''
         for i in [3,4]:
             current_valve = self.widget_psd.connect_valve_port[i]
             name_of_key = 'S{}_{}'.format(i,current_valve)
@@ -1016,15 +1019,20 @@ class MyMainWindow(QMainWindow):
                 return i
         error_pop_up('One of the valve postion should switch to cell_outlet to allow pulling!','error')
         return None
+        '''
 
     def get_pushing_syringe_init_mode(self):
+        return self.get_pushing_syringe_simple_exchange_mode()
+        '''
         if self.widget_psd.mvp_channel not in [1,2]:
             error_pop_up('MVP not in the right position, should be either 1 or 2!','error')
             return None
         else:
             return self.widget_psd.mvp_channel
+        '''
 
     def get_pulling_syringe_simple_exchange_mode(self):
+        '''
         syringe = None
         #each looks like : S1_left
         for each in self.pump_settings:
@@ -1036,13 +1044,26 @@ class MyMainWindow(QMainWindow):
         else:
             logging.getLogger().exception('Error: Could not find syringe to pull electrolyte from cell. Check your setting table!')
             self.tabWidget.setCurrentIndex(1)
+        '''
+        if self.widget_psd.mvp_channel not in [1,2]:
+            error_pop_up('MVP not in the right position, should be either 1 or 2!','error')
+            return None 
+        else:
+            return {1:3,2:4}[self.widget_psd.mvp_channel]
 
     def get_pushing_syringe_simple_exchange_mode(self):
+        '''
         for each in self.pump_settings:
             if self.pump_settings[each] == self.connected_mvp_channel:
                 return int(''.join(each.rsplit('_')[0][1:]))
         logging.getLogger().exception('No MVP channel is actived now. Connect it first!')
         self.tabWidget.setCurrentIndex(1) 
+        '''
+        if self.widget_psd.mvp_channel not in [1,2]:
+            error_pop_up('MVP not in the right position, should be either 1 or 2!','error')
+            return None
+        else:
+            return self.widget_psd.mvp_channel 
 
     def update_cell_volume(self):
         self.widget_psd.cell_volume_in_total = self.spinBox_cell_volume.value()
@@ -1384,21 +1405,24 @@ class MyMainWindow(QMainWindow):
     @check_any_timer_except_exchange
     def pickup_init_mode(self,kwargs = None):
         self.textBrowser_error_msg.setText('')
-        if self.timer_update.isActive() or self.timer_update_simple.isActive():
+        if self.timer_update.isActive():
             self.widget_psd.actived_syringe_motion_init_mode = 'fill'
             syringe_index = self.get_pulling_syringe_init_mode()
             if syringe_index in [3,4]:
                 timer_name = f"timer_droplet_adjustment_S{syringe_index}"
                 getattr(self.advanced_exchange_operation,timer_name).start(100)
         elif self.timer_update_simple.isActive():#if simple exchange mode actived
+            self.server_devices['client'].stop()
             self.stop_all_timers()
+            self.simple_exchange_operation.set_status_to_ready()
             time.sleep(0.1)
             self.widget_psd.actived_syringe_motion_init_mode = 'fill'
             self.init_operation.start_exchange_timer()
             self.timer_check_device_busy.start(50)
         else:
-            self.widget_psd.actived_syringe_motion_init_mode = 'fill'
+            self.server_devices['client'].stop()
             self.stop_all_timers()
+            self.widget_psd.actived_syringe_motion_init_mode = 'fill'
             self.init_operation.start_exchange_timer()
 
     def check_server_devices_busy_init_mode_to_simple_mode(self):
@@ -1414,6 +1438,7 @@ class MyMainWindow(QMainWindow):
         if not busy:
             this_timer.stop()
             connect_timer.stop()
+            self.server_devices['client'].stop()
             post_action()
 
     @check_any_timer_except_exchange
@@ -1429,6 +1454,8 @@ class MyMainWindow(QMainWindow):
                 getattr(self.advanced_exchange_operation,timer_name).start(100)
         elif self.timer_update_simple.isActive():#if simple exchange mode actived
             self.stop_all_timers()
+            self.server_devices['client'].stop()
+            self.simple_exchange_operation.set_status_to_ready()
             time.sleep(0.1)
             self.widget_psd.actived_syringe_motion_init_mode = 'dispense'
             self.init_operation.start_exchange_timer()
@@ -1436,6 +1463,7 @@ class MyMainWindow(QMainWindow):
         else:
             self.widget_psd.actived_syringe_motion_init_mode = 'dispense'
             self.stop_all_timers()
+            self.server_devices['client'].stop()
             self.init_operation.start_exchange_timer()
 
     @check_any_timer
