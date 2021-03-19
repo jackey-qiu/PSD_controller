@@ -1304,10 +1304,10 @@ class MyMainWindow(QMainWindow):
 
     # start/stop webcam
     def start_webcam(self):
-        self.cap = cv2.VideoCapture(int(self.lineEdit_camera_index.text()))
+        self.cap = cv2.VideoCapture(int(self.lineEdit_camera_index.text()),cv2.CAP_DSHOW)
         if not self.cap.isOpened():
             logging.getLogger().exception('\nOpenCV: camera failed to properly initialize! \nOpenCV: out device of bound: {}'.format(int(self.lineEdit_camera_index.text())))
-            self.tabWidget.setCurrentIndex(2) 
+            self.tabWidget.setCurrentIndex(1) 
         else:
             self.tabWidget.setCurrentIndex(0) 
             self.timer_webcam.start(20)
