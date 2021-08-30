@@ -75,6 +75,12 @@ class baseOperationMode(object):
             config['psd_widget'][key] = value
         self.server_devices['client'].configuration = config
         
+    def update_syringe_volume_from_device(self):
+        for index in [1,2,3,4]:
+            device_reading = self.server_devices['syringe'][index].volume/1000
+            setattr(self.psd_widget, 'volume_syringe_{}'.format(index), device_reading)
+        self.psd_widget.update()
+
     #TODO by Timo
     #update the syringe volumes from server to GUI
     #syringe are indexed from left to righ as 1, 2, 3 and 4, respectively in the GUI
@@ -371,6 +377,7 @@ class baseOperationMode(object):
             else:
                 logging.getLogger().exception('Valve turning error: possible_connection_valves_syringe_{} is not the member of settings'.format(index))
 
+
 class simpleRefillingOperationMode(baseOperationMode):
     def __init__(self, psd_server, psd_widget, error_widget, timer_premotion, timer_motion, timeout, pump_settings, settings, demo):
         super().__init__(psd_server, psd_widget, error_widget, timer_premotion, timer_motion,timeout, pump_settings, settings)
@@ -378,6 +385,7 @@ class simpleRefillingOperationMode(baseOperationMode):
         self.operation_mode = 'simple_exchange_mode'
         self.onetime = False
         self.resume = False
+        self.premotion_stage = None
         self.timer_begin = False
         self.timer_prepressure = self.settings['timer_prepressure']
         self.timer_prepressure.timeout.connect(self.update_widget_prepressure)
@@ -486,6 +494,7 @@ class simpleRefillingOperationMode(baseOperationMode):
             self.server_devices['exchange_pair'][label].swap()
             if self.premotion_stage:
                 self.premotion_stage = False
+                self.set_status_to_ready()
             else:
                 to_exchange_amount = (self.total_exchange_amount - self.exchange_amount_already)*1000 #from mL to uL 
                 max_exchange_amount_from_device_limit = self.server_devices['exchange_pair'][label].exchangeableVolume-float(self.settings['leftover_volume_handle']())*1000
@@ -524,7 +533,7 @@ class simpleRefillingOperationMode(baseOperationMode):
             else:
                 label = f"S{push_syringe_index}_S{pull_syringe_index}"
                 if label == 'S1_S3':
-                    if self.server_devices['exchange_pair'][label].pushSyr.deviceId!=1:
+                    if self.server_devices['exchange_pair'][label].pushSyr.deviceId!=4:
                         self.server_devices['exchange_pair'][label].swap()
                 if label == 'S2_S4':
                     if self.server_devices['exchange_pair'][label].pushSyr.deviceId!=2:
@@ -540,7 +549,14 @@ class simpleRefillingOperationMode(baseOperationMode):
                 return True
 
     def exchange_motion(self):
+        self.settings['volume_record_handle'](round(self.exchange_amount_already*1000,0))
         if self.check_synchronization():
+            self.update_syringe_volume_from_device()
+            self.set_status_to_ready()
+            if abs(self.exchange_amount_already - self.total_exchange_amount)<0.001:
+                self.server_devices['client'].stop()
+                self.timer_motion.stop()
+                return
             if self.onetime:
                 self.server_devices['client'].stop()
                 self.timer_motion.stop()
@@ -754,11 +770,13 @@ class advancedRefillingOperationMode(baseOperationMode):
         for i in [1,2,3,4]:
             self.settings['syringe{}_status'.format(i)] = 'moving'
             self.psd_widget.connect_status[i] = 'moving'
+            self.psd_widget.update()
 
     def set_status_to_ready(self):
         for i in [1,2,3,4]:
             self.settings['syringe{}_status'.format(i)] = 'ready'
             self.psd_widget.connect_status[i] = 'ready'
+            self.psd_widget.update()
 
     def init_motion_resume(self):
         #init auto exchange motion after stopping all timers (i.e. resume exchange)
@@ -921,6 +939,7 @@ class advancedRefillingOperationMode(baseOperationMode):
             self.onetime = onetime
             self.init_motion()#do the prepressure first and then trigger the exchange operation
         else:
+            self.onetime =  onetime
             if self.init_motion_resume():#resume the exchange
                 self.timer_motion.start(100) #slot func is start_motion
 
@@ -929,7 +948,12 @@ class advancedRefillingOperationMode(baseOperationMode):
         overshoot_amount = 0
         ready = self.check_synchronization()
         if ready:
-            if not self.timer_motion.isActive():
+            self.update_syringe_volume_from_device()
+            self.set_status_to_ready()
+            #if not self.timer_motion.isActive():
+            if self.exchange_amount_already>=self.total_exchange_amount:
+                self.server_devices['client'].stop()
+                self.timer_motion.stop()
                 return
             if self.onetime:
                 self.server_devices['client'].stop()

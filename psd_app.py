@@ -680,13 +680,16 @@ class MyMainWindow(QMainWindow):
                 self.send_cmd_to_cloud('\n'.join(cmd_list))
 
     def hide_setting_frame(self):
+        '''
         size = self.frame_2.size()
         self.frame_2.setVisible(False)
         self.frame.resize(size)
+        '''
+        self.tabWidget_settings.hide()
 
     def display_setting_frame(self):
-        #size = self.frame_2.size()
-        self.frame_2.setVisible(True)
+        # self.frame_2.setVisible(True)
+        self.tabWidget_settings.show()
 
     def start_pump_client_dialog(self):
         dlg = StartPumpClientDialog(self)
@@ -821,6 +824,7 @@ class MyMainWindow(QMainWindow):
                                                             'leftover_volume_handle':lambda:self.doubleSpinBox_leftover_vol.value()/1000.,
                                                             'push_syringe_handle':self.get_pushing_syringe_simple_exchange_mode,
                                                             'refill_speed_handle':self.get_default_filling_speed,
+                                                            'volume_record_handle':self.display_exchange_volume,
                                                             'timer_prepressure':QTimer(self),
                                                             'exchange_speed_handle':lambda:self.doubleSpinBox.value()/1000}, demo = self.demo)
 
