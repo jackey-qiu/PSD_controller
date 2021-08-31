@@ -1419,6 +1419,23 @@ class MyMainWindow(QMainWindow):
     def pickup_init_mode(self,kwargs = None):
         self.textBrowser_error_msg.setText('')
         if self.timer_update.isActive():
+            label = 'S{}_S{}'.format(*self.widget_psd.get_exchange_syringes_advance_exchange_mode())
+            self.server_devices['exchange_pair'][label].decreaseVolume(volume = self.spinBox_amount.value(), rate = self.spinBox_speed.value())
+        elif self.timer_update_simple.isActive():#if simple exchange mode actived
+            pull_syringe_index = int(self.simple_exchange_operation.settings['pull_syringe_handle']())
+            push_syringe_index = int(self.simple_exchange_operation.settings['push_syringe_handle']())
+            label = f"S{push_syringe_index}_S{pull_syringe_index}"
+            self.server_devices['exchange_pair'][label].decreaseVolume(volume = self.spinBox_amount.value(), rate = self.spinBox_speed.value())
+        else:
+            self.server_devices['client'].stop()
+            self.stop_all_timers()
+            self.widget_psd.actived_syringe_motion_init_mode = 'fill'
+            self.init_operation.start_exchange_timer()
+
+    @check_any_timer_except_exchange
+    def pickup_init_mode_old(self,kwargs = None):
+        self.textBrowser_error_msg.setText('')
+        if self.timer_update.isActive():
             self.widget_psd.actived_syringe_motion_init_mode = 'fill'
             syringe_index = self.get_pulling_syringe_init_mode()
             if syringe_index in [3,4]:
@@ -1455,7 +1472,7 @@ class MyMainWindow(QMainWindow):
             post_action()
 
     @check_any_timer_except_exchange
-    def dispense_init_mode(self, kwargs = None):
+    def dispense_init_mode_old(self, kwargs = None):
         self.textBrowser_error_msg.setText('')
         #shrink droplet during advanced exchange
         if self.timer_update.isActive():
@@ -1473,6 +1490,41 @@ class MyMainWindow(QMainWindow):
             self.widget_psd.actived_syringe_motion_init_mode = 'dispense'
             self.init_operation.start_exchange_timer()
             self.timer_check_device_busy.start(50)
+        else:
+            self.widget_psd.actived_syringe_motion_init_mode = 'dispense'
+            self.stop_all_timers()
+            self.server_devices['client'].stop()
+            self.init_operation.start_exchange_timer()
+
+    @check_any_timer_except_exchange
+    def dispense_init_mode(self, kwargs = None):
+        self.textBrowser_error_msg.setText('')
+        #shrink droplet during advanced exchange
+        if self.timer_update.isActive():
+            label = 'S{}_S{}'.format(*self.widget_psd.get_exchange_syringes_advance_exchange_mode())
+            self.server_devices['exchange_pair'][label].increaseVolume(volume = self.spinBox_amount.value(), rate = self.spinBox_speed.value())
+            '''
+            syringe_index = self.get_pushing_syringe_init_mode()
+            self.widget_psd.actived_syringe_motion_init_mode = 'dispense'
+            if syringe_index in [1,2]:
+                # self.server_devices['syringe'][syringe_index].dispense(volume= self.init_operation.settings['vol_handle'](), rate = self.init_operation.settings['speed_handle']())
+                timer_name = f"timer_droplet_adjustment_S{syringe_index}"
+                getattr(self.advanced_exchange_operation,timer_name).start(100)
+            '''
+        elif self.timer_update_simple.isActive():#if simple exchange mode actived
+            pull_syringe_index = int(self.simple_exchange_operation.settings['pull_syringe_handle']())
+            push_syringe_index = int(self.simple_exchange_operation.settings['push_syringe_handle']())
+            label = f"S{push_syringe_index}_S{pull_syringe_index}"
+            self.server_devices['exchange_pair'][label].increaseVolume(volume = self.spinBox_amount.value(), rate = self.spinBox_speed.value())
+            '''
+            self.stop_all_timers()
+            self.server_devices['client'].stop()
+            self.simple_exchange_operation.set_status_to_ready()
+            time.sleep(0.1)
+            self.widget_psd.actived_syringe_motion_init_mode = 'dispense'
+            self.init_operation.start_exchange_timer()
+            self.timer_check_device_busy.start(50)
+            '''
         else:
             self.widget_psd.actived_syringe_motion_init_mode = 'dispense'
             self.stop_all_timers()
