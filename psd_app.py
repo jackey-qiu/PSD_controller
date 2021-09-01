@@ -287,14 +287,14 @@ class MyMainWindow(QMainWindow):
         # self.pushButton_start.clicked.connect(self.init_start)
         self.actioninitExchange.triggered.connect(self.init_start)
 
-        self.pushButton_stop.clicked.connect(self.stop)
+        # self.pushButton_stop.clicked.connect(self.stop)
 
         self.pushButton_exchange.setIcon(QtGui.QIcon(os.path.join(script_path,'icons','exchange.png')))
         self.pushButton_exchange.setIconSize(QtCore.QSize(50,50))
         self.pushButton_exchange.clicked.connect(self.start_exchange)
         self.actionExchange.triggered.connect(self.start_exchange)
 
-        self.pushButton_apply.clicked.connect(self.apply_setting_during_exchange)
+        # self.pushButton_apply.clicked.connect(self.apply_setting_during_exchange)
 
         self.pushButton_fill_syringe_1.clicked.connect(lambda:self.fill_syringe(1))
         self.pushButton_dispense_syringe_1.clicked.connect(lambda:self.dispense_syringe(1))

@@ -5,6 +5,8 @@ import sys
 import numpy as np
 import time
 
+font_size = 10.5
+
 class syringe_widget(QWidget):
     def __init__(self,parent=None):
         super().__init__(parent)
@@ -199,10 +201,12 @@ class syringe_widget(QWidget):
         self.draw_valve(qp,rects_3[1],connect_port=self.connect_valve_port[3])
         self.draw_valve(qp,rects_4[1],connect_port=self.connect_valve_port[4])
 
-        self.draw_radio_signal(qp,[rects_1[8][0]-6,rects_1[8][1]+90],msg=self.connect_status[1])
-        self.draw_radio_signal(qp,[rects_2[8][0]-6,rects_2[8][1]+90],msg=self.connect_status[2])
-        self.draw_radio_signal(qp,[rects_3[8][0]-6,rects_3[8][1]+90],msg=self.connect_status[3])
-        self.draw_radio_signal(qp,[rects_4[8][0]-6,rects_4[8][1]+90],msg=self.connect_status[4])
+        offset_ver = 70
+        offset_hor = 11
+        self.draw_radio_signal(qp,[rects_1[8][0]-offset_hor,rects_1[8][1]+offset_ver],msg=self.connect_status[1])
+        self.draw_radio_signal(qp,[rects_2[8][0]-offset_hor,rects_2[8][1]+offset_ver],msg=self.connect_status[2])
+        self.draw_radio_signal(qp,[rects_3[8][0]-offset_hor,rects_3[8][1]+offset_ver],msg=self.connect_status[3])
+        self.draw_radio_signal(qp,[rects_4[8][0]-offset_hor,rects_4[8][1]+offset_ver],msg=self.connect_status[4])
         # if self.operation_mode in ['auto_refilling','init_mode']:
         #Not showing the cell in the clean_mode
         if not self.operation_mode == 'clean_mode':
@@ -427,10 +431,14 @@ class syringe_widget(QWidget):
         qp.drawText(self.cell_rect[0]-15-18,self.cell_rect[1]-35,"cell vol:{:7.1f} ul".format(self.volume_of_electrolyte_in_cell*1000))
         return [x+l1-(l1-l2)/2-l2,y+(l1-l2)/2,l2,l2]
 
-    def draw_radio_signal(self,qp,pos,dim=[40,40],start_angle=50,num_arcs = 0,vertical_spacing =10, msg='error'):
-        color = 'green'
-        if msg == 'error':
-            color = 'red'
+    def draw_radio_signal(self,qp,pos,dim=[40,40],start_angle=50,num_arcs = 4,vertical_spacing =10, msg='error'):
+        color = 'white'
+        if msg in ['ready','No error']:
+            color = 'green'
+        elif msg in ['moving']:
+            color = 'magenta'
+        elif msg in ['disconnected']:
+            color = 'red'        
         qp.setPen(QPen(getattr(Qt,color), 2, Qt.SolidLine))
         for i in range(num_arcs):
             current_pos = [pos[0]+i*vertical_spacing/2,pos[1]+i*vertical_spacing/2]
@@ -439,23 +447,18 @@ class syringe_widget(QWidget):
             if i==num_arcs-1:
                 if color=='red':
                     qp.setBrush(QColor(200,0,0))
-                elif color =='blue':
-                    qp.setBrush(QColor(0,0,200))
+                elif color =='green':
+                    qp.setBrush(QColor(0,200,0))
+                elif color == 'magenta':
+                    qp.setBrush(QColor(200,0,200))
                 qp.setPen(QPen(getattr(Qt,color), 0, Qt.SolidLine))
                 qp.drawEllipse(current_pos[0],current_pos[1],current_dim[0],current_dim[1])
             else:
                 qp.drawArc(current_pos[0],current_pos[1],current_dim[0],current_dim[1],30*16,120*16)
-        color = 'white'
-        if msg in ['ready','No error']:
-            color = 'green'
-        elif msg in ['moving']:
-            color = 'magenta'
-        elif msg in ['disconnected']:
-            color = 'red'
         qp.setPen(QPen(getattr(Qt,color), 2, Qt.SolidLine))
-        qp.setFont(QFont('Decorative', 12))
-        offset = [-15,2][int(msg=='error')]
-        qp.drawText(pos[0]+offset,pos[1]+vertical_spacing*num_arcs-10,msg)
+        qp.setFont(QFont('Decorative', font_size))
+        offset = [2,-15][int(msg=='disconnected')]
+        qp.drawText(pos[0]+offset,pos[1]+vertical_spacing*num_arcs,msg)
 
     def draw_bottle(self,qp,top_width = 80,top_height = 4, bottom_width = 90, fill_height =20, offset = [0,0],color = [0,0,250],label='resevoir',volume=250):
         bottom_height_total = self.bottom_height_total
@@ -485,7 +488,7 @@ class syringe_widget(QWidget):
         qp.setBrush(QColor(250, 250, 250))
         # qp.drawRect(*(rec10_pos+rec10_dim))
         qp.setPen(QPen(QColor(200, 200, 200), 1, Qt.SolidLine, Qt.FlatCap, Qt.MiterJoin))
-        qp.setFont(QFont('Decorative', 12))
+        qp.setFont(QFont('Decorative', font_size))
         qp.drawText(rec6_pos[0],rec6_pos[1]+rec6_dim[1]+50,"{}:{:6.2f} ml".format(label,volume/bottom_height_total*fill_height))
         if label!='Waste':
             qp.drawText(rec6_pos[0],rec6_pos[1]+rec6_dim[1]+30,"Resevoir")
@@ -542,7 +545,7 @@ class syringe_widget(QWidget):
                 return_coord_channel = coord_tmp
             if self.operation_mode !='clean_mode':
                 qp.drawLine(*(coord_tmp+coord_center))
-        qp.setFont(QFont('Decorative', 12))
+        qp.setFont(QFont('Decorative', font_size))
         qp.setPen(QPen(Qt.red,  4, Qt.SolidLine))
         if self.operation_mode !='clean_mode':
             # qp.drawText(dim[0],dim[1]+80,"{}-->MVP".format(self.mvp_connected_valve))
@@ -615,7 +618,7 @@ class syringe_widget(QWidget):
         qp.setBrush(QColor(50, 50, 50))
         qp.drawRect(*(rec9_pos+rec9_dim))
         # qp.drawRect(*(rec10_pos+rec10_dim))
-        qp.setFont(QFont("Arial", 12))
+        qp.setFont(QFont("Arial", font_size))
         qp.setPen(QPen(QColor(250, 250, 250), 1, Qt.SolidLine, Qt.FlatCap, Qt.MiterJoin))
         qp.drawText(rec8_pos[0],rec9_pos[1]+40,label[1])
         # qp.drawText(rec8_pos[0],rec9_pos[1]+60,"{}:{:6.2f} ml".format(label[0],getattr(self,vol_tag)))
@@ -626,9 +629,9 @@ class syringe_widget(QWidget):
             rect_dim = eval('rec{}_dim'.format(i))
             rects.append(rect_pos+rect_dim)
         qp.setPen(QPen(QColor(0, 0, 0), 1, Qt.SolidLine, Qt.FlatCap, Qt.MiterJoin))
-        qp.setFont(QFont("Arial", 12))
+        qp.setFont(QFont("Arial", font_size))
         self.draw_markers(qp,rec_tube)
-        qp.setFont(QFont("Arial", 15, QFont.Bold))
+        qp.setFont(QFont("Arial", font_size, QFont.Bold))
         return rects
 
     def drawRectangles(self, qp):
@@ -647,5 +650,5 @@ class syringe_widget(QWidget):
 
     def drawText(self, event, qp):
         qp.setPen(QColor(168, 34, 3))
-        qp.setFont(QFont('Decorative', 10))
+        qp.setFont(QFont('Decorative', font_size))
         qp.drawText(event.rect(), Qt.AlignCenter, self.text)
