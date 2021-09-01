@@ -61,6 +61,8 @@ class baseOperationMode(object):
         self.settings = settings
         self.exchange_amount_already = 0
         self.total_exchange_amount = 0
+        #a handle supposed to update the valve position in the main gui widget
+        self.valve_handle = None
         #set redirection of error message to embeted text browser widget
         logTextBox = QTextEditLogger(error_widget)
         # You can format what is printed to text box
@@ -351,6 +353,8 @@ class baseOperationMode(object):
     def turn_valve_from_server(self, index, position):
         self.server_devices['T_valve'][index].valve = position
         self.server_devices['T_valve'][index].join()
+        if self.valve_handle!=None:
+            self.valve_handle(index, position)
 
     def turn_valve(self, index, to_position = None):
         if to_position in ['up','left','right']:
@@ -392,6 +396,8 @@ class simpleRefillingOperationMode(baseOperationMode):
         self.timer_motion.timeout.connect(self.exchange_motion)
         self.timer_premotion.timeout.connect(self.premotion)
         self.check_settings()
+        if 'valve_handle' in self.settings:
+            self.valve_handle = self.settings['valve_handle']
 
     def append_valve_info(self, index, pushing_syringe = True):
         if pushing_syringe:
@@ -556,6 +562,7 @@ class simpleRefillingOperationMode(baseOperationMode):
             if abs(self.exchange_amount_already - self.total_exchange_amount)<0.001:
                 self.server_devices['client'].stop()
                 self.timer_motion.stop()
+                self.settings['set_under_exchange_to_false']()
                 return
             if self.onetime:
                 self.server_devices['client'].stop()
@@ -685,6 +692,8 @@ class advancedRefillingOperationMode(baseOperationMode):
         self.timer_droplet_adjustment_S4.timeout.connect(lambda:self.update_widget_droplet_adjustment(4))
 
         self.check_settings()
+        if 'valve_handle' in self.settings:
+            self.valve_handle = self.settings['valve_handle']
         self.append_valve_info()
         self.waste_volume_t0 = 0
         self.exchange_t0 = 0
@@ -954,6 +963,7 @@ class advancedRefillingOperationMode(baseOperationMode):
             if self.exchange_amount_already>=self.total_exchange_amount:
                 self.server_devices['client'].stop()
                 self.timer_motion.stop()
+                self.settings['set_under_exchange_to_false']()
                 return
             if self.onetime:
                 self.server_devices['client'].stop()

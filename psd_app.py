@@ -272,6 +272,8 @@ class MyMainWindow(QMainWindow):
         self.frame_number = 0
         self.pushButton_catch_frame.clicked.connect(self.catch_frame)
 
+        self.under_exchange = False
+
         # self.pushButton_fill_syringe.setIcon(QtGui.QIcon(os.path.join(script_path,'icons','refill1.png')))
         # self.pushButton_fill_syringe.setIconSize(QtCore.QSize(60,60))
         # self.pushButton_fill_syringe.clicked.connect(self.fill_specified_syringe)
@@ -682,6 +684,17 @@ class MyMainWindow(QMainWindow):
                            ]
                 self.send_cmd_to_cloud('\n'.join(cmd_list))
 
+
+    def update_valve_on_GUI(self,syringe_num = 1, valve_pos = None):
+        if valve_pos not in ['up', 'left', 'right']:
+            return
+        comboBox_name = 'comboBox_valve_port_{}'.format(syringe_num)
+        combo = getattr(self, comboBox_name)
+        if combo.currentText() == valve_pos:
+            return
+        else:
+            combo.setCurrentText(valve_pos)
+
     def hide_setting_frame(self):
         '''
         size = self.frame_2.size()
@@ -781,6 +794,9 @@ class MyMainWindow(QMainWindow):
                                   }
         self.widget_terminal.update_name_space('server_devices',self.server_devices)
 
+    def set_under_exchange_to_false(self):
+        self.under_exchange = False
+
     def set_up_operations(self):
         #pushing electrolyte to cell or pulling it out (miniscus size adjustment)
         self.init_operation = initOperationMode(self.server_devices, self.widget_psd,self.textBrowser_error_msg, None, self.timer_update_init_mode, 100, self.pump_settings, \
@@ -816,6 +832,8 @@ class MyMainWindow(QMainWindow):
                                                             'timer_droplet_adjustment_S2':self.timer_droplet_adjustment_S2,
                                                             'timer_droplet_adjustment_S3':self.timer_droplet_adjustment_S3,
                                                             'timer_droplet_adjustment_S4':self.timer_droplet_adjustment_S4,
+                                                            'valve_handle': self.update_valve_on_GUI,
+                                                            'set_under_exchange_to_false': self.set_under_exchange_to_false,
                                                             }, demo = self.demo)
 
         #only one pair of pumps responsible for electrolyte eschange (will automatically refill the syringe once empty)
@@ -829,6 +847,8 @@ class MyMainWindow(QMainWindow):
                                                             'refill_speed_handle':self.get_default_filling_speed,
                                                             'volume_record_handle':self.display_exchange_volume,
                                                             'timer_prepressure':QTimer(self),
+                                                            'valve_handle': self.update_valve_on_GUI,
+                                                            'set_under_exchange_to_false': self.set_under_exchange_to_false,
                                                             'exchange_speed_handle':lambda:self.doubleSpinBox.value()/1000}, demo = self.demo)
 
         #fill the tubing line (to waste then to cell for specified cycles)
@@ -1240,6 +1260,7 @@ class MyMainWindow(QMainWindow):
 
     def start_exchange(self):
         # self.init_start()
+        self.under_exchange = True
         if self.comboBox_exchange_mode.currentText() == 'Continuous':
             if self.main_client_cloud!=None:
                 if not self.main_client_cloud:
@@ -1329,6 +1350,7 @@ class MyMainWindow(QMainWindow):
             pass
 
     def stop_all_motion(self):
+        self.under_exchange = False
         for each in self.timers:
             if each==self.timer_update and each.isActive():
                 self.advanced_exchange_operation.resume = True
@@ -1372,29 +1394,32 @@ class MyMainWindow(QMainWindow):
         self.textBrowser_error_msg.setText('')
         #radioButton_widget.setChecked(True)
         self.widget_psd.actived_syringe_normal_mode = syringe_no
-        self.widget_psd.operation_mode = 'normal_mode'
-        valve_position = eval('self.comboBox_valve_port_{}.currentText()'.format(syringe_no))
-        temp_valve_port = self.widget_psd.connect_valve_port
-        temp_valve_port.update({syringe_no:valve_position})
-        self.syn_server_and_gui_init(attrs = {'operation_mode':'normal_mode','valve_pos':temp_valve_port})
-        self.widget_psd.connect_valve_port[self.widget_psd.actived_syringe_normal_mode] = valve_position
-        key_for_pump_setting = 'S{}_{}'.format(syringe_no,valve_position)
-        if not self.demo:
-            exec("self.valve_server_S{}.valve = '{}'".format(syringe_no, valve_position))
-            exec('self.valve_server_S{}.join()'.format(syringe_no))
-        # key_for_mvp = 'S{}_mvp'.format(syringe_no)
-        '''
-        #update mvp channel if connecting to cell_inlet
-        if self.pump_settings[key_for_pump_setting]=='cell_inlet':
-            self.widget_psd.mvp_channel = int(self.pump_settings[key_for_mvp].rsplit('_')[1])
-            self.widget_psd.mvp_connected_valve = 'S{}'.format(self.widget_psd.mvp_channel)
-        '''
-        #update the valve connection based on the info in pump settings
-        #eval("self.comboBox_valve_connection_{}.setCurrentText('{}')".format(syringe_no,self.pump_settings[key_for_pump_setting]))
-        #self.widget_psd.actived_syringe_valve_connection = eval('self.comboBox_valve_connection_{}.currentText()'.format(syringe_no))
-        self.widget_psd.actived_syringe_valve_connection = self.pump_settings[key_for_pump_setting]
-        # self.widget_psd.volume_normal_mode = eval('self.doubleSpinBox_stroke_factor_{}.value()'.format(syringe_no))*self.widget_psd.syringe_size
-        self.widget_psd.update()
+        if self.under_exchange:
+            pass
+        else:
+            self.widget_psd.operation_mode = 'normal_mode'
+            valve_position = eval('self.comboBox_valve_port_{}.currentText()'.format(syringe_no))
+            temp_valve_port = self.widget_psd.connect_valve_port
+            temp_valve_port.update({syringe_no:valve_position})
+            self.syn_server_and_gui_init(attrs = {'operation_mode':'normal_mode','valve_pos':temp_valve_port})
+            self.widget_psd.connect_valve_port[self.widget_psd.actived_syringe_normal_mode] = valve_position
+            key_for_pump_setting = 'S{}_{}'.format(syringe_no,valve_position)
+            if not self.demo:
+                exec("self.valve_server_S{}.valve = '{}'".format(syringe_no, valve_position))
+                exec('self.valve_server_S{}.join()'.format(syringe_no))
+            # key_for_mvp = 'S{}_mvp'.format(syringe_no)
+            '''
+            #update mvp channel if connecting to cell_inlet
+            if self.pump_settings[key_for_pump_setting]=='cell_inlet':
+                self.widget_psd.mvp_channel = int(self.pump_settings[key_for_mvp].rsplit('_')[1])
+                self.widget_psd.mvp_connected_valve = 'S{}'.format(self.widget_psd.mvp_channel)
+            '''
+            #update the valve connection based on the info in pump settings
+            #eval("self.comboBox_valve_connection_{}.setCurrentText('{}')".format(syringe_no,self.pump_settings[key_for_pump_setting]))
+            #self.widget_psd.actived_syringe_valve_connection = eval('self.comboBox_valve_connection_{}.currentText()'.format(syringe_no))
+            self.widget_psd.actived_syringe_valve_connection = self.pump_settings[key_for_pump_setting]
+            # self.widget_psd.volume_normal_mode = eval('self.doubleSpinBox_stroke_factor_{}.value()'.format(syringe_no))*self.widget_psd.syringe_size
+            self.widget_psd.update()
 
     @check_any_timer
     def update_mvp_connection(self, syringe_no):
