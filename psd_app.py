@@ -1,6 +1,6 @@
 from PyQt5 import QtCore
 from PyQt5.QtWidgets import QCheckBox, QRadioButton, QDialog, QTableWidgetItem, QHeaderView, QAbstractItemView, QInputDialog, QDialog,QShortcut
-from PyQt5.QtCore import Qt, QTimer, QEventLoop, QThread
+from PyQt5.QtCore import Qt, QTimer, QDeadlineTimer, QEventLoop, QThread
 from PyQt5.QtGui import QTransform, QFont, QBrush, QColor, QIcon, QImage, QPixmap
 from pyqtgraph.Qt import QtGui
 from PyQt5.QtWidgets import QApplication, QMainWindow, QFileDialog, QMessageBox
@@ -397,6 +397,9 @@ class MyMainWindow(QMainWindow):
         self.timer_droplet_adjustment_S2 = QTimer(self)
         self.timer_droplet_adjustment_S3 = QTimer(self)
         self.timer_droplet_adjustment_S4 = QTimer(self)
+        self.timer_droplet_adjustment_on_the_fly = QTimer(self)
+        self.timer_droplet_adjustment_on_the_fly.timeout.connect(self.check_elapsed_time)
+        self.deadlinetimer_droplet_adjustment_on_the_fly = QDeadlineTimer()
         #simple mode of auto_refilling
         self.timer_update_simple = QTimer(self)
 
@@ -1420,12 +1423,20 @@ class MyMainWindow(QMainWindow):
         self.textBrowser_error_msg.setText('')
         if self.timer_update.isActive():
             label = 'S{}_S{}'.format(*self.widget_psd.get_exchange_syringes_advance_exchange_mode())
-            self.server_devices['exchange_pair'][label].decreaseVolume(volume = self.spinBox_amount.value(), rate = self.spinBox_speed.value())
+            timeout = self.spinBox_amount.value()/self.spinBox_speed.value()*1000
+            self.server_devices['exchange_pair'][label].pullSyr.rate = self.server_devices['exchange_pair'][label].rate + self.spinBox_speed.value()
+            self.timer_droplet_adjustment_on_the_fly.start(10)
+            self.deadlinetimer_droplet_adjustment_on_the_fly.setRemainingTime(timeout)
+            # self.server_devices['exchange_pair'][label].decreaseVolume(volume = self.spinBox_amount.value(), rate = self.spinBox_speed.value())
         elif self.timer_update_simple.isActive():#if simple exchange mode actived
             pull_syringe_index = int(self.simple_exchange_operation.settings['pull_syringe_handle']())
             push_syringe_index = int(self.simple_exchange_operation.settings['push_syringe_handle']())
             label = f"S{push_syringe_index}_S{pull_syringe_index}"
-            self.server_devices['exchange_pair'][label].decreaseVolume(volume = self.spinBox_amount.value(), rate = self.spinBox_speed.value())
+            timeout = self.spinBox_amount.value()/self.spinBox_speed.value()*1000
+            self.server_devices['exchange_pair'][label].pullSyr.rate = self.server_devices['exchange_pair'][label].rate + self.spinBox_speed.value()
+            self.timer_droplet_adjustment_on_the_fly.start(10)
+            self.deadlinetimer_droplet_adjustment_on_the_fly.setRemainingTime(timeout)
+            # self.server_devices['exchange_pair'][label].decreaseVolume(volume = self.spinBox_amount.value(), rate = self.spinBox_speed.value())
         else:
             self.server_devices['client'].stop()
             self.stop_all_timers()
@@ -1499,23 +1510,23 @@ class MyMainWindow(QMainWindow):
     @check_any_timer_except_exchange
     def dispense_init_mode(self, kwargs = None):
         self.textBrowser_error_msg.setText('')
-        #shrink droplet during advanced exchange
+        #puff droplet during advanced exchange
         if self.timer_update.isActive():
             label = 'S{}_S{}'.format(*self.widget_psd.get_exchange_syringes_advance_exchange_mode())
-            self.server_devices['exchange_pair'][label].increaseVolume(volume = self.spinBox_amount.value(), rate = self.spinBox_speed.value())
-            '''
-            syringe_index = self.get_pushing_syringe_init_mode()
-            self.widget_psd.actived_syringe_motion_init_mode = 'dispense'
-            if syringe_index in [1,2]:
-                # self.server_devices['syringe'][syringe_index].dispense(volume= self.init_operation.settings['vol_handle'](), rate = self.init_operation.settings['speed_handle']())
-                timer_name = f"timer_droplet_adjustment_S{syringe_index}"
-                getattr(self.advanced_exchange_operation,timer_name).start(100)
-            '''
+            timeout = self.spinBox_amount.value()/self.spinBox_speed.value()*1000
+            self.server_devices['exchange_pair'][label].pushSyr.rate = self.server_devices['exchange_pair'][label].rate + self.spinBox_speed.value()
+            self.timer_droplet_adjustment_on_the_fly.start(10)
+            self.deadlinetimer_droplet_adjustment_on_the_fly.setRemainingTime(timeout)
+            #self.server_devices['exchange_pair'][label].increaseVolume(volume = self.spinBox_amount.value(), rate = self.spinBox_speed.value())
         elif self.timer_update_simple.isActive():#if simple exchange mode actived
             pull_syringe_index = int(self.simple_exchange_operation.settings['pull_syringe_handle']())
             push_syringe_index = int(self.simple_exchange_operation.settings['push_syringe_handle']())
             label = f"S{push_syringe_index}_S{pull_syringe_index}"
-            self.server_devices['exchange_pair'][label].increaseVolume(volume = self.spinBox_amount.value(), rate = self.spinBox_speed.value())
+            timeout = self.spinBox_amount.value()/self.spinBox_speed.value()*1000
+            self.server_devices['exchange_pair'][label].pushSyr.rate = self.server_devices['exchange_pair'][label].rate + self.spinBox_speed.value()
+            self.timer_droplet_adjustment_on_the_fly.start(10)
+            self.deadlinetimer_droplet_adjustment_on_the_fly.setRemainingTime(timeout)
+            # self.server_devices['exchange_pair'][label].increaseVolume(volume = self.spinBox_amount.value(), rate = self.spinBox_speed.value())
             '''
             self.stop_all_timers()
             self.server_devices['client'].stop()
@@ -1530,6 +1541,21 @@ class MyMainWindow(QMainWindow):
             self.stop_all_timers()
             self.server_devices['client'].stop()
             self.init_operation.start_exchange_timer()
+
+    def check_elapsed_time(self):
+        if self.deadlinetimer_droplet_adjustment_on_the_fly.hasExpired():
+            #advance exchange mode
+            if self.timer_update.isActive():
+                label = 'S{}_S{}'.format(*self.widget_psd.get_exchange_syringes_advance_exchange_mode()) 
+                self.server_devices['exchange_pair'][label].pullSyr.rate = self.server_devices['exchange_pair'][label].rate
+                self.server_devices['exchange_pair'][label].pushSyr.rate = self.server_devices['exchange_pair'][label].rate
+            elif self.timer_update_simple.isActive():#if simple exchange mode actived
+                pull_syringe_index = int(self.simple_exchange_operation.settings['pull_syringe_handle']())
+                push_syringe_index = int(self.simple_exchange_operation.settings['push_syringe_handle']())
+                label = f"S{push_syringe_index}_S{pull_syringe_index}"
+                self.server_devices['exchange_pair'][label].pullSyr.rate = self.server_devices['exchange_pair'][label].rate
+                self.server_devices['exchange_pair'][label].pushSyr.rate = self.server_devices['exchange_pair'][label].rate
+            self.timer_droplet_adjustment_on_the_fly.stop()
 
     @check_any_timer
     def fill_syringe(self,syringe_no):
