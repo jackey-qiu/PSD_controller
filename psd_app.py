@@ -1284,7 +1284,7 @@ class MyMainWindow(QMainWindow):
             pass
 
     def stop_all_motion(self):
-        def _action()
+        def _action():
             self.under_exchange = False
             for each in self.timers:
                 if each==self.timer_update and each.isActive():
