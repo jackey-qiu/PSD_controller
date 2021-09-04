@@ -274,29 +274,13 @@ class MyMainWindow(QMainWindow):
 
         self.under_exchange = False
 
-        # self.pushButton_fill_syringe.setIcon(QtGui.QIcon(os.path.join(script_path,'icons','refill1.png')))
-        # self.pushButton_fill_syringe.setIconSize(QtCore.QSize(60,60))
-        # self.pushButton_fill_syringe.clicked.connect(self.fill_specified_syringe)
         self.actionfillSyringe.triggered.connect(self.fill_specified_syringe)
-
-        # self.pushButton_init_line.setIcon(QtGui.QIcon(os.path.join(script_path,'icons','init_tube3.png')))
-        # self.pushButton_init_line.setIconSize(QtCore.QSize(60,60))
-        # self.pushButton_init_line.clicked.connect(self.open_refill_dialog)
         self.actioninitTubeLine.triggered.connect(self.open_refill_dialog)
-
-        # self.pushButton_start.setIcon(QtGui.QIcon(os.path.join(script_path,'icons','refill.png')))
-        # self.pushButton_start.setIconSize(QtCore.QSize(60,60))
-        # self.pushButton_start.clicked.connect(self.init_start)
         self.actioninitExchange.triggered.connect(self.init_start)
-
-        # self.pushButton_stop.clicked.connect(self.stop)
-
         self.pushButton_exchange.setIcon(QtGui.QIcon(os.path.join(script_path,'icons','exchange.png')))
         self.pushButton_exchange.setIconSize(QtCore.QSize(50,50))
         self.pushButton_exchange.clicked.connect(self.start_exchange)
         self.actionExchange.triggered.connect(self.start_exchange)
-
-        # self.pushButton_apply.clicked.connect(self.apply_setting_during_exchange)
 
         self.pushButton_fill_syringe_1.clicked.connect(lambda:self.fill_syringe(1))
         self.pushButton_dispense_syringe_1.clicked.connect(lambda:self.dispense_syringe(1))
@@ -321,7 +305,6 @@ class MyMainWindow(QMainWindow):
         self.actionStartServer.triggered.connect(self.start_server_dialog)
         self.pushButton_connect_cloud.clicked.connect(self.start_mongo_client_cloud)
         self.pushButton_listen.clicked.connect(self.start_listening_cloud)
-        self.listen = False
         self.pushButton_stop_listen.clicked.connect(self.stop_listening_cloud)
 
         self.actionStop_all_motions.triggered.connect(self.stop_all_motion)
@@ -424,9 +407,7 @@ class MyMainWindow(QMainWindow):
         self.timers = [self.timer_prepressure_S1, self.timer_prepressure_S2, self.timer_droplet_adjustment_S1, self.timer_droplet_adjustment_S2, self.timer_droplet_adjustment_S3, self.timer_droplet_adjustment_S4, self.timer_update_simple, self.timer_update_simple_pre, self.timer_update_fill_half_mode,  self.timer_update,self.timer_update_normal_mode, self.timer_update_init_mode, self.timer_update_fill_cell, self.timer_clean_S1, self.timer_clean_S2, self.timer_clean_S3, self.timer_clean_S4]
         self.timers_partial = [self.timer_update_simple_pre, self.timer_update_fill_half_mode, self.timer_update_normal_mode, self.timer_update_init_mode]
 
-        # self.pushButton_connect_mvp_syringe_1.click()
         self.syn_valve_pos()
-        #instances of operation modes
 
     def syn_server_and_gui_init(self,attrs):
         config = self.client.configuration
