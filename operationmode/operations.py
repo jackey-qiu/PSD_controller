@@ -64,10 +64,10 @@ class baseOperationMode(object):
         #a handle supposed to update the valve position in the main gui widget
         self.valve_handle = None
         #set redirection of error message to embeted text browser widget
-        logTextBox = QTextEditLogger(error_widget)
+        # logTextBox = QTextEditLogger(error_widget)
         # You can format what is printed to text box
-        logTextBox.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
-        logging.getLogger().addHandler(logTextBox)
+        # logTextBox.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
+        # logging.getLogger().addHandler(logTextBox)
         # You can control the logging level
         logging.getLogger().setLevel(logging.DEBUG)
 
@@ -141,7 +141,7 @@ class baseOperationMode(object):
         #direction_sign: either 1(filling syringe) or -1(dispense syringe)
         direction_sign = [-1,1][int(getattr(self.psd_widget,'filling_status_syringe_{}'.format(index)))]
         if type_name_in_widget == None:
-            logging.getLogger().exception('Error: The key {} is not set in the settings'.format(type_+str(index)))
+            error_pop_up('Error: The key {} is not set in the settings'.format(type_+str(index)))
             return
         
         value_before_motion = getattr(self.psd_widget, type_name_in_widget)
@@ -162,7 +162,7 @@ class baseOperationMode(object):
                     pass
                 finally:
                     self.server_devices['client'].stop()
-                logging.getLogger().exception('Pump setting Error:YOU ARE ONLY allowed to dispense solution to WASTE or CELL_INLET')
+                error_pop_up('Pump setting Error:YOU ARE ONLY allowed to dispense solution to WASTE or CELL_INLET')
                 error_pop_up('Pump setting Error:YOU ARE ONLY allowed to dispense solution to WASTE or CELL_INLET','error')
             elif connection == 'waste':
                 self.psd_widget.waste_volumn = self.psd_widget.waste_volumn - (value_after_motion - value_before_motion)
@@ -178,7 +178,7 @@ class baseOperationMode(object):
                     pass
                 finally:
                     self.server_devices['client'].stop()
-                logging.getLogger().exception('Pump setting Error:YOU ARE ONLY allowed to withdraw solution from RESEVOIR or CELL_OUTLET')
+                # logging.getLogger().exception('Pump setting Error:YOU ARE ONLY allowed to withdraw solution from RESEVOIR or CELL_OUTLET')
                 error_pop_up('Pump setting Error:YOU ARE ONLY allowed to withdraw solution from RESEVOIR or CELL_OUTLET','error')
             elif connection == 'resevoir':
                 resevoir_volumn = getattr(self.psd_widget, 'resevoir_volumn_S{}'.format(index))
@@ -222,7 +222,7 @@ class baseOperationMode(object):
         type_name_in_widget = 'volume_{}_{}'.format(type_,str(index))
         direction_sign = [-1,1][int(getattr(self.psd_widget,'filling_status_syringe_{}'.format(index)))]
         if type_name_in_widget == None:
-            logging.getLogger().exception('Error: The key {} is not set in the settings'.format(type_+str(index)))
+            error_pop_up('Error: The key {} is not set in the settings'.format(type_+str(index)))
             return
 
         value_before_motion = getattr(self.psd_widget, type_name_in_widget)
@@ -246,7 +246,7 @@ class baseOperationMode(object):
 
         if direction_sign == -1:#the syringe dispensing solution
             if connection not in ['waste', 'cell_inlet']:
-                logging.getLogger().exception('Pump setting Error:YOU ARE ONLY allowed to dispense solution to WASTE or CELL_INLET')
+                error_pop_up('Pump setting Error:YOU ARE ONLY allowed to dispense solution to WASTE or CELL_INLET')
             elif connection == 'waste':
                 checked_value_connection_part = {'type':'waste', 'checked_value':self.check_limits(self.psd_widget.waste_volumn+speed_new, 'waste')}
                 self.psd_widget.waste_volumn = self.psd_widget.waste_volumn + speed_new - checked_value_connection_part['checked_value']
@@ -256,7 +256,7 @@ class baseOperationMode(object):
                 self.exchange_amount_already = self.exchange_amount_already + speed_new  - checked_value_connection_part['checked_value']
         elif direction_sign == 1:
             if connection not in ['resevoir', 'cell_outlet', 'not_used']:
-                logging.getLogger().exception('Pump setting Error:YOU ARE ONLY allowed to withdraw solution from RESEVOIR or CELL_OUTLET')
+                error_pop_up('Pump setting Error:YOU ARE ONLY allowed to withdraw solution from RESEVOIR or CELL_OUTLET')
             elif connection == 'resevoir':
                 # checked_value_connection_part = {'type':'resevoir', 'checked_value':self.check_limits(self.psd_widget.resevoir_volumn-speed_new, 'resevoir')}
                 # self.psd_widget.resevoir_volumn = self.psd_widget.resevoir_volumn - (speed_new - checked_value_connection_part['checked_value'])
@@ -329,7 +329,7 @@ class baseOperationMode(object):
             else:
                 volume_max = max_vol
         else:
-            logging.getLogger().exception('Unknown type of object for limit checking: It should be one of {} but got {}'.format('resevoir, cell, syringe, waste',type_))
+            error_pop_up('Unknown type of object for limit checking: It should be one of {} but got {}'.format('resevoir, cell, syringe, waste',type_))
             return
         if min_vol==None:
             volume_min = 0
@@ -363,12 +363,12 @@ class baseOperationMode(object):
                 if not self.demo:
                     self.turn_valve_from_server(index, to_position)
             else:
-                logging.getLogger().exception('The syringe index {} is not registered.'.format(index))
+                error_pop_up('The syringe index {} is not registered.'.format(index))
         elif to_position == None:#switch the vale to the other possible position
             possible_valve_positions = self.settings['possible_connection_valves_syringe_{}'.format(index)]
             if possible_valve_positions!=None:
                 if len(possible_valve_positions)!=2:
-                    logging.getLogger().exception('Valve turning error: During exchange, there must be only two possible valve positions for each syringe!')
+                    error_pop_up('Valve turning error: During exchange, there must be only two possible valve positions for each syringe!')
                 else:
                     if index in self.psd_widget.connect_valve_port:
                         current_valve_position = self.psd_widget.connect_valve_port[index]
@@ -377,9 +377,9 @@ class baseOperationMode(object):
                         if not self.demo:
                             self.turn_valve_from_server(index, possible_valve_positions[possible_valve_positions.index(current_valve_position)-1])
                     else:
-                        logging.getLogger().exception('The syringe index {} is not registered.'.format(index))
+                        error_pop_up('The syringe index {} is not registered.'.format(index))
             else:
-                logging.getLogger().exception('Valve turning error: possible_connection_valves_syringe_{} is not the member of settings'.format(index))
+                error_pop_up('Valve turning error: possible_connection_valves_syringe_{} is not the member of settings'.format(index))
 
 
 class simpleRefillingOperationMode(baseOperationMode):
@@ -412,7 +412,7 @@ class simpleRefillingOperationMode(baseOperationMode):
             if each not in self.settings:
                 missed.append(each)
         if len(missed)>0:
-            logging.getLogger().exception('Missing the following keys in the Init mode settings:{}'.format(','.join(missed)))
+            error_pop_up('Missing the following keys in the Init mode settings:{}'.format(','.join(missed)))
 
     def init_premotion(self):
         self.premotion_stage = True
@@ -533,7 +533,7 @@ class simpleRefillingOperationMode(baseOperationMode):
             # at the beginning, S1 and S4 are connected to resevoir and waste, respectively
             # while, S2 and S3 are connected to cell for exchangeing
             if f'S{push_syringe_index}_S{pull_syringe_index}' not in ['S1_S3','S2_S4']:
-                logging.getLogger().exception(f'Syringe pair S{push_syringe_index}_S{pull_syringe_index} not implemented! Please use combo of S1_S3 or S2_S4!')
+                # error_pop_up(f'Syringe pair S{push_syringe_index}_S{pull_syringe_index} not implemented! Please use combo of S1_S3 or S2_S4!')
                 error_pop_up(f'Syringe pair S{push_syringe_index}_S{pull_syringe_index} not implemented! Please use combo of S1_S3 or S2_S4!') 
                 return False
             else:
@@ -722,7 +722,7 @@ class advancedRefillingOperationMode(baseOperationMode):
             if each not in self.settings:
                 missed.append(each)
         if len(missed)>0:
-            logging.getLogger().exception('Missing the following keys in this autorefilling_mode settings:{}'.format(','.join(missed)))
+            error_pop_up('Missing the following keys in this autorefilling_mode settings:{}'.format(','.join(missed)))
 
     def init_premotion(self):
         self.psd_widget.operation_mode = 'pre_auto_refilling'
@@ -800,7 +800,7 @@ class advancedRefillingOperationMode(baseOperationMode):
         self.settings['refill_speed'] = refill_speed
         self.settings['prepressure_speed'] = float(self.settings['pre_pressure_speed_handle']())/(1000/self.timeout)
         if speed>refill_speed:
-            logging.getLogger().exception('Error: Refill speed {} NOT larger than exchange speed {}! Reset one of them please!'.format(refill_speed, speed))
+            error_pop_up('Error: Refill speed {} NOT larger than exchange speed {}! Reset one of them please!'.format(refill_speed, speed))
             return False
         if not self.demo:
             #launch electrolyte exchange
@@ -846,7 +846,7 @@ class advancedRefillingOperationMode(baseOperationMode):
         self.settings['refill_speed'] = refill_speed
         self.settings['prepressure_speed'] = float(self.settings['pre_pressure_speed_handle']())/(1000/self.timeout)
         if speed>refill_speed:
-            logging.getLogger().exception('Error: Refill speed {} NOT larger than exchange speed {}! Reset one of them please!'.format(refill_speed, speed))
+            # logging.getLogger().exception('Error: Refill speed {} NOT larger than exchange speed {}! Reset one of them please!'.format(refill_speed, speed))
             error_pop_up('Error: Refill speed {} NOT larger than exchange speed {}! Reset one of them please!'.format(refill_speed, speed),'error')
             return False
 
@@ -979,7 +979,7 @@ class advancedRefillingOperationMode(baseOperationMode):
                 self.server_devices['client'].stop()
                 if self.check_device_status()=='error':
                     self.timer_motion.stop()
-                    logging.getLogger().exception('Error: Something is wrong with the pump! The exchange is stopped!')
+                    error_pop_up('Error: Something is wrong with the pump! The exchange is stopped!')
                     return
             time.sleep(0.5)
             self.switch_state_during_exchange(syringe_index_list = [1, 2, 3, 4])
@@ -1002,7 +1002,7 @@ class advancedRefillingOperationMode(baseOperationMode):
             try:
                 self.pre_pressure(syringe_index = 1, volume = self._volume(), speed = self._rate(), pull = False, valve = 'right')
             except Exception as e:
-                logging.getLogger().exception(f"Error: {e}")
+                error_pop_up(f"Error: {e}")
             # print('s2_ready?',self.prepressure_S2_ready)
             return gui_ready
         elif self.timer_droplet_adjustment_S2.isActive() and (not self.timer_prepressure_S2.isActive()):
@@ -1016,7 +1016,7 @@ class advancedRefillingOperationMode(baseOperationMode):
             try:
                 self.pre_pressure(syringe_index = 2, volume = self._volume(), speed = self._rate(), pull = False, valve = 'right')
             except Exception as e:
-                logging.getLogger().exception(f"Error: {e}")
+                error_pop_up(f"Error: {e}")
             # print('s1_ready?',self.prepressure_S1_ready)
             return gui_ready
         elif self.timer_droplet_adjustment_S3.isActive():
@@ -1037,7 +1037,7 @@ class advancedRefillingOperationMode(baseOperationMode):
             try:
                 self.pre_pressure(syringe_index = 3, volume = self._volume(), speed = self._rate(), pull = True, valve = 'left', filling_status= True)
             except Exception as e:
-                logging.getLogger().exception(f"Error: {e}")
+                error_pop_up(f"Error: {e}")
             return gui_ready
         elif self.timer_droplet_adjustment_S4.isActive():
             _valve_no = None
@@ -1057,7 +1057,7 @@ class advancedRefillingOperationMode(baseOperationMode):
             try:
                 self.pre_pressure(syringe_index = 4, volume = self._volume(), speed = self._rate(), pull = True, valve = 'left', filling_status = True)
             except Exception as e:
-                logging.getLogger().exception(f"Error: {e}")
+                error_pop_up(f"Error: {e}")
             return gui_ready
 
         #whichever is ready, the valve positions of all syringes will switch over
@@ -1181,7 +1181,7 @@ class cleanOperationMode(baseOperationMode):
             if each not in self.settings:
                 missed.append(each)
         if len(missed)>0:
-            logging.getLogger().exception('Missing the following keys in this clean_mode settings:{}'.format(','.join(missed)))
+            error_pop_up('Missing the following keys in this clean_mode settings:{}'.format(','.join(missed)))
 
     def init_motion(self):
         #syringe index
@@ -1262,7 +1262,7 @@ class fillCellOperationMode(baseOperationMode):
             if each not in self.settings:
                 missed.append(each)
         if len(missed)>0:
-            logging.getLogger().exception('Missing the following keys in this refill_cell_mode settings:{}'.format(','.join(missed)))
+            error_pop_up('Missing the following keys in this refill_cell_mode settings:{}'.format(','.join(missed)))
 
     def init_motion(self):
         #syringe index
@@ -1381,7 +1381,7 @@ class normalOperationMode(baseOperationMode):
             if each not in self.settings:
                 missed.append(each)
         if len(missed)>0:
-            logging.getLogger().exception('Missing the following keys in this normal_mode settings:{}'.format(','.join(missed)))
+            error_pop_up('Missing the following keys in this normal_mode settings:{}'.format(','.join(missed)))
 
     def init_motion(self):
         #syringe_index = int(self.settings['syringe_handle']())
@@ -1454,7 +1454,7 @@ class initOperationMode(baseOperationMode):
             if each not in self.settings:
                 missed.append(each)
         if len(missed)>0:
-            logging.getLogger().exception('Missing the following keys in the Init mode settings:{}'.format(','.join(missed)))
+            error_pop_up('Missing the following keys in the Init mode settings:{}'.format(','.join(missed)))
 
     def init_motion(self):
         pull_syringe_index = int(self.settings['pull_syringe_handle']())

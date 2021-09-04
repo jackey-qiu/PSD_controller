@@ -241,7 +241,7 @@ class MyMainWindow(QMainWindow):
     def __init__(self, parent = None):
         super(MyMainWindow, self).__init__(parent)
         #load GUI ui file made by qt designer
-        ui_path = os.path.join(script_path,'psd_gui_beta4.ui')
+        ui_path = os.path.join(script_path,'psd_gui.ui')
         uic.loadUi(ui_path,self)
         self.connected_mvp_channel = None #like 'channel_1'
         self.fill_speed_syringe = 500 # global speed for filling syringe in ul/s
@@ -257,18 +257,10 @@ class MyMainWindow(QMainWindow):
         self.pump_settings = {}
         self.pushButton_apply_settings.clicked.connect(self.apply_pump_settings)
         self.apply_pump_settings()
-
+        ##
         self.cam_frame_path = os.path.join(script_path,'images')
         self.widget_terminal.update_name_space('psd_widget',self.widget_psd)
         self.widget_terminal.update_name_space('main_gui',self)
-
-        #set redirection of error message to embeted text browser widget
-        logTextBox = QTextEditLogger(self.textBrowser_error_msg)
-        # You can format what is printed to text box
-        logTextBox.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
-        logging.getLogger().addHandler(logTextBox)
-        # You can control the logging level
-        logging.getLogger().setLevel(logging.DEBUG)
 
         self.image = None
         self.frame_number = 0
@@ -425,11 +417,6 @@ class MyMainWindow(QMainWindow):
                 break
         if running:#update gui info in the server config
             gui_info = {
-                        #'S1_vol': str(round(self.widget_psd.volume_syringe_1,3)),
-                        #'valve_pos':self.widget_psd.connect_valve_port,
-                        #'S2_vol': str(round(self.widget_psd.volume_syringe_2,3)),
-                        #'S3_vol': str(round(self.widget_psd.volume_syringe_3,3)),
-                        #'S4_vol': str(round(self.widget_psd.volume_syringe_4,3)),
                         'cell_vol':str(round(self.widget_psd.volume_of_electrolyte_in_cell,3)),
                         'mvp_valve': self.widget_psd.mvp_channel,
                         'resevoir_vol': str(round(self.widget_psd.resevoir_volumn,3)),
@@ -442,9 +429,6 @@ class MyMainWindow(QMainWindow):
                                           4:self.widget_psd.filling_status_syringe_4},
                         'resume_advance_exchange':self.advanced_exchange_operation.resume
                         }
-            #config = self.client.configuration
-            #config.update({'psd_widget':gui_info})
-            #self.client.configuration = config
             self.syn_server_and_gui_init(gui_info)
         else:#pull gui info from server config
             configuration = self.client.configuration['psd_widget']
@@ -467,36 +451,9 @@ class MyMainWindow(QMainWindow):
             self.widget_psd.update()
 
     def start_mongo_client_cloud(self):
-        print('Hellow')
         if self.lineEdit_database_name.text()=='':
             return
-        #return
-        self.mongo_client = self.mc(f"mongodb+srv://{self.login_name}:{self.password}@cluster0.sjw9m.mongodb.net/<dbname>?retryWrites=true&w=majority")
-        return
-        print('Hellow1')
-        self.database = self.mongo_client[self.lineEdit_database_name.text()]
-        print('Hellow2')
-        self.database.client_info.delete_one({'client_id':self.lineEdit_current_client.text()})
-        if self.lineEdit_current_client.text()==self.lineEdit_main_client.text():
-            self.main_client_cloud = True
-            self.database.device_info.drop()
-        else:
-            self.main_client_cloud = False
-            self.database.cmd_info.drop()
-        print('Hellow3')
-        self.database.client_info.insert_one({'client_id':self.lineEdit_current_client.text(),
-                                'main_client':self.lineEdit_main_client.text()==self.lineEdit_current_client.text(),
-                                'paired_client_id':self.lineEdit_paired_client.text()
-                                })
-        self.init_mongo_DB()
-        error_pop_up('Success connection to MongoDB atlas cloud!','Information')
         try:
-            '''
-            if not os.path.exists(os.path.join(script_path,'private','atlas_password')):
-                error_pop_up('You should create a file named atlas_password under Project_Manager/private folder, where you save the password for your MongoDB atlas cloud account')
-            else:
-                with open(os.path.join(script_path,'private','atlas_password')) as f:
-            '''
             self.mongo_client = MongoClient(f"mongodb+srv://{self.login_name}:{self.password}@cluster0.sjw9m.mongodb.net/<dbname>?retryWrites=true&w=majority")
             self.database = self.mongo_client[self.lineEdit_database_name.text()]
             self.database.client_info.delete_one({'client_id':self.lineEdit_current_client.text()})
@@ -518,9 +475,6 @@ class MyMainWindow(QMainWindow):
     def init_mongo_DB(self):
         if self.main_client_cloud:
             self.send_cmd_remotely = False
-            #self.timer_renew_device_info_cloud.start(1000)
-            #self.thread_exec_cmd_from_cloud = threading.Thread(target=self.exec_cmd_from_cloud, args=(), daemon = True)
-            #self.thread_exec_cmd_from_cloud.start()
             device_info = {
                            'client_id':self.lineEdit_current_client.text(),
                            'S1_vol': str(self.widget_psd.volume_syringe_1),
@@ -905,10 +859,10 @@ class MyMainWindow(QMainWindow):
     def fill_specified_syringe(self):
         syringe, done = QInputDialog.getInt(self, 'Pick the syringe', 'Enter the syringe_index (integer from 1 to 4):',value = 1)
         if not done:
-            logging.getLogger().exception('Error in getting syringe index from pop-up dialog!')
+            error_pop_up('Error in getting syringe index from pop-up dialog!')
         else:
             if syringe not in [1,2,3,4]:
-                logging.getLogger().exception('Invalid syringe index, must be an integer from 1 to 4!')
+                error_pop_up('Invalid syringe index, must be an integer from 1 to 4!')
             else:
                 cmd_list = [
                             f'self.doubleSpinBox_speed_normal_mode_{syringe}.setValue({float(self.lineEdit_default_speed.text())})',
@@ -994,7 +948,7 @@ class MyMainWindow(QMainWindow):
     def reset_cell_vol(self):
         volume, done = QInputDialog.getInt(self, 'Reset the cell volume', 'Enter the cell volume (ul) you want to set to:',value = 100)
         if not done:
-            logging.getLogger().exception('Error in setting the cell volume!')
+            error_pop_up('Error in setting the cell volume!')
         else:
             self.syn_server_and_gui_init(attrs = {'cell_vol':volume/1000})
             self.widget_psd.volume_of_electrolyte_in_cell = volume/1000
@@ -1003,8 +957,6 @@ class MyMainWindow(QMainWindow):
     def onCleanerClicked(self):
         dlg = Cleaner(self)
         dlg.exec()
-
-    #def 
 
     def display_exchange_time(self):
         pass
@@ -1019,13 +971,13 @@ class MyMainWindow(QMainWindow):
     def get_pushing_syringe_fill_cell_mode(self):
         syringe = self.widget_psd.actived_syringe_fill_cell_mode
         if syringe not in [1,2,3,4]:
-            logging.getLogger().exception('Error: The syringe index {} is wrongly set, please reset the syringe index from [1,2,3,4]!'.format(syringe))
+            error_pop_up('Error: The syringe index {} is wrongly set, please reset the syringe index from [1,2,3,4]!'.format(syringe))
         else:
             for each in self.pump_settings:
                 #The syringe must connect to the cell_inlet in the setting table
                 if (self.pump_settings[each]=='cell_inlet') and ('S{}'.format(syringe) in each):
                     return syringe
-            logging.getLogger().exception('Error: The selected syringe is not supposed to pushing solution to cell, but used as waste syringe. Pick a different syringe!')
+            error_pop_up('Error: The selected syringe is not supposed to pushing solution to cell, but used as waste syringe. Pick a different syringe!')
 
     def get_refill_speed_fill_cell_mode(self):
         speed = self.widget_psd.refill_speed_fill_cell_mode
@@ -1053,40 +1005,11 @@ class MyMainWindow(QMainWindow):
 
     def get_pulling_syringe_init_mode(self):
         return self.get_pulling_syringe_simple_exchange_mode()
-        '''
-        for i in [3,4]:
-            current_valve = self.widget_psd.connect_valve_port[i]
-            name_of_key = 'S{}_{}'.format(i,current_valve)
-            if self.widget_psd.pump_settings[name_of_key]=='cell_outlet':
-                return i
-        error_pop_up('One of the valve postion should switch to cell_outlet to allow pulling!','error')
-        return None
-        '''
 
     def get_pushing_syringe_init_mode(self):
         return self.get_pushing_syringe_simple_exchange_mode()
-        '''
-        if self.widget_psd.mvp_channel not in [1,2]:
-            error_pop_up('MVP not in the right position, should be either 1 or 2!','error')
-            return None
-        else:
-            return self.widget_psd.mvp_channel
-        '''
 
     def get_pulling_syringe_simple_exchange_mode(self):
-        '''
-        syringe = None
-        #each looks like : S1_left
-        for each in self.pump_settings:
-            if self.pump_settings[each] == 'cell_outlet':
-                syringe = each
-                break
-        if syringe != None:
-            return int(''.join(syringe.rsplit('_')[0][1:]))
-        else:
-            logging.getLogger().exception('Error: Could not find syringe to pull electrolyte from cell. Check your setting table!')
-            self.tabWidget.setCurrentIndex(1)
-        '''
         if self.widget_psd.mvp_channel not in [1,2]:
             error_pop_up('MVP not in the right position, should be either 1 or 2!','error')
             return None 
@@ -1094,13 +1017,6 @@ class MyMainWindow(QMainWindow):
             return {1:3,2:4}[self.widget_psd.mvp_channel]
 
     def get_pushing_syringe_simple_exchange_mode(self):
-        '''
-        for each in self.pump_settings:
-            if self.pump_settings[each] == self.connected_mvp_channel:
-                return int(''.join(each.rsplit('_')[0][1:]))
-        logging.getLogger().exception('No MVP channel is actived now. Connect it first!')
-        self.tabWidget.setCurrentIndex(1) 
-        '''
         if self.widget_psd.mvp_channel not in [1,2]:
             error_pop_up('MVP not in the right position, should be either 1 or 2!','error')
             return None
@@ -1115,7 +1031,7 @@ class MyMainWindow(QMainWindow):
         for i in range(0,len(radioButtons)):
             if radioButtons[i].isChecked():
                 return int(i+1)
-        logging.getLogger().exception('No radioButton has been clicked! Click one button to activate normal mode!')
+        error_pop_up('No radioButton has been clicked! Click one button to activate normal mode!')
 
     def get_valve_position_handle_normal_mode(self,index):
         if isinstance(index, int):
@@ -1162,14 +1078,14 @@ class MyMainWindow(QMainWindow):
             if value<limits[each][0]:
                 setattr(self.widget_psd,each,limits[each][0])
                 self.stop_all_motion()
-                logging.getLogger().exception('\nError due to {} out of limits: within {} but now {}'.format(each,self.widget_psd,each,limits[each],value))
+                error_pop_up('\nError due to {} out of limits: within {} but now {}'.format(each,self.widget_psd,each,limits[each],value))
                 self.tabWidget.setCurrentIndex(2) 
                 # self.timer_check_limit.stop()
                 break
             elif value>limits[each][1]:
                 setattr(self.widget_psd,each,limits[each][1])
                 self.stop_all_motion()
-                logging.getLogger().exception('\nError due to {} out of limits: within {} but now {}'.format(each,self.widget_psd,each,limits[each],value))
+                error_pop_up('\nError due to {} out of limits: within {} but now {}'.format(each,self.widget_psd,each,limits[each],value))
                 # logging.getLogger().exception('\nError due to {} out of limits: '.format(each))
                 self.tabWidget.setCurrentIndex(2) 
                 # self.timer_check_limit.stop()
@@ -1206,7 +1122,7 @@ class MyMainWindow(QMainWindow):
         def wrapper_func(self, *args, **kwargs):
             for timer in self.timers:
                 if timer.isActive():
-                    logging.getLogger().exception('Error: some timer is running now. Stop it before you can make this move!')
+                    error_pop_up('Error: some timer is running now. Stop it before you can make this move!')
                     self.tabWidget.setCurrentIndex(2)
                     return
             return func(self, *args, **kwargs)
@@ -1217,7 +1133,7 @@ class MyMainWindow(QMainWindow):
         def wrapper_func(self, *args, **kwargs):
             for timer in self.timers_partial:
                 if timer.isActive():
-                    logging.getLogger().exception('Error: some timer is running now. Stop it before you can make this move!')
+                    error_pop_up('Error: some timer is running now. Stop it before you can make this move!')
                     self.tabWidget.setCurrentIndex(2)
                     return
             return func(self, *args, **kwargs)
@@ -1225,23 +1141,34 @@ class MyMainWindow(QMainWindow):
 
     def init_start(self):
         if self.comboBox_exchange_mode.currentText() == 'Continuous':
-            self.init_start_advance()
-            self.advanced_exchange_operation.resume = False
+            # self.init_start_advance()
+            # self.advanced_exchange_operation.resume = False
             if self.main_client_cloud!=None:
                 if not self.main_client_cloud:
                     self.send_cmd_to_cloud('\n'.join(['self.init_start_advance()','self.advanced_exchange_operation.resume = False']))
+                else:
+                    self.init_start_advance()
+                    self.advanced_exchange_operation.resume = False
+            else:
+                self.init_start_advance()
+                self.advanced_exchange_operation.resume = False
+
         elif self.comboBox_exchange_mode.currentText() == 'Intermittent':
-            self.init_start_simple()
+            #self.init_start_simple()
             if self.main_client_cloud!=None:
                 if not self.main_client_cloud:
                     self.send_cmd_to_cloud('self.init_start_simple()')
+                else:
+                    self.init_start_simple()
+            else:
+                self.init_start_simple()
 
     @check_any_timer
     def init_start_advance(self):
         self.textBrowser_error_msg.setText('')
         #check the cell volume first
         if self.widget_psd.volume_of_electrolyte_in_cell < 0.1:
-            logging.getLogger().exception('Error: Not enough electrolyte in cell. Please fill some solution in the cell first!')
+            error_pop_up('Error: Not enough electrolyte in cell. Please fill some solution in the cell first!')
             self.tabWidget.setCurrentIndex(1) 
         else:
             if self.check_connection_for_advanced_auto_refilling():
@@ -1251,7 +1178,7 @@ class MyMainWindow(QMainWindow):
     def init_start_simple(self):
         self.textBrowser_error_msg.setText('')
         if self.widget_psd.volume_of_electrolyte_in_cell < 0.1:
-            logging.getLogger().exception('Error: Not enough electrolyte in cell. Please fill some solution in the cell first!')
+            error_pop_up('Error: Not enough electrolyte in cell. Please fill some solution in the cell first!')
             self.tabWidget.setCurrentIndex(2) 
         else:
             self.simple_exchange_operation.start_premotion_timer()
@@ -1317,7 +1244,7 @@ class MyMainWindow(QMainWindow):
                     }
         for each in _setting:
             if self.pump_settings[each]!=_setting[each]:
-                logging.getLogger().exception('Connections error: something is not properly set up in your valve port connection for auto_refilling purpose\n{} must be connected to {} rather than {}'.format(each,_setting[each], self.pump_settings[each]))
+                error_pop_up('Connections error: something is not properly set up in your valve port connection for auto_refilling purpose\n{} must be connected to {} rather than {}'.format(each,_setting[each], self.pump_settings[each]))
                 self.tabWidget.setCurrentIndex(1) 
                 return False
         return True
@@ -1338,9 +1265,10 @@ class MyMainWindow(QMainWindow):
 
     # start/stop webcam
     def start_webcam(self):
-        self.cap = cv2.VideoCapture(int(self.lineEdit_camera_index.text()),cv2.CAP_DSHOW)
+        self.cap = cv2.VideoCapture(int(self.lineEdit_camera_index.text()))
+        # self.cap = cv2.VideoCapture(int(self.lineEdit_camera_index.text()),cv2.CAP_DSHOW)
         if not self.cap.isOpened():
-            logging.getLogger().exception('\nOpenCV: camera failed to properly initialize! \nOpenCV: out device of bound: {}'.format(int(self.lineEdit_camera_index.text())))
+            error_pop_up('\nOpenCV: camera failed to properly initialize! \nOpenCV: out device of bound: {}'.format(int(self.lineEdit_camera_index.text())))
             self.tabWidget.setCurrentIndex(1) 
         else:
             self.tabWidget.setCurrentIndex(0) 
@@ -1356,27 +1284,32 @@ class MyMainWindow(QMainWindow):
             pass
 
     def stop_all_motion(self):
-        self.under_exchange = False
-        for each in self.timers:
-            if each==self.timer_update and each.isActive():
-                self.advanced_exchange_operation.resume = True
-                self.syn_server_and_gui_init(attrs = {'resume_advance_exchange':True})
-            else:
-                pass
-            try:
-                each.stop()
-            except:
-                pass
-        if not self.demo:
-            self.client.stop()
-            for i in range(1,5):
-                self.widget_psd.connect_status[i] = 'ready'
-                # setattr(self.widget_psd,'volume_syringe_{}'.format(i),round(self.server_devices['syringe'][i].volume,1))
-            self.syn_server_and_gui_init(attrs = {'connect_status':{1:'ready',2:'ready',3:'ready',4:'ready','mvp':self.widget_psd.connect_status['mvp']}})
-            self.widget_psd.update()
+        def _action()
+            self.under_exchange = False
+            for each in self.timers:
+                if each==self.timer_update and each.isActive():
+                    self.advanced_exchange_operation.resume = True
+                    self.syn_server_and_gui_init(attrs = {'resume_advance_exchange':True})
+                else:
+                    pass
+                try:
+                    each.stop()
+                except:
+                    pass
+            if not self.demo:
+                self.client.stop()
+                for i in range(1,5):
+                    self.widget_psd.connect_status[i] = 'ready'
+                    # setattr(self.widget_psd,'volume_syringe_{}'.format(i),round(self.server_devices['syringe'][i].volume,1))
+                self.syn_server_and_gui_init(attrs = {'connect_status':{1:'ready',2:'ready',3:'ready',4:'ready','mvp':self.widget_psd.connect_status['mvp']}})
+                self.widget_psd.update()
         if self.main_client_cloud!=None:
             if not self.main_client_cloud:
                 self.send_cmd_to_cloud('self.stop_all_motion()')
+            else:
+                _action()
+        else:
+            _action()
 
     def update_to_autorefilling_mode(self):
         self.widget_psd.operation_mode = 'auto_refilling'
@@ -1398,7 +1331,6 @@ class MyMainWindow(QMainWindow):
 
     def update_to_normal_mode(self, syringe_no):
         self.textBrowser_error_msg.setText('')
-        #radioButton_widget.setChecked(True)
         self.widget_psd.actived_syringe_normal_mode = syringe_no
         if self.under_exchange:
             pass
@@ -1413,18 +1345,7 @@ class MyMainWindow(QMainWindow):
             if not self.demo:
                 exec("self.valve_server_S{}.valve = '{}'".format(syringe_no, valve_position))
                 exec('self.valve_server_S{}.join()'.format(syringe_no))
-            # key_for_mvp = 'S{}_mvp'.format(syringe_no)
-            '''
-            #update mvp channel if connecting to cell_inlet
-            if self.pump_settings[key_for_pump_setting]=='cell_inlet':
-                self.widget_psd.mvp_channel = int(self.pump_settings[key_for_mvp].rsplit('_')[1])
-                self.widget_psd.mvp_connected_valve = 'S{}'.format(self.widget_psd.mvp_channel)
-            '''
-            #update the valve connection based on the info in pump settings
-            #eval("self.comboBox_valve_connection_{}.setCurrentText('{}')".format(syringe_no,self.pump_settings[key_for_pump_setting]))
-            #self.widget_psd.actived_syringe_valve_connection = eval('self.comboBox_valve_connection_{}.currentText()'.format(syringe_no))
             self.widget_psd.actived_syringe_valve_connection = self.pump_settings[key_for_pump_setting]
-            # self.widget_psd.volume_normal_mode = eval('self.doubleSpinBox_stroke_factor_{}.value()'.format(syringe_no))*self.widget_psd.syringe_size
             self.widget_psd.update()
 
     @check_any_timer
@@ -1474,29 +1395,6 @@ class MyMainWindow(QMainWindow):
             self.widget_psd.actived_syringe_motion_init_mode = 'fill'
             self.init_operation.start_exchange_timer()
 
-    @check_any_timer_except_exchange
-    def pickup_init_mode_old(self,kwargs = None):
-        self.textBrowser_error_msg.setText('')
-        if self.timer_update.isActive():
-            self.widget_psd.actived_syringe_motion_init_mode = 'fill'
-            syringe_index = self.get_pulling_syringe_init_mode()
-            if syringe_index in [3,4]:
-                timer_name = f"timer_droplet_adjustment_S{syringe_index}"
-                getattr(self.advanced_exchange_operation,timer_name).start(100)
-        elif self.timer_update_simple.isActive():#if simple exchange mode actived
-            self.server_devices['client'].stop()
-            self.stop_all_timers()
-            self.simple_exchange_operation.set_status_to_ready()
-            time.sleep(0.1)
-            self.widget_psd.actived_syringe_motion_init_mode = 'fill'
-            self.init_operation.start_exchange_timer()
-            self.timer_check_device_busy.start(50)
-        else:
-            self.server_devices['client'].stop()
-            self.stop_all_timers()
-            self.widget_psd.actived_syringe_motion_init_mode = 'fill'
-            self.init_operation.start_exchange_timer()
-
     def check_server_devices_busy_init_mode_to_simple_mode(self):
         #If any device is busy, then the device busy state is True
         this_timer = self.timer_check_device_busy
@@ -1512,31 +1410,6 @@ class MyMainWindow(QMainWindow):
             connect_timer.stop()
             self.server_devices['client'].stop()
             post_action()
-
-    @check_any_timer_except_exchange
-    def dispense_init_mode_old(self, kwargs = None):
-        self.textBrowser_error_msg.setText('')
-        #shrink droplet during advanced exchange
-        if self.timer_update.isActive():
-            syringe_index = self.get_pushing_syringe_init_mode()
-            self.widget_psd.actived_syringe_motion_init_mode = 'dispense'
-            if syringe_index in [1,2]:
-                # self.server_devices['syringe'][syringe_index].dispense(volume= self.init_operation.settings['vol_handle'](), rate = self.init_operation.settings['speed_handle']())
-                timer_name = f"timer_droplet_adjustment_S{syringe_index}"
-                getattr(self.advanced_exchange_operation,timer_name).start(100)
-        elif self.timer_update_simple.isActive():#if simple exchange mode actived
-            self.stop_all_timers()
-            self.server_devices['client'].stop()
-            self.simple_exchange_operation.set_status_to_ready()
-            time.sleep(0.1)
-            self.widget_psd.actived_syringe_motion_init_mode = 'dispense'
-            self.init_operation.start_exchange_timer()
-            self.timer_check_device_busy.start(50)
-        else:
-            self.widget_psd.actived_syringe_motion_init_mode = 'dispense'
-            self.stop_all_timers()
-            self.server_devices['client'].stop()
-            self.init_operation.start_exchange_timer()
 
     @check_any_timer_except_exchange
     def dispense_init_mode(self, kwargs = None):
@@ -1588,9 +1461,20 @@ class MyMainWindow(QMainWindow):
                 self.server_devices['exchange_pair'][label].pushSyr.rate = self.server_devices['exchange_pair'][label].rate
             self.timer_droplet_adjustment_on_the_fly.stop()
 
+    def make_cmd_list_normal_mode(self, syringe_no):
+        speed_wid_str = f'doubleSpinBox_speed_normal_mode_{syringe_no}'
+        vol_wid_str = f'doubleSpinBox_stroke_factor_{syringe_no}'
+        valve_wid_str = f'comboBox_valve_port_{syringe_no}'
+        speed = getattr(self, speed_wid_str).value()
+        vol = getattr(self, vol_wid_str).value()
+        valve = getattr(self, valve_wid_str).currentText()
+        cmd_list ['self.'+speed_wid_str+f'setValue({speed})',
+                  'self.'+vol_wid_str+f'setValue({vol})',
+                  'self.'+valve_wid_str+f"setCurrentText('{valve}')"]
+        return cmd_list
+
     @check_any_timer
-    def fill_syringe(self,syringe_no):
-        self.textBrowser_error_msg.setText('')
+    def _fill_syringe(self, syringe_no):
         if self.pump_settings['S{}_mvp'.format(syringe_no)] != 'not_used':
             exec('self.pushButton_connect_mvp_syringe_{}.click()'.format(syringe_no))
         self.widget_psd.actived_syringe_motion_normal_mode = 'fill'
@@ -1598,8 +1482,18 @@ class MyMainWindow(QMainWindow):
         self.normal_operation.syringe_index = syringe_no
         self.normal_operation.start_timer_motion()
 
+    def fill_syringe(self,syringe_no):
+        self.textBrowser_error_msg.setText('')
+        if self.main_client_cloud!=None:
+            if not self.main_client_cloud:
+                self.send_cmd_to_cloud('\n'.join(self.make_cmd_list_normal_mode(syringe_no)+[f'self._fill_syringe({syringe_no})']))
+            else:
+                self._fill_syringe(syringe_no)
+        else:
+            self._fill_syringe(syringe_no)
+
     @check_any_timer
-    def dispense_syringe(self,syringe_no):
+    def _dispense_syringe(self, syringe_no):
         self.textBrowser_error_msg.setText('')
         if self.pump_settings['S{}_mvp'.format(syringe_no)] != 'not_used':
             exec('self.pushButton_connect_mvp_syringe_{}.click()'.format(syringe_no))
@@ -1610,15 +1504,15 @@ class MyMainWindow(QMainWindow):
         self.normal_operation.syringe_index = syringe_no
         self.normal_operation.start_timer_motion()
 
-    #reset the volume of resevoir and waste bottom
-    '''
-    @check_any_timer
-    def reset_exchange(self, kwargs = 1):
-        self.textBrowser_error_msg.setText('')
-        self.widget_psd.waste_volumn = 0
-        self.widget_psd.resevoir_volumn = self.widget_psd.resevoir_volumn_total
-        self.widget_psd.update()
-    '''
+    #@check_any_timer
+    def dispense_syringe(self,syringe_no):
+        if self.main_client_cloud!=None:
+            if not self.main_client_cloud:
+                self.send_cmd_to_cloud('\n'.join(self.make_cmd_list_normal_mode(syringe_no)+[f'self._dispense_syringe({syringe_no})']))
+            else:
+                self._dispense_syringe(syringe_no)
+        else:
+            self._dispense_syringe(syringe_no)
 
     @check_any_timer
     def reset_exchange(self,kwargs = 1):
@@ -1783,8 +1677,8 @@ if __name__ == "__main__":
     myWin = MyMainWindow()
     if sys.argv[-1] == 'demo':
         myWin.demo = True
-        # myWin.init_server_devices()
-        # myWin.set_up_operations()
+        myWin.init_server_devices()
+        myWin.set_up_operations()
     else:
         myWin.demo = False
         try:
