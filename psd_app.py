@@ -146,6 +146,8 @@ class StartServerDialog(QDialog):
                 self.parent.lineEdit_main_client.setText(self.lineEdit_client_id.text())
             else:
                 self.parent.lineEdit_main_client.setText(self.lineEdit_paired_client_id.text())
+            self.parent.login_name = self.lineEdit_login.text()
+            self.parent.password = self.lineEdit_pass.text()
             error_pop_up('Success setting up MongoDB clients. Now you can go back to main GUI and connect the Pymongo cloud!','Information')
         else:
             error_pop_up('Failure: some fields are not filled!','Error')
@@ -248,9 +250,9 @@ class MyMainWindow(QMainWindow):
         self.main_client_cloud = None
         self.listen = False
         self.msg_exchange_thread = QtCore.QThread()
-
-        # self.set_server_thread = QtCore.QThread()
-        # self.server_dialog.moveToThread(self.set_server_thread)
+        self.login_name = ''
+        self.password = ''
+        self.mc = MongoClient
 
         self.pump_settings = {}
         self.pushButton_apply_settings.clicked.connect(self.apply_pump_settings)
@@ -465,28 +467,51 @@ class MyMainWindow(QMainWindow):
             self.widget_psd.update()
 
     def start_mongo_client_cloud(self):
+        print('Hellow')
         if self.lineEdit_database_name.text()=='':
             return
+        #return
+        self.mongo_client = self.mc(f"mongodb+srv://{self.login_name}:{self.password}@cluster0.sjw9m.mongodb.net/<dbname>?retryWrites=true&w=majority")
+        return
+        print('Hellow1')
+        self.database = self.mongo_client[self.lineEdit_database_name.text()]
+        print('Hellow2')
+        self.database.client_info.delete_one({'client_id':self.lineEdit_current_client.text()})
+        if self.lineEdit_current_client.text()==self.lineEdit_main_client.text():
+            self.main_client_cloud = True
+            self.database.device_info.drop()
+        else:
+            self.main_client_cloud = False
+            self.database.cmd_info.drop()
+        print('Hellow3')
+        self.database.client_info.insert_one({'client_id':self.lineEdit_current_client.text(),
+                                'main_client':self.lineEdit_main_client.text()==self.lineEdit_current_client.text(),
+                                'paired_client_id':self.lineEdit_paired_client.text()
+                                })
+        self.init_mongo_DB()
+        error_pop_up('Success connection to MongoDB atlas cloud!','Information')
         try:
+            '''
             if not os.path.exists(os.path.join(script_path,'private','atlas_password')):
                 error_pop_up('You should create a file named atlas_password under Project_Manager/private folder, where you save the password for your MongoDB atlas cloud account')
             else:
                 with open(os.path.join(script_path,'private','atlas_password')) as f:
-                    self.mongo_client = MongoClient(f.read().rstrip())
-                    self.database = self.mongo_client[self.lineEdit_database_name.text()]
-                    self.database.client_info.delete_one({'client_id':self.lineEdit_current_client.text()})
-                    if self.lineEdit_current_client.text()==self.lineEdit_main_client.text():
-                        self.main_client_cloud = True
-                        self.database.device_info.drop()
-                    else:
-                        self.main_client_cloud = False
-                        self.database.cmd_info.drop()
-                    self.database.client_info.insert_one({'client_id':self.lineEdit_current_client.text(),
-                                            'main_client':self.lineEdit_main_client.text()==self.lineEdit_current_client.text(),
-                                            'paired_client_id':self.lineEdit_paired_client.text()
-                                            })
-                    self.init_mongo_DB()
-                    error_pop_up('Success connection to MongoDB atlas cloud!','Information')
+            '''
+            self.mongo_client = MongoClient(f"mongodb+srv://{self.login_name}:{self.password}@cluster0.sjw9m.mongodb.net/<dbname>?retryWrites=true&w=majority")
+            self.database = self.mongo_client[self.lineEdit_database_name.text()]
+            self.database.client_info.delete_one({'client_id':self.lineEdit_current_client.text()})
+            if self.lineEdit_current_client.text()==self.lineEdit_main_client.text():
+                self.main_client_cloud = True
+                self.database.device_info.drop()
+            else:
+                self.main_client_cloud = False
+                self.database.cmd_info.drop()
+            self.database.client_info.insert_one({'client_id':self.lineEdit_current_client.text(),
+                                    'main_client':self.lineEdit_main_client.text()==self.lineEdit_current_client.text(),
+                                    'paired_client_id':self.lineEdit_paired_client.text()
+                                    })
+            self.init_mongo_DB()
+            error_pop_up('Success connection to MongoDB atlas cloud!','Information')
         except Exception as e:
             error_pop_up('Fail to start mongo client.'+'\n{}'.format(str(e)),'Error')
 
@@ -1758,11 +1783,14 @@ if __name__ == "__main__":
     myWin = MyMainWindow()
     if sys.argv[-1] == 'demo':
         myWin.demo = True
-        myWin.init_server_devices()
-        myWin.set_up_operations()
+        # myWin.init_server_devices()
+        # myWin.set_up_operations()
     else:
         myWin.demo = False
-        import psdrive as psd
+        try:
+            import psdrive as psd
+        except:
+            pass
     app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
     myWin.show()
     sys.exit(app.exec_())
