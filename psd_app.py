@@ -252,7 +252,6 @@ class MyMainWindow(QMainWindow):
         self.msg_exchange_thread = QtCore.QThread()
         self.login_name = ''
         self.password = ''
-        self.mc = MongoClient
 
         self.pump_settings = {}
         self.pushButton_apply_settings.clicked.connect(self.apply_pump_settings)
@@ -309,7 +308,7 @@ class MyMainWindow(QMainWindow):
         self.update_speed()
         self.label_cam.setScaledContents(True)
 
-        #reset cell volume to 0
+        #reset cell volume as wish
         self.actionReset_Cell_Vol.triggered.connect(self.reset_cell_vol)
         #cleaner dialog pop up
         self.actioncleaner.triggered.connect(self.onCleanerClicked)
@@ -333,12 +332,6 @@ class MyMainWindow(QMainWindow):
 
         self.pushButton_load_config.clicked.connect(self.load_setting_table)
         self.pushButton_save_config.clicked.connect(self.save_setting_table)
-
-        ###set timmers###
-        self.timer_renew_device_info_gui = QTimer(self)
-        self.timer_renew_device_info_cloud = QTimer(self)
-        self.timer_renew_device_info_cloud.timeout.connect(self.update_device_info_to_cloud)
-        self.timer_renew_device_info_gui.timeout.connect(self.update_device_info_from_cloud)
 
         #timer to check whether or not the server devices are busy
         #if not busy, stop the init mode and resume the simple exchange mode
@@ -404,6 +397,8 @@ class MyMainWindow(QMainWindow):
         self.syn_valve_pos()
 
     def syn_server_and_gui_init(self,attrs):
+        if self.client == None:
+            return
         config = self.client.configuration
         for key, value in attrs.items():
             config['psd_widget'][key] = value
@@ -540,16 +535,6 @@ class MyMainWindow(QMainWindow):
             self.timer_update_response.timeout.connect(self._update_response)
             self.timer_update_response.start(500)
 
-    def _start_listening_cloud(self):
-        self.listen = True
-        self.lineEdit_listen_status.setText('Listening now!')
-        if self.send_cmd_remotely:
-            self.thread_renew_device_info_gui = threading.Thread(target=self.update_device_info_from_cloud, args=(), daemon = True)
-            self.thread_renew_device_info_gui.start()
-        else:
-            self.thread_renew_device_info_cloud = threading.Thread(target=self.update_device_info_to_cloud, args=(), daemon = True)
-            self.thread_renew_device_info_cloud.start()
-
     def stop_listening_cloud(self):
         self.listen = False
         self.msg_exchange_thread.terminate()
@@ -558,60 +543,6 @@ class MyMainWindow(QMainWindow):
                 self.timer_update_response.stop()
             except:
                 print('Cannot stop timer:{}!'.format('timer_update_response'))
-
-    def update_device_info_to_cloud(self):
-        #main client update device info to mongo cloud
-        #never end unless terminating the main_gui program
-        while True:
-            if not self.listen:
-                self.lineEdit_listen_status.setText('Listening is terminated!')
-                return
-            time.sleep(0.05)
-            self.database.device_info.update_one({'client_id':self.lineEdit_current_client.text()},{"$set": {"S1_vol":str(self.widget_psd.volume_syringe_1)}})
-            self.database.device_info.update_one({'client_id':self.lineEdit_current_client.text()},{"$set": {'valve_pos':str(self.widget_psd.connect_valve_port)}})
-            self.database.device_info.update_one({'client_id':self.lineEdit_current_client.text()},{"$set": {'S2_vol': str(self.widget_psd.volume_syringe_2)}})
-            self.database.device_info.update_one({'client_id':self.lineEdit_current_client.text()},{"$set": {"S3_vol":str(self.widget_psd.volume_syringe_3)}})
-            self.database.device_info.update_one({'client_id':self.lineEdit_current_client.text()},{"$set": {"S4_vol":str(self.widget_psd.volume_syringe_4)}})
-            self.database.device_info.update_one({'client_id':self.lineEdit_current_client.text()},{"$set": {'mvp_valve': str(self.widget_psd.mvp_channel)}})
-            self.database.device_info.update_one({'client_id':self.lineEdit_current_client.text()},{"$set": {'resevoir_vol': str(self.widget_psd.resevoir_volumn)}})
-            self.database.device_info.update_one({'client_id':self.lineEdit_current_client.text()},{"$set": {'waste_vol': str(self.widget_psd.waste_volumn)}})
-            self.database.device_info.update_one({'client_id':self.lineEdit_current_client.text()},{"$set": {'operation_mode': self.widget_psd.operation_mode}})
-            #cmds
-            target = self.database.cmd_info.find_one({'client_id':self.lineEdit_paired_client.text()})
-            if target == None:
-                pass
-            else:
-                if target['cmd'] != '':
-                    try:
-                        exec(target['cmd'])
-                        self.database.response_info.update_one({'client_id':self.lineEdit_current_client.text()},{"$set": {"response":'Success to execute cmd: {}'.format(cmd_string)}})
-                        self.textEdit_response.setPlainText('Success to execute cmd: {}'.format(target['cmd']))
-                    except Exception as e:
-                        self.database.response_info.update_one({'client_id':self.lineEdit_current_client.text()},{"$set": {"response":str(e)}})
-                        self.textEdit_response.setPlainText(str(e))
-                    else:
-                        self.database.cmd_info.update_one({'client_id':self.lineEdit_current_client.text()},{"$set": {"cmd":''}})
-                #self.exec_cmd_from_cloud()
-
-    def update_device_info_from_cloud(self):
-        #pulling device info from mongo cloud
-        #never end unless terminating the main_gui program
-        while True:
-            #time.sleep(0.01)
-            if not self.listen:
-                self.lineEdit_listen_status.setText('Listening is terminated!')
-                return
-            device_info = self.database.device_info.find_one()
-            self.widget_psd.volume_syringe_1 = float(device_info['S1_vol'])
-            self.widget_psd.volume_syringe_2 = float(device_info['S2_vol'])
-            self.widget_psd.volume_syringe_3 = float(device_info['S3_vol'])
-            self.widget_psd.volume_syringe_4 = float(device_info['S4_vol'])
-            self.widget_psd.connect_valve_port = eval(device_info['valve_pos'])
-            self.widget_psd.mvp_channel = int(device_info['mvp_valve'])
-            self.widget_psd.resevoir_volumn = float(device_info['resevoir_vol'])
-            self.widget_psd.waste_volumn = float(device_info['waste_vol'])
-            self.widget_psd.operation_mode = device_info['operation_mode']
-            self.widget_psd.update()
 
     def send_cmd_to_cloud(self, cmd_string):
         self.database.cmd_info.update_one({'client_id':self.lineEdit_current_client.text()},{"$set": {"cmd":cmd_string}})
@@ -633,16 +564,21 @@ class MyMainWindow(QMainWindow):
         else:
             pass
 
-    def apply_setting_during_exchange(self):
-        if self.main_client_cloud!=None:
-            if not self.main_client_cloud:
-                cmd_list = [
-                            'self.doubleSpinBox.setValue({})'.format(self.doubleSpinBox.value()),
-                            'self.doubleSpinBox_exchange_amount.setValue({})'.format(self.doubleSpinBox_exchange_amount.value()),
-                            'self.spinBox_speed.setValue({})'.format(self.spinBox_speed.value()),
-                            'self.spinBox_amount.setValue({})'.format(self.spinBox_amount.value())
-                           ]
-                self.send_cmd_to_cloud('\n'.join(cmd_list))
+    def make_cmd_list_during_exchange(self):
+        cmd_list = [
+                    'self.doubleSpinBox.setValue({})'.format(self.doubleSpinBox.value()),
+                    'self.doubleSpinBox_exchange_amount.setValue({})'.format(self.doubleSpinBox_exchange_amount.value()),
+                    'self.spinBox_speed.setValue({})'.format(self.spinBox_speed.value()),
+                    "self.lineEdit_default_speed.setText('{}')".format(self.lineEdit_default_speed.text()),
+                    "self.comboBox_exchange_mode.setCurrentText('{}')".format(self.comboBox_exchange_mode.currentText()),
+                    'self.spinBox_amount.setValue({})'.format(self.spinBox_amount.value()),
+                    'self.doubleSpinBox_prepresure_vol.setValue({})'.format(self.doubleSpinBox_prepresure_vol.value()),
+                    'self.doubleSpinBox_prepressure_rate.setValue({})'.format(self.doubleSpinBox_prepressure_rate.value()),
+                    'self.doubleSpinBox_leftover_vol.setValue({})'.format(self.doubleSpinBox_leftover_vol.value()),
+                    'self.checkBox_auto.setChecked({})'.format(self.checkBox_auto.isChecked())
+                    ]
+        #self.send_cmd_to_cloud('\n'.join(cmd_list))
+        return cmd_list
 
 
     def update_valve_on_GUI(self,syringe_num = 1, valve_pos = None):
@@ -1145,7 +1081,8 @@ class MyMainWindow(QMainWindow):
             # self.advanced_exchange_operation.resume = False
             if self.main_client_cloud!=None:
                 if not self.main_client_cloud:
-                    self.send_cmd_to_cloud('\n'.join(['self.init_start_advance()','self.advanced_exchange_operation.resume = False']))
+                    cmd_list_widget = self.make_cmd_list_during_exchange()
+                    self.send_cmd_to_cloud('\n'.join(cmd_list_widget + ['self.init_start_advance()','self.advanced_exchange_operation.resume = False']))
                 else:
                     self.init_start_advance()
                     self.advanced_exchange_operation.resume = False
@@ -1157,13 +1094,14 @@ class MyMainWindow(QMainWindow):
             #self.init_start_simple()
             if self.main_client_cloud!=None:
                 if not self.main_client_cloud:
-                    self.send_cmd_to_cloud('self.init_start_simple()')
+                    cmd_list_widget = self.make_cmd_list_during_exchange()
+                    self.send_cmd_to_cloud('\n'.join(cmd_list_widget + ['self.init_start_simple()']))
                 else:
                     self.init_start_simple()
             else:
                 self.init_start_simple()
 
-    @check_any_timer
+    # @check_any_timer
     def init_start_advance(self):
         self.textBrowser_error_msg.setText('')
         #check the cell volume first
@@ -1174,7 +1112,7 @@ class MyMainWindow(QMainWindow):
             if self.check_connection_for_advanced_auto_refilling():
                 self.advanced_exchange_operation.start_premotion_timer()
 
-    @check_any_timer
+    # @check_any_timer
     def init_start_simple(self):
         self.textBrowser_error_msg.setText('')
         if self.widget_psd.volume_of_electrolyte_in_cell < 0.1:
@@ -1187,7 +1125,7 @@ class MyMainWindow(QMainWindow):
         dlg = RefillCellSetup(self)
         dlg.exec()
 
-    @check_any_timer
+    # @check_any_timer
     def start_fill_cell(self,kwargs =1):
         self.fill_cell_operation.start_timer_motion()
 
@@ -1197,7 +1135,8 @@ class MyMainWindow(QMainWindow):
         if self.comboBox_exchange_mode.currentText() == 'Continuous':
             if self.main_client_cloud!=None:
                 if not self.main_client_cloud:
-                    self.send_cmd_to_cloud('self.start_exchange_advance(not self.checkBox_auto.isChecked())')
+                    cmd_list_widget = self.make_cmd_list_during_exchange()
+                    self.send_cmd_to_cloud('\n'.join(cmd_list_widget+['self.start_exchange_advance(not self.checkBox_auto.isChecked())']))
                 else:
                     self.start_exchange_advance(not self.checkBox_auto.isChecked())
             else:
@@ -1205,20 +1144,21 @@ class MyMainWindow(QMainWindow):
         elif self.comboBox_exchange_mode.currentText() == 'Intermittent':
             if self.main_client_cloud!=None:
                 if not self.main_client_cloud:
-                    self.send_cmd_to_cloud('self.start_exchange_simple(not self.checkBox_auto.isChecked())')
+                    cmd_list_widget = self.make_cmd_list_during_exchange()
+                    self.send_cmd_to_cloud('\n'.join(cmd_list_widget+['self.start_exchange_simple(not self.checkBox_auto.isChecked())']))
                 else:
                     self.start_exchange_simple(not self.checkBox_auto.isChecked())
             else:
                 self.start_exchange_simple(not self.checkBox_auto.isChecked())
 
-    @check_any_timer
+    # @check_any_timer
     def start_exchange_advance(self, onetime):
         self.textBrowser_error_msg.setText('')
         #self.advanced_exchange_operation.resume = True
         self.advanced_exchange_operation.start_motion_timer(onetime)
         self.widget_psd.operation_mode = 'autorefilling_mode'
 
-    @check_any_timer
+    # @check_any_timer
     def start_exchange_simple(self, onetime):
         self.textBrowser_error_msg.setText('')
         self.simple_exchange_operation.start_motion_timer(onetime)
@@ -1348,7 +1288,7 @@ class MyMainWindow(QMainWindow):
             self.widget_psd.actived_syringe_valve_connection = self.pump_settings[key_for_pump_setting]
             self.widget_psd.update()
 
-    @check_any_timer
+    # @check_any_timer
     def update_mvp_connection(self, syringe_no):
         self.textBrowser_error_msg.setText('')
         self.connected_mvp_channel = self.pump_settings['S{}_mvp'.format(syringe_no)]
@@ -1468,12 +1408,12 @@ class MyMainWindow(QMainWindow):
         speed = getattr(self, speed_wid_str).value()
         vol = getattr(self, vol_wid_str).value()
         valve = getattr(self, valve_wid_str).currentText()
-        cmd_list ['self.'+speed_wid_str+f'setValue({speed})',
-                  'self.'+vol_wid_str+f'setValue({vol})',
-                  'self.'+valve_wid_str+f"setCurrentText('{valve}')"]
+        cmd_list = ['self.'+speed_wid_str+f'.setValue({speed})',
+                  'self.'+vol_wid_str+f'.setValue({vol})',
+                  'self.'+valve_wid_str+f".setCurrentText('{valve}')"]
         return cmd_list
 
-    @check_any_timer
+    # @check_any_timer
     def _fill_syringe(self, syringe_no):
         if self.pump_settings['S{}_mvp'.format(syringe_no)] != 'not_used':
             exec('self.pushButton_connect_mvp_syringe_{}.click()'.format(syringe_no))
@@ -1492,7 +1432,7 @@ class MyMainWindow(QMainWindow):
         else:
             self._fill_syringe(syringe_no)
 
-    @check_any_timer
+    # @check_any_timer
     def _dispense_syringe(self, syringe_no):
         self.textBrowser_error_msg.setText('')
         if self.pump_settings['S{}_mvp'.format(syringe_no)] != 'not_used':
@@ -1514,12 +1454,12 @@ class MyMainWindow(QMainWindow):
         else:
             self._dispense_syringe(syringe_no)
 
-    @check_any_timer
+    # @check_any_timer
     def reset_exchange(self,kwargs = 1):
         dlg = ResetResevoirWaste(self)
         dlg.exec()
 
-    @check_any_timer
+    # @check_any_timer
     def config_pump_system(self,kwargs = 1):
         dlg = ConfigPumpSystem(self)
         dlg.exec()
@@ -1681,10 +1621,7 @@ if __name__ == "__main__":
         myWin.set_up_operations()
     else:
         myWin.demo = False
-        try:
-            import psdrive as psd
-        except:
-            pass
+        import psdrive as psd
     app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
     myWin.show()
     sys.exit(app.exec_())
