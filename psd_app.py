@@ -1056,6 +1056,9 @@ class MyMainWindow(QMainWindow):
     def check_any_timer(func):
         @functools.wraps(func)
         def wrapper_func(self, *args, **kwargs):
+            if self.main_client_cloud!=None:
+                if not self.main_client_cloud:
+                    return func(self, *args, **kwargs)
             for timer in self.timers:
                 if timer.isActive():
                     error_pop_up('Error: some timer is running now. Stop it before you can make this move!')
@@ -1067,6 +1070,9 @@ class MyMainWindow(QMainWindow):
     def check_any_timer_except_exchange(func):
         @functools.wraps(func)
         def wrapper_func(self, *args, **kwargs):
+            if self.main_client_cloud!=None:
+                if not self.main_client_cloud:
+                    return func(self, *args, **kwargs)
             for timer in self.timers_partial:
                 if timer.isActive():
                     error_pop_up('Error: some timer is running now. Stop it before you can make this move!')
@@ -1101,7 +1107,7 @@ class MyMainWindow(QMainWindow):
             else:
                 self.init_start_simple()
 
-    # @check_any_timer
+    @check_any_timer
     def init_start_advance(self):
         self.textBrowser_error_msg.setText('')
         #check the cell volume first
@@ -1112,7 +1118,7 @@ class MyMainWindow(QMainWindow):
             if self.check_connection_for_advanced_auto_refilling():
                 self.advanced_exchange_operation.start_premotion_timer()
 
-    # @check_any_timer
+    @check_any_timer
     def init_start_simple(self):
         self.textBrowser_error_msg.setText('')
         if self.widget_psd.volume_of_electrolyte_in_cell < 0.1:
@@ -1125,7 +1131,7 @@ class MyMainWindow(QMainWindow):
         dlg = RefillCellSetup(self)
         dlg.exec()
 
-    # @check_any_timer
+    @check_any_timer
     def start_fill_cell(self,kwargs =1):
         self.fill_cell_operation.start_timer_motion()
 
@@ -1151,14 +1157,14 @@ class MyMainWindow(QMainWindow):
             else:
                 self.start_exchange_simple(not self.checkBox_auto.isChecked())
 
-    # @check_any_timer
+    @check_any_timer
     def start_exchange_advance(self, onetime):
         self.textBrowser_error_msg.setText('')
         #self.advanced_exchange_operation.resume = True
         self.advanced_exchange_operation.start_motion_timer(onetime)
         self.widget_psd.operation_mode = 'autorefilling_mode'
 
-    # @check_any_timer
+    @check_any_timer
     def start_exchange_simple(self, onetime):
         self.textBrowser_error_msg.setText('')
         self.simple_exchange_operation.start_motion_timer(onetime)
@@ -1288,7 +1294,7 @@ class MyMainWindow(QMainWindow):
             self.widget_psd.actived_syringe_valve_connection = self.pump_settings[key_for_pump_setting]
             self.widget_psd.update()
 
-    # @check_any_timer
+    @check_any_timer
     def update_mvp_connection(self, syringe_no):
         self.textBrowser_error_msg.setText('')
         self.connected_mvp_channel = self.pump_settings['S{}_mvp'.format(syringe_no)]
@@ -1413,7 +1419,7 @@ class MyMainWindow(QMainWindow):
                   'self.'+valve_wid_str+f".setCurrentText('{valve}')"]
         return cmd_list
 
-    # @check_any_timer
+    @check_any_timer
     def _fill_syringe(self, syringe_no):
         if self.pump_settings['S{}_mvp'.format(syringe_no)] != 'not_used':
             exec('self.pushButton_connect_mvp_syringe_{}.click()'.format(syringe_no))
@@ -1432,7 +1438,7 @@ class MyMainWindow(QMainWindow):
         else:
             self._fill_syringe(syringe_no)
 
-    # @check_any_timer
+    @check_any_timer
     def _dispense_syringe(self, syringe_no):
         self.textBrowser_error_msg.setText('')
         if self.pump_settings['S{}_mvp'.format(syringe_no)] != 'not_used':
@@ -1444,7 +1450,7 @@ class MyMainWindow(QMainWindow):
         self.normal_operation.syringe_index = syringe_no
         self.normal_operation.start_timer_motion()
 
-    #@check_any_timer
+    @check_any_timer
     def dispense_syringe(self,syringe_no):
         if self.main_client_cloud!=None:
             if not self.main_client_cloud:
@@ -1454,12 +1460,12 @@ class MyMainWindow(QMainWindow):
         else:
             self._dispense_syringe(syringe_no)
 
-    # @check_any_timer
+    @check_any_timer
     def reset_exchange(self,kwargs = 1):
         dlg = ResetResevoirWaste(self)
         dlg.exec()
 
-    # @check_any_timer
+    @check_any_timer
     def config_pump_system(self,kwargs = 1):
         dlg = ConfigPumpSystem(self)
         dlg.exec()
