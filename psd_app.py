@@ -1139,7 +1139,6 @@ class MyMainWindow(QMainWindow):
 
     def start_exchange(self):
         # self.init_start()
-        self.under_exchange = True
         if self.comboBox_exchange_mode.currentText() == 'Continuous':
             if self.main_client_cloud!=None:
                 if not self.main_client_cloud:
@@ -1161,6 +1160,7 @@ class MyMainWindow(QMainWindow):
 
     @check_any_timer
     def start_exchange_advance(self, onetime):
+        self.under_exchange = True
         self.textBrowser_error_msg.setText('')
         #self.advanced_exchange_operation.resume = True
         self.advanced_exchange_operation.start_motion_timer(onetime)
@@ -1168,6 +1168,7 @@ class MyMainWindow(QMainWindow):
 
     @check_any_timer
     def start_exchange_simple(self, onetime):
+        self.under_exchange = True
         self.textBrowser_error_msg.setText('')
         self.simple_exchange_operation.start_motion_timer(onetime)
         #self.advanced_exchange_operation.start_motion_timer(onetime)
@@ -1253,6 +1254,7 @@ class MyMainWindow(QMainWindow):
                 self.widget_psd.update()
         if self.main_client_cloud!=None:
             if not self.main_client_cloud:
+                self.under_exchange = False
                 self.send_cmd_to_cloud('self.stop_all_motion()')
             else:
                 _action()
@@ -1277,7 +1279,7 @@ class MyMainWindow(QMainWindow):
         self.widget_psd.connect_valve_port[self.widget_psd.actived_pushing_syringe_init_mode] = 'right'
         self.widget_psd.update()
 
-    def update_to_normal_mode(self, syringe_no):
+    def _update_to_normal_mode(self, syringe_no):
         self.textBrowser_error_msg.setText('')
         self.widget_psd.actived_syringe_normal_mode = syringe_no
         if self.under_exchange:
@@ -1295,6 +1297,15 @@ class MyMainWindow(QMainWindow):
                 exec('self.valve_server_S{}.join()'.format(syringe_no))
             self.widget_psd.actived_syringe_valve_connection = self.pump_settings[key_for_pump_setting]
             self.widget_psd.update()
+
+    def update_to_normal_mode(self, syringe_no):
+        if self.main_client_cloud!=None:
+            if not self.main_client_cloud:
+                pass
+            else:
+                self._update_to_normal_mode(syringe_no)
+        else:
+            self._update_to_normal_mode(syringe_no)
 
     @check_any_timer
     def update_mvp_connection(self, syringe_no):
@@ -1350,6 +1361,8 @@ class MyMainWindow(QMainWindow):
                 self.send_cmd_to_cloud('\n'.join(cmd_list_widget+['self._pickup_init_mode()']))
             else:
                 self._pickup_init_mode()
+        else:
+            self._pickup_init_mode()
 
     def check_server_devices_busy_init_mode_to_simple_mode(self):
         #If any device is busy, then the device busy state is True
@@ -1399,6 +1412,8 @@ class MyMainWindow(QMainWindow):
                 self.send_cmd_to_cloud('\n'.join(cmd_list_widget+['self._dispense_init_mode()']))
             else:
                 self._dispense_init_mode()
+        else:
+            self._dispense_init_mode()
 
     def check_elapsed_time(self):
         if self.deadlinetimer_droplet_adjustment_on_the_fly.hasExpired():
