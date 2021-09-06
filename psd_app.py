@@ -65,6 +65,7 @@ class MessageExchanger(QtCore.QObject):
             self.database.device_info.update_one({'client_id':self.parent.lineEdit_current_client.text()},{"$set": {'waste_vol': str(self.parent.widget_psd.waste_volumn)}})
             self.database.device_info.update_one({'client_id':self.parent.lineEdit_current_client.text()},{"$set": {'connect_status': str(self.parent.widget_psd.connect_status)}})
             self.database.device_info.update_one({'client_id':self.parent.lineEdit_current_client.text()},{"$set": {'operation_mode': self.parent.widget_psd.operation_mode}})
+            self.database.device_info.update_one({'client_id':self.parent.lineEdit_current_client.text()},{"$set": {'statusbar': self.parent.statusbar.currentMessage()}})
             #cmds
             target = self.database.cmd_info.find_one({'client_id':self.parent.lineEdit_paired_client.text()})
             if target == None:
@@ -93,6 +94,7 @@ class MessageExchanger(QtCore.QObject):
             self.parent.widget_psd.resevoir_volumn = float(device_info['resevoir_vol'])
             self.parent.widget_psd.waste_volumn = float(device_info['waste_vol'])
             self.parent.widget_psd.operation_mode = device_info['operation_mode']
+            self.parent.statusbar.showMessage(device_info['statusbar'])
             self.parent.widget_psd.update()
 
 def error_pop_up(msg_text = 'error', window_title = ['Error','Information','Warning'][0]):
@@ -1317,7 +1319,7 @@ class MyMainWindow(QMainWindow):
         self.dispense_init_mode()
 
     @check_any_timer_except_exchange
-    def pickup_init_mode(self,kwargs = None):
+    def _pickup_init_mode(self,kwargs = None):
         self.textBrowser_error_msg.setText('')
         if self.timer_update.isActive():
             label = 'S{}_S{}'.format(*self.widget_psd.get_exchange_syringes_advance_exchange_mode())
@@ -1341,6 +1343,14 @@ class MyMainWindow(QMainWindow):
             self.widget_psd.actived_syringe_motion_init_mode = 'fill'
             self.init_operation.start_exchange_timer()
 
+    def pickup_init_mode(self, kwargs = None):
+        if self.main_client_cloud!=None:
+            if not self.main_client_cloud:
+                cmd_list_widget = self.make_cmd_list_during_exchange()
+                self.send_cmd_to_cloud('\n'.join(cmd_list_widget+['self._pickup_init_mode()']))
+            else:
+                self._pickup_init_mode()
+
     def check_server_devices_busy_init_mode_to_simple_mode(self):
         #If any device is busy, then the device busy state is True
         this_timer = self.timer_check_device_busy
@@ -1358,7 +1368,7 @@ class MyMainWindow(QMainWindow):
             post_action()
 
     @check_any_timer_except_exchange
-    def dispense_init_mode(self, kwargs = None):
+    def _dispense_init_mode(self, kwargs = None):
         self.textBrowser_error_msg.setText('')
         #puff droplet during advanced exchange
         if self.timer_update.isActive():
@@ -1376,21 +1386,19 @@ class MyMainWindow(QMainWindow):
             self.server_devices['exchange_pair'][label].pushSyr.rate = self.server_devices['exchange_pair'][label].rate + self.spinBox_speed.value()
             self.timer_droplet_adjustment_on_the_fly.start(10)
             self.deadlinetimer_droplet_adjustment_on_the_fly.setRemainingTime(timeout)
-            # self.server_devices['exchange_pair'][label].increaseVolume(volume = self.spinBox_amount.value(), rate = self.spinBox_speed.value())
-            '''
-            self.stop_all_timers()
-            self.server_devices['client'].stop()
-            self.simple_exchange_operation.set_status_to_ready()
-            time.sleep(0.1)
-            self.widget_psd.actived_syringe_motion_init_mode = 'dispense'
-            self.init_operation.start_exchange_timer()
-            self.timer_check_device_busy.start(50)
-            '''
         else:
             self.widget_psd.actived_syringe_motion_init_mode = 'dispense'
             self.stop_all_timers()
             self.server_devices['client'].stop()
             self.init_operation.start_exchange_timer()
+
+    def dispense_init_mode(self, kwargs = None):
+        if self.main_client_cloud!=None:
+            if not self.main_client_cloud:
+                cmd_list_widget = self.make_cmd_list_during_exchange()
+                self.send_cmd_to_cloud('\n'.join(cmd_list_widget+['self._dispense_init_mode()']))
+            else:
+                self._dispense_init_mode()
 
     def check_elapsed_time(self):
         if self.deadlinetimer_droplet_adjustment_on_the_fly.hasExpired():
