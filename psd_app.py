@@ -73,6 +73,7 @@ class MessageExchanger(QtCore.QObject):
             else:
                 if target['cmd'] != '':
                     sig_exec_cmd.emit(target['cmd'])
+                    time.sleep(3)
 
     def _update_device_info_from_cloud(self):
         #pulling device info from mongo cloud
@@ -394,6 +395,7 @@ class MyMainWindow(QMainWindow):
         self.timer_update_fill_half_mode = QTimer(self)
 
         self.timers = [self.timer_prepressure_S1, self.timer_prepressure_S2, self.timer_droplet_adjustment_S1, self.timer_droplet_adjustment_S2, self.timer_droplet_adjustment_S3, self.timer_droplet_adjustment_S4, self.timer_update_simple, self.timer_update_simple_pre, self.timer_update_fill_half_mode,  self.timer_update,self.timer_update_normal_mode, self.timer_update_init_mode, self.timer_update_fill_cell, self.timer_clean_S1, self.timer_clean_S2, self.timer_clean_S3, self.timer_clean_S4]
+        self.timers_names = ['timer_prepressure_S1', 'timer_prepressure_S2', 'timer_droplet_adjustment_S1', 'timer_droplet_adjustment_S2', 'timer_droplet_adjustment_S3', 'timer_droplet_adjustment_S4', 'timer_update_simple', 'timer_update_simple_pre', 'timer_update_fill_half_mode',  'timer_update','timer_update_normal_mode', 'timer_update_init_mode', 'timer_update_fill_cell', 'timer_clean_S1', 'timer_clean_S2', 'timer_clean_S3', 'timer_clean_S4']
         self.timers_partial = [self.timer_update_simple_pre, self.timer_update_fill_half_mode, self.timer_update_normal_mode, self.timer_update_init_mode]
 
         self.syn_valve_pos()
@@ -1063,7 +1065,7 @@ class MyMainWindow(QMainWindow):
                     return func(self, *args, **kwargs)
             for timer in self.timers:
                 if timer.isActive():
-                    error_pop_up('Error: some timer is running now. Stop it before you can make this move!')
+                    error_pop_up(f'Error: {self.timers_names[self.timers.index(timer)]} is running now. Stop it before you can make this move!')
                     self.tabWidget.setCurrentIndex(2)
                     return
             return func(self, *args, **kwargs)
