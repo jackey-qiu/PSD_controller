@@ -39,6 +39,7 @@ class MessageExchanger(QtCore.QObject):
         super(MessageExchanger, self).__init__()
         self.database = parent_object.database
         self.parent = parent_object
+        self.ready = True
 
     def exchange_info(self):
         if self.parent.main_client_cloud:
@@ -71,9 +72,13 @@ class MessageExchanger(QtCore.QObject):
             if target == None:
                 pass
             else:
-                if target['cmd'] != '':
+                if target['cmd'] != '' and self.ready:
+                    self.ready = False
                     sig_exec_cmd.emit(target['cmd'])
-                    time.sleep(3)
+                    #ready will be set backe to True after executing the slot function
+                else:
+                    pass
+                    #time.sleep(3)
 
     def _update_device_info_from_cloud(self):
         #pulling device info from mongo cloud
@@ -521,6 +526,8 @@ class MyMainWindow(QMainWindow):
             self.database.response_info.update_one({'client_id':self.lineEdit_current_client.text()},{"$set": {"response":'{}:{}'.format(now,str(e))}})
         # finally:
         self.database.cmd_info.update_one({'client_id':self.lineEdit_paired_client.text()},{"$set": {"cmd":''}})
+        time.sleep(3)
+        self.msg_exchange.ready = True
             #self.exec_cmd_from_cloud()
 
     #update response string from main client
