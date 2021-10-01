@@ -1,7 +1,7 @@
 server:
   tangoname: exp/ec/pump1
   database: False # indicate whether Tango database is available
-  serialport: COM5
+  serialport: COM4
   host: localhost #IP address or hostname; only required if no Tango database is set up
   port: 50005 # only required if no Tango database is set up 
   name: pump1 # only required when the server is started from python

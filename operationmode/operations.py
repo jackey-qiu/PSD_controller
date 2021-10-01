@@ -863,6 +863,11 @@ class advancedRefillingOperationMode(baseOperationMode):
         self.turn_valve(4,'left')
         setattr(self.psd_widget, 'filling_status_syringe_{}'.format(4), True)
         self.settings['syringe{}_status'.format(4)] ='moving'
+        #also ensure the exchange_operation from device is right
+        if self.server_devices['exchange_pair']['S1_S3'].pushSyr.deviceId != 3: # S3--> 3
+            self.server_devices['exchange_pair']['S1_S3'].swap()
+        if self.server_devices['exchange_pair']['S2_S4'].pushSyr.deviceId != 2: # S2--> 2
+            self.server_devices['exchange_pair']['S2_S4'].swap()
 
         #set mvp channel
         self.psd_widget.mvp_channel = int(self.pump_settings['S{}_mvp'.format(2)].rsplit('_')[1])
@@ -1161,6 +1166,10 @@ class advancedRefillingOperationMode(baseOperationMode):
         valves_codes = [self.server_devices['syringe'][i].status['valve'].statuscode for i in [1,2,3,4]]
         mvp_valve_code = self.server_devices['mvp_valve'].status['valve'].statuscode
         if sum(syringes_codes)+sum(valves_codes)+mvp_valve_code!=0:
+            #if error then show the error source on GUI widget
+            for i in [1,2,3,4]:
+                self.psd_widget.connect_status[i] = self.server_devices['syringe'][i].status['syringe'].__str__()
+            self.psd_widget.update()
             return 'error'
         else:
             return 'no error'

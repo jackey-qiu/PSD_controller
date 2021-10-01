@@ -355,6 +355,10 @@ class MyMainWindow(QMainWindow):
         self.timer_webcam = QTimer(self)
         self.timer_webcam.timeout.connect(self.viewCam)
 
+        #timer to check device error
+        self.timer_track_device_status = QTimer(self)
+        self.timer_track_device_status.timeout.connect(self.track_device_status)
+
         #timers in clean_mode
         self.timer_clean_S1 = QTimer(self)
         self.timer_clean_S2 = QTimer(self)
@@ -404,6 +408,15 @@ class MyMainWindow(QMainWindow):
         self.timers_partial = [self.timer_update_simple_pre, self.timer_update_fill_half_mode, self.timer_update_normal_mode, self.timer_update_init_mode]
 
         self.syn_valve_pos()
+
+    def track_device_status(self):
+        syringes_codes = [self.server_devices['syringe'][i].status['syringe'].statuscode for i in [1,2,3,4]]
+        valves_codes = [self.server_devices['syringe'][i].status['valve'].statuscode for i in [1,2,3,4]]
+        mvp_valve_code = self.server_devices['mvp_valve'].status['valve'].statuscode
+        if sum(syringes_codes)+sum(valves_codes)+mvp_valve_code!=0:
+            self.stop_all_motion()
+            self.timer_track_device_status.stop()        
+            error_pop_up('Error caught for some device. Fix the issue and reinitialize the devices to continue!')
 
     def syn_server_and_gui_init(self,attrs):
         if self.client == None:
@@ -647,6 +660,7 @@ class MyMainWindow(QMainWindow):
                 self.client = psd.fromFile(config_file)
                 self.client.readConfigfile(config_file)
                 self.init_server_devices()
+                self.timer_track_device_status.start(20)
                 self.set_up_operations()
             except Exception as e:
                 error_pop_up('Fail to start start client.'+'\n{}'.format(str(e)),'Error')
@@ -1257,7 +1271,11 @@ class MyMainWindow(QMainWindow):
             if not self.demo:
                 self.client.stop()
                 for i in range(1,5):
-                    self.widget_psd.connect_status[i] = 'ready'
+                    status = self.server_devices['syringe'][i].status['syringe'].__str__()
+                    if status == 'no error':
+                        self.widget_psd.connect_status[i] = 'ready'
+                    else:
+                        self.widget_psd.connect_status[i] = status
                     # setattr(self.widget_psd,'volume_syringe_{}'.format(i),round(self.server_devices['syringe'][i].volume,1))
                 self.syn_server_and_gui_init(attrs = {'connect_status':{1:'ready',2:'ready',3:'ready',4:'ready','mvp':self.widget_psd.connect_status['mvp']}})
                 self.widget_psd.update()
