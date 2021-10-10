@@ -47,6 +47,7 @@ class QTextEditLogger(logging.Handler):
 
 
 class baseOperationMode(object):
+    mvp_detachment_status = False
     def __init__(self, psd_server,psd_widget, error_widget, timer_premotion, timer_motion, timeout, pump_settings, settings):
         self.switch_success_pump_server = True
         self.server_ready = False
@@ -70,6 +71,12 @@ class baseOperationMode(object):
         # logging.getLogger().addHandler(logTextBox)
         # You can control the logging level
         logging.getLogger().setLevel(logging.DEBUG)
+
+    def attach_mvp(self):
+        self.mvp_detachment_status = False
+
+    def detach_mvp(self):
+        self.mvp_detachment_status = False
 
     def syn_server_and_gui_init(self,attrs):
         config = self.server_devices['client'].configuration
@@ -181,10 +188,16 @@ class baseOperationMode(object):
                 # logging.getLogger().exception('Pump setting Error:YOU ARE ONLY allowed to withdraw solution from RESEVOIR or CELL_OUTLET')
                 error_pop_up('Pump setting Error:YOU ARE ONLY allowed to withdraw solution from RESEVOIR or CELL_OUTLET','error')
             elif connection == 'resevoir':
-                resevoir_volumn = getattr(self.psd_widget, 'resevoir_volumn_S{}'.format(index))
-                self.psd_widget.resevoir_volumn = resevoir_volumn - (value_after_motion - value_before_motion)
-                setattr(self.psd_widget, 'resevoir_volumn_S{}'.format(index), self.psd_widget.resevoir_volumn)
-                self.psd_widget.label_resevoir = self.pump_settings['S{}_solution'.format(index)]
+                if not self.mvp_detachment_status:
+                    resevoir_volumn = getattr(self.psd_widget, 'resevoir_volumn_S{}'.format(index))
+                    self.psd_widget.resevoir_volumn = resevoir_volumn - (value_after_motion - value_before_motion)
+                    setattr(self.psd_widget, 'resevoir_volumn_S{}'.format(index), self.psd_widget.resevoir_volumn)
+                    self.psd_widget.label_resevoir = self.pump_settings['S{}_solution'.format(index)]
+                else:#in detached status, the resevoir volumn is determined by the mvp channel only
+                    resevoir_volumn = getattr(self.psd_widget, 'resevoir_volumn_S{}'.format(self.psd_widget.mvp_channel))
+                    self.psd_widget.resevoir_volumn = resevoir_volumn - (value_after_motion - value_before_motion)
+                    setattr(self.psd_widget, 'resevoir_volumn_S{}'.format(self.psd_widget.mvp_channel), self.psd_widget.resevoir_volumn)
+                    self.psd_widget.label_resevoir = self.pump_settings['S{}_solution'.format(self.psd_widget.mvp_channel)]
             elif connection == 'cell_outlet':
                 self.psd_widget.volume_of_electrolyte_in_cell = self.psd_widget.volume_of_electrolyte_in_cell - (value_after_motion - value_before_motion)
             elif connection == 'not_used':#if not used, just sucking from air, nothing need to be updated
@@ -522,12 +535,14 @@ class simpleRefillingOperationMode(baseOperationMode):
         self.turn_valve(pull_syringe_index, 'left')
         self.turn_valve(push_syringe_index, 'right')
         #set mvp channel
-        self.psd_widget.mvp_channel = int(self.pump_settings['S{}_mvp'.format(push_syringe_index)].rsplit('_')[1])
-        self.psd_widget.mvp_connected_valve = 'S{}_right'.format(push_syringe_index)
+        if not self.mvp_detachment_status:
+            self.psd_widget.mvp_channel = int(self.pump_settings['S{}_mvp'.format(push_syringe_index)].rsplit('_')[1])
+            self.psd_widget.mvp_connected_valve = 'S{}_right'.format(push_syringe_index)
         #set mvp channel from server side
         if not self.demo:
-            self.server_devices['mvp_valve'].moveValve(self.psd_widget.mvp_channel)
-            self.server_devices['mvp_valve'].join()
+            if not self.mvp_detachment_status:
+                self.server_devices['mvp_valve'].moveValve(self.psd_widget.mvp_channel)
+                self.server_devices['mvp_valve'].join()
 
             #launch electrolyte exchange
             # at the beginning, S1 and S4 are connected to resevoir and waste, respectively
@@ -870,12 +885,14 @@ class advancedRefillingOperationMode(baseOperationMode):
             self.server_devices['exchange_pair']['S2_S4'].swap()
 
         #set mvp channel
-        self.psd_widget.mvp_channel = int(self.pump_settings['S{}_mvp'.format(2)].rsplit('_')[1])
-        self.psd_widget.mvp_connected_valve = 'S2_right'
+        if not self.mvp_detachment_status:
+            self.psd_widget.mvp_channel = int(self.pump_settings['S{}_mvp'.format(2)].rsplit('_')[1])
+            self.psd_widget.mvp_connected_valve = 'S2_right'
         #set mvp channel from server side
         if not self.demo:
-            self.server_devices['mvp_valve'].moveValve(self.psd_widget.mvp_channel)
-            self.server_devices['mvp_valve'].join()
+            if not self.mvp_detachment_status:
+                self.server_devices['mvp_valve'].moveValve(self.psd_widget.mvp_channel)
+                self.server_devices['mvp_valve'].join()
 
         if not self.demo:
             #launch electrolyte exchange
@@ -1110,12 +1127,14 @@ class advancedRefillingOperationMode(baseOperationMode):
             self.turn_valve(syringe_index)
             setattr(self.psd_widget, 'filling_status_syringe_{}'.format(syringe_index), not getattr(self.psd_widget, 'filling_status_syringe_{}'.format(syringe_index)))
             if self.pump_settings['S{}_{}'.format(syringe_index, self.psd_widget.connect_valve_port[syringe_index])] == 'cell_inlet':
-                print('switch mvp now!')
-                self.psd_widget.mvp_connected_valve = 'S{}_{}'.format(syringe_index, self.psd_widget.connect_valve_port[syringe_index])
-                self.psd_widget.mvp_channel = int(self.pump_settings['S{}_mvp'.format(syringe_index)].rsplit('_')[1])
-                if not self.demo:  
-                    self.server_devices['mvp_valve'].moveValve(self.psd_widget.mvp_channel)
-                    self.server_devices['mvp_valve'].join()
+
+                if not self.mvp_detachment_status:
+                    print('switch mvp now!')
+                    self.psd_widget.mvp_connected_valve = 'S{}_{}'.format(syringe_index, self.psd_widget.connect_valve_port[syringe_index])
+                    self.psd_widget.mvp_channel = int(self.pump_settings['S{}_mvp'.format(syringe_index)].rsplit('_')[1])
+                    if not self.demo:  
+                        self.server_devices['mvp_valve'].moveValve(self.psd_widget.mvp_channel)
+                        self.server_devices['mvp_valve'].join()
         if not self.demo:
             #make sure the mvp vale is switched succesfully
             self.server_devices['exchange_pair']['S1_S3'].swap()
@@ -1343,10 +1362,12 @@ class fillCellOperationMode(baseOperationMode):
         #switch to the right mvp channel 
         if self.pump_settings['S{}_{}'.format(self.syringe_index, self.psd_widget.connect_valve_port[self.syringe_index])] == 'cell_inlet':
             #print('switch mvp now!')
-            self.psd_widget.mvp_connected_valve = 'S{}_{}'.format(self.syringe_index, self.psd_widget.connect_valve_port[self.syringe_index])
-            self.psd_widget.mvp_channel = int(self.pump_settings['S{}_mvp'.format(self.syringe_index)].rsplit('_')[1])
+            if not self.mvp_detachment_status:
+                self.psd_widget.mvp_connected_valve = 'S{}_{}'.format(self.syringe_index, self.psd_widget.connect_valve_port[self.syringe_index])
+                self.psd_widget.mvp_channel = int(self.pump_settings['S{}_mvp'.format(self.syringe_index)].rsplit('_')[1])
         if not self.demo:
-            self.server_devices['mvp_valve'].moveValve(self.psd_widget.mvp_channel)
+            if not self.mvp_detachment_status:
+                self.server_devices['mvp_valve'].moveValve(self.psd_widget.mvp_channel)
             while True:
                 if (not self.server_devices['T_valve'][self.syringe_index].busy) and (not self.server_devices['mvp_valve'].busy):
                     self.server_devices['syringe'][self.syringe_index].dispense(volume = vol_dispense, rate = speed_dispense)
@@ -1416,8 +1437,9 @@ class normalOperationMode(baseOperationMode):
         self.settings['syringe_{}_max'.format(syringe_index)] = min([getattr(self.psd_widget,'volume_syringe_{}'.format(syringe_index)) + vol, self.psd_widget.syringe_size])
 
         if not self.demo:
-            self.server_devices['mvp_valve'].moveValve(self.psd_widget.mvp_channel)
-            self.server_devices['mvp_valve'].join()
+            if not self.mvp_detachment_status:
+                self.server_devices['mvp_valve'].moveValve(self.psd_widget.mvp_channel)
+                self.server_devices['mvp_valve'].join()
             if eval('self.psd_widget.filling_status_syringe_{}'.format(syringe_index)):#if true then pulling the syringe
                 try:
                     self.server_devices['syringe'][syringe_index].pickup(volume= vol*1000, rate = speed*10*1000)
@@ -1500,12 +1522,13 @@ class initOperationMode(baseOperationMode):
                 self.settings['syringe{}_status'.format(index)] ='moving'
                 self.psd_widget.connect_status[index] = 'moving'
             #set mvp channel
-            self.psd_widget.mvp_channel = int(self.pump_settings['S{}_mvp'.format(int(push_syringe_index))].rsplit('_')[1])
-            self.psd_widget.mvp_connected_valve = 'S{}_right'.format(int(push_syringe_index))
-            #set mvp channel from server side
-            if not self.demo:
-                self.server_devices['mvp_valve'].moveValve(self.psd_widget.mvp_channel)
-                self.server_devices['mvp_valve'].join()
+            if not self.mvp_detachment_status:
+                self.psd_widget.mvp_channel = int(self.pump_settings['S{}_mvp'.format(int(push_syringe_index))].rsplit('_')[1])
+                self.psd_widget.mvp_connected_valve = 'S{}_right'.format(int(push_syringe_index))
+                #set mvp channel from server side
+                if not self.demo:
+                    self.server_devices['mvp_valve'].moveValve(self.psd_widget.mvp_channel)
+                    self.server_devices['mvp_valve'].join()
         self.psd_widget.update()
 
     def start_exchange_timer(self):

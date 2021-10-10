@@ -26,224 +26,11 @@ try:
     from . import locate_path
 except:
     import locate_path
-from operationmode.operations import initOperationMode, normalOperationMode, advancedRefillingOperationMode, simpleRefillingOperationMode, fillCellOperationMode, cleanOperationMode
+from operationmode.operations import baseOperationMode, initOperationMode, normalOperationMode, advancedRefillingOperationMode, simpleRefillingOperationMode, fillCellOperationMode, cleanOperationMode
 script_path = locate_path.module_path_locator()
 # sys.path.append(os.path.join(script_path, 'pysyringedrive'))
 # from syringedrive.PumpInterface import PumpController
 # from syringedrive.device import PSD4_smooth, Valve, ExchangePair
-
-class MessageExchanger(QtCore.QObject):
-    exec_cmd = QtCore.pyqtSignal(str)
-    #update_response = QtCore.pyqtSignal(bool)
-    def __init__(self, parent_object):
-        super(MessageExchanger, self).__init__()
-        self.database = parent_object.database
-        self.parent = parent_object
-        self.ready = True
-
-    def exchange_info(self):
-        if self.parent.main_client_cloud:
-            self._update_device_info_to_cloud(self.exec_cmd)
-        else:
-            self._update_device_info_from_cloud()
-
-    def _update_device_info_to_cloud(self, sig_exec_cmd):
-        #main client update device info to mongo cloud
-        #never end unless terminating the main_gui program
-        while True:
-            if not self.parent.listen:
-                self.parent.lineEdit_listen_status.setText('Listening is terminated!')
-                return
-            time.sleep(0.05)
-            self.database.device_info.update_one({'client_id':self.parent.lineEdit_current_client.text()},{"$set": {"S1_vol":str(self.parent.widget_psd.volume_syringe_1)}})
-            self.database.device_info.update_one({'client_id':self.parent.lineEdit_current_client.text()},{"$set": {'valve_pos':str(self.parent.widget_psd.connect_valve_port)}})
-            self.database.device_info.update_one({'client_id':self.parent.lineEdit_current_client.text()},{"$set": {'S2_vol': str(self.parent.widget_psd.volume_syringe_2)}})
-            self.database.device_info.update_one({'client_id':self.parent.lineEdit_current_client.text()},{"$set": {"S3_vol":str(self.parent.widget_psd.volume_syringe_3)}})
-            self.database.device_info.update_one({'client_id':self.parent.lineEdit_current_client.text()},{"$set": {"S4_vol":str(self.parent.widget_psd.volume_syringe_4)}})
-            self.database.device_info.update_one({'client_id':self.parent.lineEdit_current_client.text()},{"$set": {"cell_vol":str(self.parent.widget_psd.volume_of_electrolyte_in_cell)}})
-            self.database.device_info.update_one({'client_id':self.parent.lineEdit_current_client.text()},{"$set": {'mvp_valve': str(self.parent.widget_psd.mvp_channel)}})
-            self.database.device_info.update_one({'client_id':self.parent.lineEdit_current_client.text()},{"$set": {'resevoir_vol': str(self.parent.widget_psd.resevoir_volumn)}})
-            self.database.device_info.update_one({'client_id':self.parent.lineEdit_current_client.text()},{"$set": {'waste_vol': str(self.parent.widget_psd.waste_volumn)}})
-            self.database.device_info.update_one({'client_id':self.parent.lineEdit_current_client.text()},{"$set": {'connect_status': str(self.parent.widget_psd.connect_status)}})
-            self.database.device_info.update_one({'client_id':self.parent.lineEdit_current_client.text()},{"$set": {'operation_mode': self.parent.widget_psd.operation_mode}})
-            self.database.device_info.update_one({'client_id':self.parent.lineEdit_current_client.text()},{"$set": {'statusbar': self.parent.statusbar.currentMessage()}})
-            #cmds
-            target = self.database.cmd_info.find_one({'client_id':self.parent.lineEdit_paired_client.text()})
-            if target == None:
-                pass
-            else:
-                if target['cmd'] != '' and self.ready:
-                    self.ready = False
-                    sig_exec_cmd.emit(target['cmd'])
-                    #ready will be set backe to True after executing the slot function
-                else:
-                    pass
-                    #time.sleep(3)
-
-    def _update_device_info_from_cloud(self):
-        #pulling device info from mongo cloud
-        #never end unless terminating the main_gui program
-        while True:
-            #time.sleep(0.01)
-            if not self.parent.listen:
-                self.parent.lineEdit_listen_status.setText('Listening is terminated!')
-                return
-            device_info = self.database.device_info.find_one()
-            self.parent.widget_psd.volume_syringe_1 = float(device_info['S1_vol'])
-            self.parent.widget_psd.volume_syringe_2 = float(device_info['S2_vol'])
-            self.parent.widget_psd.volume_syringe_3 = float(device_info['S3_vol'])
-            self.parent.widget_psd.volume_syringe_4 = float(device_info['S4_vol'])
-            self.parent.widget_psd.volume_of_electrolyte_in_cell = float(device_info['cell_vol'])
-            self.parent.widget_psd.connect_valve_port = eval(device_info['valve_pos'])
-            self.parent.widget_psd.connect_status = eval(device_info['connect_status'])
-            self.parent.widget_psd.mvp_channel = int(device_info['mvp_valve'])
-            self.parent.widget_psd.resevoir_volumn = float(device_info['resevoir_vol'])
-            self.parent.widget_psd.waste_volumn = float(device_info['waste_vol'])
-            self.parent.widget_psd.operation_mode = device_info['operation_mode']
-            self.parent.statusbar.showMessage(device_info['statusbar'])
-            self.parent.widget_psd.update()
-
-def error_pop_up(msg_text = 'error', window_title = ['Error','Information','Warning'][0]):
-    msg = QMessageBox()
-    if window_title == 'Error':
-        msg.setIcon(QMessageBox.Critical)
-    elif window_title == 'Warning':
-        msg.setIcon(QMessageBox.Warning)
-    else:
-        msg.setIcon(QMessageBox.Information)
-
-    msg.setText(msg_text)
-    # msg.setInformativeText('More information')
-    msg.setWindowTitle(window_title)
-    msg.exec_()
-
-#redirect the error stream to qt widge_syiit
-class QTextEditLogger(logging.Handler):
-    def __init__(self, textbrowser_widget):
-        super().__init__()
-        self.textBrowser_error_msg = textbrowser_widget
-        # self.widget.setReadOnly(True)
-
-    def emit(self, record):
-        error_msg = self.format(record)
-        separator = '-' * 80
-        notice = \
-        """An unhandled exception occurred. Please report the problem\n"""\
-        """using the error reporting dialog or via email to <%s>."""%\
-        ("crqiu2@gmail.com")
-        self.textBrowser_error_msg.clear()
-        cursor = self.textBrowser_error_msg.textCursor()
-        cursor.insertHtml('''<p><span style="color: red;">{} <br></span>'''.format(" "))
-        self.textBrowser_error_msg.setText(notice + '\n' +separator+'\n'+error_msg)
-
-class StartServerDialog(QDialog):
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.parent = parent
-        # Load the dialog's GUI
-        uic.loadUi(os.path.join(script_path,"start_mongo_server.ui"), self)
-        self.pushButton_start.clicked.connect(self.setup_mongo_client_cloud)
-
-    def setup_mongo_client_cloud(self):
-        if (self.lineEdit_database_name.text()!='') and (self.lineEdit_client_id.text()!='') and (self.lineEdit_paired_client_id.text()!=''):
-            self.parent.lineEdit_database_name.setText(self.lineEdit_database_name.text())
-            self.parent.lineEdit_current_client.setText(self.lineEdit_client_id.text())
-            self.parent.lineEdit_paired_client.setText(self.lineEdit_paired_client_id.text())
-            main_client = self.checkBox_main_client.isChecked()
-            if main_client:
-                self.parent.lineEdit_main_client.setText(self.lineEdit_client_id.text())
-            else:
-                self.parent.lineEdit_main_client.setText(self.lineEdit_paired_client_id.text())
-            self.parent.login_name = self.lineEdit_login.text()
-            self.parent.password = self.lineEdit_pass.text()
-            error_pop_up('Success setting up MongoDB clients. Now you can go back to main GUI and connect the Pymongo cloud!','Information')
-        else:
-            error_pop_up('Failure: some fields are not filled!','Error')
-
-
-class StartPumpClientDialog(QDialog):
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.parent = parent
-        # Load the dialog's GUI
-        uic.loadUi(os.path.join(script_path,"start_pump_client.ui"), self)
-        self.pushButton_open.clicked.connect(self.open_file)
-        self.pushButton_update.clicked.connect(self.update_file)
-        self.pushButton_load.clicked.connect(self.load_file)
-        self.pushButton_init_s1.clicked.connect(lambda:self.initialize_device(1,'syringe'))
-        self.pushButton_init_s2.clicked.connect(lambda:self.initialize_device(2,'syringe'))
-        self.pushButton_init_s3.clicked.connect(lambda:self.initialize_device(3,'syringe'))
-        self.pushButton_init_s4.clicked.connect(lambda:self.initialize_device(4,'syringe'))
-        self.pushButton_init_mvp.clicked.connect(lambda:self.initialize_device(None,'mvp'))
-        self.pushButton_init_all.clicked.connect(lambda:self.initialize_all_device([1,2,3,4,None],['syringe']*4+['mvp']))
-        self.pushButton_create_client.clicked.connect(self.create_client_without_config)
-        self.pushButton_server_cmd.clicked.connect(self.generate_server_cmd)
-        # self.pushButton_load_without_config.clicked.connect(self.load_file_without_config)
-
-    def open_file(self):
-        options = QFileDialog.Options()
-        options |= QFileDialog.DontUseNativeDialog
-        fileName, _ = QFileDialog.getOpenFileName(self,"QFileDialog.getOpenFileName()", "","config file (*.yml);;config Files (*.txt)", options=options)
-        if fileName:
-            with open(fileName,'r') as f:
-                self.textEdit_config.setPlainText(f.read())
-            self.lineEdit_config_path.setText(fileName)
-        else:
-            pass
-
-    def update_file(self):
-        if self.textEdit_config.toPlainText()!='':
-            with open(self.lineEdit_config_path.text(),'w') as f:
-                f.write(self.textEdit_config.toPlainText())
-    
-    def load_file(self):
-        self.parent.create_pump_client(config_file = self.lineEdit_config_path.text(), device_name = 'exp/ec/pump1', config_use = True)
-        self.parent.timer_syn_server_and_gui.start(100)
-
-    def load_file_without_config(self):
-        self.parent.create_pump_client(config_file = self.lineEdit_config_path.text(), device_name = self.lineEdit_device_name.text(), config_use = False)
-
-    def generate_server_cmd(self):
-        if len(self.lineEdit_config_path.text())==0:
-            return
-        import yaml
-        data = yaml.safe_load(open(self.lineEdit_config_path.text(),'r'))
-        bashCommand = "PumpServer {} -ORBendPoint giop:tcp::{} -nodb -dlist {}".format(data['server']['name'], data['server']['port'], data['server']['tangoname'])
-        self.lineEdit_server_cmd.setText(bashCommand)
-
-    def create_client_without_config(self):
-        cmd = '{}:{}{}#dbase=no'.format(self.lineEdit_ip.text(),self.lineEdit_port.text(),self.lineEdit_device_name.text())
-        try:
-            self.parent.client = psd.connect(cmd)
-            self.parent.init_server_devices()
-            self.parent.set_up_operations()
-            self.parent.timer_syn_server_and_gui.start(100)
-        except Exception as e:
-            error_pop_up('Fail to start start client.'+'\n{}'.format(str(e)),'Error')
-
-    def initialize_device(self, device_id, device_type):
-        if device_type == 'syringe':
-            valve = getattr(self,'comboBox_val_s{}'.format(device_id)).currentText()
-            syringe = getattr(self.parent,'syringe_server_S{}'.format(device_id))
-            syringe.initSyringe(valve, 200)
-            # exec("self.parent.widget_psd.connect_status[device_id] = syringe.status['syringe'].__str__()")
-            connect_status = self.parent.widget_psd.connect_status
-            connect_status[device_id] = syringe.status['syringe'].__str__()
-            # print(connect_status)
-            self.parent.syn_server_and_gui_init(attrs = {'connect_status':connect_status})
-            getattr(self,'lineEdit_status_s{}'.format(device_id)).setText(syringe.status['syringe'].__str__())
-        elif device_type == 'mvp':
-            self.parent.mvp_valve_server.initValve()
-            self.parent.mvp_valve_server.join()
-            self.lineEdit_status_mvp.setText(self.parent.mvp_valve_server.status['valve'].__str__())
-            self.parent.pushButton_connect_mvp_syringe_1.click()
-        else:
-            pass
-        self.parent.widget_psd.update()
-
-    def initialize_all_device(self,device_ids, device_types):
-        for device_id, device_type in zip(device_ids, device_types):
-            self.initialize_device(device_id, device_type)
 
 class MyMainWindow(QMainWindow):
     def __init__(self, parent = None):
@@ -340,7 +127,8 @@ class MyMainWindow(QMainWindow):
 
         self.pushButton_load_config.clicked.connect(self.load_setting_table)
         self.pushButton_save_config.clicked.connect(self.save_setting_table)
-
+        self.pushButton_detach_mvp.clicked.connect(self.connect_mvp_to_resevoir)
+        self.pushButton_attach_mvp.clicked.connect(self.connect_mvp_to_cell)
         #timer to check whether or not the server devices are busy
         #if not busy, stop the init mode and resume the simple exchange mode
         #used to perform droplet adjustment during simple exchange mode
@@ -408,6 +196,16 @@ class MyMainWindow(QMainWindow):
         self.timers_partial = [self.timer_update_simple_pre, self.timer_update_fill_half_mode, self.timer_update_normal_mode, self.timer_update_init_mode]
 
         self.syn_valve_pos()
+
+    def connect_mvp_to_cell(self):
+        self.widget_psd.attach_mvp()
+        baseOperationMode.mvp_detachment_status = False
+        self.widget_psd.update()
+
+    def connect_mvp_to_resevoir(self):
+        self.widget_psd.detach_mvp()
+        baseOperationMode.mvp_detachment_status = True
+        self.widget_psd.update()
 
     def track_device_status(self):
         syringes_codes = [self.server_devices['syringe'][i].status['syringe'].statuscode for i in [1,2,3,4]]
@@ -1663,6 +1461,219 @@ class ResetResevoirWaste(QDialog):
         self.parent.widget_psd.set_resevoir_volumes()
         self.parent.widget_psd.waste_volumn = eval(self.lineEdit_waste_vol.text())
         self.parent.widget_psd.update()
+
+class MessageExchanger(QtCore.QObject):
+    exec_cmd = QtCore.pyqtSignal(str)
+    #update_response = QtCore.pyqtSignal(bool)
+    def __init__(self, parent_object):
+        super(MessageExchanger, self).__init__()
+        self.database = parent_object.database
+        self.parent = parent_object
+        self.ready = True
+
+    def exchange_info(self):
+        if self.parent.main_client_cloud:
+            self._update_device_info_to_cloud(self.exec_cmd)
+        else:
+            self._update_device_info_from_cloud()
+
+    def _update_device_info_to_cloud(self, sig_exec_cmd):
+        #main client update device info to mongo cloud
+        #never end unless terminating the main_gui program
+        while True:
+            if not self.parent.listen:
+                self.parent.lineEdit_listen_status.setText('Listening is terminated!')
+                return
+            time.sleep(0.05)
+            self.database.device_info.update_one({'client_id':self.parent.lineEdit_current_client.text()},{"$set": {"S1_vol":str(self.parent.widget_psd.volume_syringe_1)}})
+            self.database.device_info.update_one({'client_id':self.parent.lineEdit_current_client.text()},{"$set": {'valve_pos':str(self.parent.widget_psd.connect_valve_port)}})
+            self.database.device_info.update_one({'client_id':self.parent.lineEdit_current_client.text()},{"$set": {'S2_vol': str(self.parent.widget_psd.volume_syringe_2)}})
+            self.database.device_info.update_one({'client_id':self.parent.lineEdit_current_client.text()},{"$set": {"S3_vol":str(self.parent.widget_psd.volume_syringe_3)}})
+            self.database.device_info.update_one({'client_id':self.parent.lineEdit_current_client.text()},{"$set": {"S4_vol":str(self.parent.widget_psd.volume_syringe_4)}})
+            self.database.device_info.update_one({'client_id':self.parent.lineEdit_current_client.text()},{"$set": {"cell_vol":str(self.parent.widget_psd.volume_of_electrolyte_in_cell)}})
+            self.database.device_info.update_one({'client_id':self.parent.lineEdit_current_client.text()},{"$set": {'mvp_valve': str(self.parent.widget_psd.mvp_channel)}})
+            self.database.device_info.update_one({'client_id':self.parent.lineEdit_current_client.text()},{"$set": {'resevoir_vol': str(self.parent.widget_psd.resevoir_volumn)}})
+            self.database.device_info.update_one({'client_id':self.parent.lineEdit_current_client.text()},{"$set": {'waste_vol': str(self.parent.widget_psd.waste_volumn)}})
+            self.database.device_info.update_one({'client_id':self.parent.lineEdit_current_client.text()},{"$set": {'connect_status': str(self.parent.widget_psd.connect_status)}})
+            self.database.device_info.update_one({'client_id':self.parent.lineEdit_current_client.text()},{"$set": {'operation_mode': self.parent.widget_psd.operation_mode}})
+            self.database.device_info.update_one({'client_id':self.parent.lineEdit_current_client.text()},{"$set": {'statusbar': self.parent.statusbar.currentMessage()}})
+            #cmds
+            target = self.database.cmd_info.find_one({'client_id':self.parent.lineEdit_paired_client.text()})
+            if target == None:
+                pass
+            else:
+                if target['cmd'] != '' and self.ready:
+                    self.ready = False
+                    sig_exec_cmd.emit(target['cmd'])
+                    #ready will be set backe to True after executing the slot function
+                else:
+                    pass
+                    #time.sleep(3)
+
+    def _update_device_info_from_cloud(self):
+        #pulling device info from mongo cloud
+        #never end unless terminating the main_gui program
+        while True:
+            #time.sleep(0.01)
+            if not self.parent.listen:
+                self.parent.lineEdit_listen_status.setText('Listening is terminated!')
+                return
+            device_info = self.database.device_info.find_one()
+            self.parent.widget_psd.volume_syringe_1 = float(device_info['S1_vol'])
+            self.parent.widget_psd.volume_syringe_2 = float(device_info['S2_vol'])
+            self.parent.widget_psd.volume_syringe_3 = float(device_info['S3_vol'])
+            self.parent.widget_psd.volume_syringe_4 = float(device_info['S4_vol'])
+            self.parent.widget_psd.volume_of_electrolyte_in_cell = float(device_info['cell_vol'])
+            self.parent.widget_psd.connect_valve_port = eval(device_info['valve_pos'])
+            self.parent.widget_psd.connect_status = eval(device_info['connect_status'])
+            self.parent.widget_psd.mvp_channel = int(device_info['mvp_valve'])
+            self.parent.widget_psd.resevoir_volumn = float(device_info['resevoir_vol'])
+            self.parent.widget_psd.waste_volumn = float(device_info['waste_vol'])
+            self.parent.widget_psd.operation_mode = device_info['operation_mode']
+            self.parent.statusbar.showMessage(device_info['statusbar'])
+            self.parent.widget_psd.update()
+
+def error_pop_up(msg_text = 'error', window_title = ['Error','Information','Warning'][0]):
+    msg = QMessageBox()
+    if window_title == 'Error':
+        msg.setIcon(QMessageBox.Critical)
+    elif window_title == 'Warning':
+        msg.setIcon(QMessageBox.Warning)
+    else:
+        msg.setIcon(QMessageBox.Information)
+
+    msg.setText(msg_text)
+    # msg.setInformativeText('More information')
+    msg.setWindowTitle(window_title)
+    msg.exec_()
+
+#redirect the error stream to qt widge_syiit
+class QTextEditLogger(logging.Handler):
+    def __init__(self, textbrowser_widget):
+        super().__init__()
+        self.textBrowser_error_msg = textbrowser_widget
+        # self.widget.setReadOnly(True)
+
+    def emit(self, record):
+        error_msg = self.format(record)
+        separator = '-' * 80
+        notice = \
+        """An unhandled exception occurred. Please report the problem\n"""\
+        """using the error reporting dialog or via email to <%s>."""%\
+        ("crqiu2@gmail.com")
+        self.textBrowser_error_msg.clear()
+        cursor = self.textBrowser_error_msg.textCursor()
+        cursor.insertHtml('''<p><span style="color: red;">{} <br></span>'''.format(" "))
+        self.textBrowser_error_msg.setText(notice + '\n' +separator+'\n'+error_msg)
+
+class StartServerDialog(QDialog):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.parent = parent
+        # Load the dialog's GUI
+        uic.loadUi(os.path.join(script_path,"start_mongo_server.ui"), self)
+        self.pushButton_start.clicked.connect(self.setup_mongo_client_cloud)
+
+    def setup_mongo_client_cloud(self):
+        if (self.lineEdit_database_name.text()!='') and (self.lineEdit_client_id.text()!='') and (self.lineEdit_paired_client_id.text()!=''):
+            self.parent.lineEdit_database_name.setText(self.lineEdit_database_name.text())
+            self.parent.lineEdit_current_client.setText(self.lineEdit_client_id.text())
+            self.parent.lineEdit_paired_client.setText(self.lineEdit_paired_client_id.text())
+            main_client = self.checkBox_main_client.isChecked()
+            if main_client:
+                self.parent.lineEdit_main_client.setText(self.lineEdit_client_id.text())
+            else:
+                self.parent.lineEdit_main_client.setText(self.lineEdit_paired_client_id.text())
+            self.parent.login_name = self.lineEdit_login.text()
+            self.parent.password = self.lineEdit_pass.text()
+            error_pop_up('Success setting up MongoDB clients. Now you can go back to main GUI and connect the Pymongo cloud!','Information')
+        else:
+            error_pop_up('Failure: some fields are not filled!','Error')
+
+
+class StartPumpClientDialog(QDialog):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.parent = parent
+        # Load the dialog's GUI
+        uic.loadUi(os.path.join(script_path,"start_pump_client.ui"), self)
+        self.pushButton_open.clicked.connect(self.open_file)
+        self.pushButton_update.clicked.connect(self.update_file)
+        self.pushButton_load.clicked.connect(self.load_file)
+        self.pushButton_init_s1.clicked.connect(lambda:self.initialize_device(1,'syringe'))
+        self.pushButton_init_s2.clicked.connect(lambda:self.initialize_device(2,'syringe'))
+        self.pushButton_init_s3.clicked.connect(lambda:self.initialize_device(3,'syringe'))
+        self.pushButton_init_s4.clicked.connect(lambda:self.initialize_device(4,'syringe'))
+        self.pushButton_init_mvp.clicked.connect(lambda:self.initialize_device(None,'mvp'))
+        self.pushButton_init_all.clicked.connect(lambda:self.initialize_all_device([1,2,3,4,None],['syringe']*4+['mvp']))
+        self.pushButton_create_client.clicked.connect(self.create_client_without_config)
+        self.pushButton_server_cmd.clicked.connect(self.generate_server_cmd)
+        # self.pushButton_load_without_config.clicked.connect(self.load_file_without_config)
+
+    def open_file(self):
+        options = QFileDialog.Options()
+        options |= QFileDialog.DontUseNativeDialog
+        fileName, _ = QFileDialog.getOpenFileName(self,"QFileDialog.getOpenFileName()", "","config file (*.yml);;config Files (*.txt)", options=options)
+        if fileName:
+            with open(fileName,'r') as f:
+                self.textEdit_config.setPlainText(f.read())
+            self.lineEdit_config_path.setText(fileName)
+        else:
+            pass
+
+    def update_file(self):
+        if self.textEdit_config.toPlainText()!='':
+            with open(self.lineEdit_config_path.text(),'w') as f:
+                f.write(self.textEdit_config.toPlainText())
+    
+    def load_file(self):
+        self.parent.create_pump_client(config_file = self.lineEdit_config_path.text(), device_name = 'exp/ec/pump1', config_use = True)
+        self.parent.timer_syn_server_and_gui.start(100)
+
+    def load_file_without_config(self):
+        self.parent.create_pump_client(config_file = self.lineEdit_config_path.text(), device_name = self.lineEdit_device_name.text(), config_use = False)
+
+    def generate_server_cmd(self):
+        if len(self.lineEdit_config_path.text())==0:
+            return
+        import yaml
+        data = yaml.safe_load(open(self.lineEdit_config_path.text(),'r'))
+        bashCommand = "PumpServer {} -ORBendPoint giop:tcp::{} -nodb -dlist {}".format(data['server']['name'], data['server']['port'], data['server']['tangoname'])
+        self.lineEdit_server_cmd.setText(bashCommand)
+
+    def create_client_without_config(self):
+        cmd = '{}:{}{}#dbase=no'.format(self.lineEdit_ip.text(),self.lineEdit_port.text(),self.lineEdit_device_name.text())
+        try:
+            self.parent.client = psd.connect(cmd)
+            self.parent.init_server_devices()
+            self.parent.set_up_operations()
+            self.parent.timer_syn_server_and_gui.start(100)
+        except Exception as e:
+            error_pop_up('Fail to start start client.'+'\n{}'.format(str(e)),'Error')
+
+    def initialize_device(self, device_id, device_type):
+        if device_type == 'syringe':
+            valve = getattr(self,'comboBox_val_s{}'.format(device_id)).currentText()
+            syringe = getattr(self.parent,'syringe_server_S{}'.format(device_id))
+            syringe.initSyringe(valve, 200)
+            # exec("self.parent.widget_psd.connect_status[device_id] = syringe.status['syringe'].__str__()")
+            connect_status = self.parent.widget_psd.connect_status
+            connect_status[device_id] = syringe.status['syringe'].__str__()
+            # print(connect_status)
+            self.parent.syn_server_and_gui_init(attrs = {'connect_status':connect_status})
+            getattr(self,'lineEdit_status_s{}'.format(device_id)).setText(syringe.status['syringe'].__str__())
+        elif device_type == 'mvp':
+            self.parent.mvp_valve_server.initValve()
+            self.parent.mvp_valve_server.join()
+            self.lineEdit_status_mvp.setText(self.parent.mvp_valve_server.status['valve'].__str__())
+            self.parent.pushButton_connect_mvp_syringe_1.click()
+        else:
+            pass
+        self.parent.widget_psd.update()
+
+    def initialize_all_device(self,device_ids, device_types):
+        for device_id, device_type in zip(device_ids, device_types):
+            self.initialize_device(device_id, device_type)
 
 if __name__ == "__main__":
     QApplication.setStyle("windows")
