@@ -751,7 +751,7 @@
                 <enum>QTabWidget::West</enum>
                </property>
                <property name="currentIndex">
-                <number>1</number>
+                <number>0</number>
                </property>
                <property name="elideMode">
                 <enum>Qt::ElideRight</enum>
@@ -1226,73 +1226,6 @@
                 </attribute>
                 <layout class="QVBoxLayout" name="verticalLayout_2">
                  <item>
-                  <layout class="QHBoxLayout" name="horizontalLayout_12">
-                   <item>
-                    <widget class="QPushButton" name="pushButton_load_config">
-                     <property name="sizePolicy">
-                      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                       <horstretch>0</horstretch>
-                       <verstretch>0</verstretch>
-                      </sizepolicy>
-                     </property>
-                     <property name="text">
-                      <string>LoadSettings</string>
-                     </property>
-                    </widget>
-                   </item>
-                   <item>
-                    <widget class="QPushButton" name="pushButton_save_config">
-                     <property name="sizePolicy">
-                      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                       <horstretch>0</horstretch>
-                       <verstretch>0</verstretch>
-                      </sizepolicy>
-                     </property>
-                     <property name="text">
-                      <string>SaveSettings</string>
-                     </property>
-                    </widget>
-                   </item>
-                   <item>
-                    <widget class="QPushButton" name="pushButton_apply_settings">
-                     <property name="text">
-                      <string>ApplySettings</string>
-                     </property>
-                    </widget>
-                   </item>
-                   <item>
-                    <spacer name="horizontalSpacer_5">
-                     <property name="orientation">
-                      <enum>Qt::Horizontal</enum>
-                     </property>
-                     <property name="sizeType">
-                      <enum>QSizePolicy::MinimumExpanding</enum>
-                     </property>
-                     <property name="sizeHint" stdset="0">
-                      <size>
-                       <width>40</width>
-                       <height>25</height>
-                      </size>
-                     </property>
-                    </spacer>
-                   </item>
-                   <item>
-                    <widget class="QPushButton" name="pushButton_detach_mvp">
-                     <property name="text">
-                      <string>MVP &gt;&gt;&gt; Resevoir</string>
-                     </property>
-                    </widget>
-                   </item>
-                   <item>
-                    <widget class="QPushButton" name="pushButton_attach_mvp">
-                     <property name="text">
-                      <string>MVP &gt;&gt;&gt; Cell</string>
-                     </property>
-                    </widget>
-                   </item>
-                  </layout>
-                 </item>
-                 <item>
                   <layout class="QGridLayout" name="gridLayout">
                    <property name="leftMargin">
                     <number>0</number>
@@ -1303,220 +1236,21 @@
                    <property name="horizontalSpacing">
                     <number>0</number>
                    </property>
-                   <item row="1" column="5">
-                    <widget class="QLineEdit" name="lineEdit_sol_1">
-                     <property name="sizePolicy">
-                      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                       <horstretch>0</horstretch>
-                       <verstretch>0</verstretch>
-                      </sizepolicy>
-                     </property>
-                     <property name="maximumSize">
-                      <size>
-                       <width>90</width>
-                       <height>16777215</height>
-                      </size>
-                     </property>
-                     <property name="text">
-                      <string>NaOH</string>
-                     </property>
-                    </widget>
-                   </item>
-                   <item row="0" column="5">
-                    <widget class="QLabel" name="label_45">
-                     <property name="text">
-                      <string>Solution</string>
-                     </property>
-                    </widget>
-                   </item>
-                   <item row="2" column="5">
-                    <widget class="QLineEdit" name="lineEdit_sol_2">
-                     <property name="sizePolicy">
-                      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                       <horstretch>0</horstretch>
-                       <verstretch>0</verstretch>
-                      </sizepolicy>
-                     </property>
-                     <property name="maximumSize">
-                      <size>
-                       <width>90</width>
-                       <height>16777215</height>
-                      </size>
-                     </property>
-                     <property name="text">
-                      <string>NaOH</string>
-                     </property>
-                    </widget>
-                   </item>
-                   <item row="3" column="1">
-                    <widget class="QComboBox" name="comboBox_S3_left">
-                     <property name="sizePolicy">
-                      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                       <horstretch>0</horstretch>
-                       <verstretch>0</verstretch>
-                      </sizepolicy>
-                     </property>
-                     <item>
-                      <property name="text">
-                       <string>cell_outlet</string>
-                      </property>
-                     </item>
-                     <item>
-                      <property name="text">
-                       <string>not_used</string>
-                      </property>
-                     </item>
-                     <item>
-                      <property name="text">
-                       <string>waste</string>
-                      </property>
-                     </item>
-                     <item>
-                      <property name="text">
-                       <string>resevoir</string>
-                      </property>
-                     </item>
-                     <item>
-                      <property name="text">
-                       <string>cell_inlet</string>
-                      </property>
-                     </item>
-                    </widget>
-                   </item>
-                   <item row="2" column="3">
-                    <widget class="QComboBox" name="comboBox_S2_right">
-                     <property name="sizePolicy">
-                      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                       <horstretch>0</horstretch>
-                       <verstretch>0</verstretch>
-                      </sizepolicy>
-                     </property>
-                     <item>
-                      <property name="text">
-                       <string>cell_inlet</string>
-                      </property>
-                     </item>
-                     <item>
-                      <property name="text">
-                       <string>not_used</string>
-                      </property>
-                     </item>
-                     <item>
-                      <property name="text">
-                       <string>waste</string>
-                      </property>
-                     </item>
-                     <item>
-                      <property name="text">
-                       <string>resevoir</string>
-                      </property>
-                     </item>
-                     <item>
-                      <property name="text">
-                       <string>cell_outlet</string>
-                      </property>
-                     </item>
-                    </widget>
-                   </item>
-                   <item row="2" column="1">
-                    <widget class="QComboBox" name="comboBox_S2_left">
-                     <property name="sizePolicy">
-                      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                       <horstretch>0</horstretch>
-                       <verstretch>0</verstretch>
-                      </sizepolicy>
-                     </property>
-                     <item>
-                      <property name="text">
-                       <string>resevoir</string>
-                      </property>
-                     </item>
-                     <item>
-                      <property name="text">
-                       <string>not_used</string>
-                      </property>
-                     </item>
-                     <item>
-                      <property name="text">
-                       <string>waste</string>
-                      </property>
-                     </item>
-                     <item>
-                      <property name="text">
-                       <string>cell_inlet</string>
-                      </property>
-                     </item>
-                     <item>
-                      <property name="text">
-                       <string>cell_outlet</string>
-                      </property>
-                     </item>
-                    </widget>
-                   </item>
-                   <item row="0" column="1">
-                    <widget class="QLabel" name="label_6">
-                     <property name="sizePolicy">
-                      <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
-                       <horstretch>0</horstretch>
-                       <verstretch>0</verstretch>
-                      </sizepolicy>
-                     </property>
-                     <property name="text">
-                      <string>left</string>
-                     </property>
-                    </widget>
-                   </item>
-                   <item row="1" column="0">
-                    <widget class="QLabel" name="label_5">
-                     <property name="sizePolicy">
-                      <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
-                       <horstretch>0</horstretch>
-                       <verstretch>0</verstretch>
-                      </sizepolicy>
-                     </property>
-                     <property name="text">
-                      <string>Syringe_1</string>
-                     </property>
-                     <property name="alignment">
-                      <set>Qt::AlignCenter</set>
-                     </property>
-                    </widget>
-                   </item>
-                   <item row="2" column="0">
-                    <widget class="QLabel" name="label_11">
-                     <property name="text">
-                      <string>Syringe_2</string>
-                     </property>
-                    </widget>
-                   </item>
-                   <item row="0" column="3">
-                    <widget class="QLabel" name="label_8">
-                     <property name="sizePolicy">
-                      <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
-                       <horstretch>0</horstretch>
-                       <verstretch>0</verstretch>
-                      </sizepolicy>
-                     </property>
-                     <property name="text">
-                      <string>right</string>
-                     </property>
-                    </widget>
-                   </item>
-                   <item row="3" column="0">
+                   <item row="4" column="0">
                     <widget class="QLabel" name="label_12">
                      <property name="text">
                       <string>Syringe_3</string>
                      </property>
                     </widget>
                    </item>
-                   <item row="4" column="0">
+                   <item row="5" column="0">
                     <widget class="QLabel" name="label_13">
                      <property name="text">
                       <string>Syringe_4</string>
                      </property>
                     </widget>
                    </item>
-                   <item row="1" column="3">
+                   <item row="2" column="3">
                     <widget class="QComboBox" name="comboBox_S1_right">
                      <property name="sizePolicy">
                       <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
@@ -1551,7 +1285,7 @@
                      </item>
                     </widget>
                    </item>
-                   <item row="1" column="2">
+                   <item row="2" column="2">
                     <widget class="QComboBox" name="comboBox_S1_up">
                      <property name="sizePolicy">
                       <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
@@ -1586,7 +1320,7 @@
                      </item>
                     </widget>
                    </item>
-                   <item row="2" column="2">
+                   <item row="3" column="2">
                     <widget class="QComboBox" name="comboBox_S2_up">
                      <property name="sizePolicy">
                       <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
@@ -1621,7 +1355,7 @@
                      </item>
                     </widget>
                    </item>
-                   <item row="1" column="1">
+                   <item row="2" column="1">
                     <widget class="QComboBox" name="comboBox_S1_left">
                      <property name="sizePolicy">
                       <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
@@ -1656,7 +1390,7 @@
                      </item>
                     </widget>
                    </item>
-                   <item row="3" column="2">
+                   <item row="4" column="2">
                     <widget class="QComboBox" name="comboBox_S3_up">
                      <property name="sizePolicy">
                       <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
@@ -1691,7 +1425,7 @@
                      </item>
                     </widget>
                    </item>
-                   <item row="4" column="1">
+                   <item row="5" column="1">
                     <widget class="QComboBox" name="comboBox_S4_left">
                      <property name="sizePolicy">
                       <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
@@ -1726,7 +1460,7 @@
                      </item>
                     </widget>
                    </item>
-                   <item row="4" column="2">
+                   <item row="5" column="2">
                     <widget class="QComboBox" name="comboBox_S4_up">
                      <property name="sizePolicy">
                       <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
@@ -1761,7 +1495,7 @@
                      </item>
                     </widget>
                    </item>
-                   <item row="1" column="4">
+                   <item row="2" column="4">
                     <widget class="QComboBox" name="comboBox_S1_mvp">
                      <property name="sizePolicy">
                       <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
@@ -1796,7 +1530,7 @@
                      </item>
                     </widget>
                    </item>
-                   <item row="2" column="4">
+                   <item row="3" column="4">
                     <widget class="QComboBox" name="comboBox_S2_mvp">
                      <property name="sizePolicy">
                       <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
@@ -1831,7 +1565,7 @@
                      </item>
                     </widget>
                    </item>
-                   <item row="3" column="4">
+                   <item row="4" column="4">
                     <widget class="QComboBox" name="comboBox_S3_mvp">
                      <property name="sizePolicy">
                       <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
@@ -1866,7 +1600,7 @@
                      </item>
                     </widget>
                    </item>
-                   <item row="4" column="4">
+                   <item row="5" column="4">
                     <widget class="QComboBox" name="comboBox_S4_mvp">
                      <property name="sizePolicy">
                       <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
@@ -1901,7 +1635,7 @@
                      </item>
                     </widget>
                    </item>
-                   <item row="0" column="0">
+                   <item row="1" column="0">
                     <widget class="QLabel" name="label_4">
                      <property name="sizePolicy">
                       <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
@@ -1914,7 +1648,7 @@
                      </property>
                     </widget>
                    </item>
-                   <item row="0" column="2">
+                   <item row="1" column="2">
                     <widget class="QLabel" name="label_7">
                      <property name="sizePolicy">
                       <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
@@ -1927,7 +1661,7 @@
                      </property>
                     </widget>
                    </item>
-                   <item row="0" column="4">
+                   <item row="1" column="4">
                     <widget class="QLabel" name="label_10">
                      <property name="sizePolicy">
                       <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
@@ -1940,7 +1674,7 @@
                      </property>
                     </widget>
                    </item>
-                   <item row="4" column="3">
+                   <item row="5" column="3">
                     <widget class="QComboBox" name="comboBox_S4_right">
                      <property name="sizePolicy">
                       <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
@@ -1975,7 +1709,7 @@
                      </item>
                     </widget>
                    </item>
-                   <item row="3" column="3">
+                   <item row="4" column="3">
                     <widget class="QComboBox" name="comboBox_S3_right">
                      <property name="sizePolicy">
                       <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
@@ -2010,7 +1744,7 @@
                      </item>
                     </widget>
                    </item>
-                   <item row="3" column="5">
+                   <item row="4" column="5">
                     <widget class="QLineEdit" name="lineEdit_sol_3">
                      <property name="sizePolicy">
                       <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
@@ -2029,7 +1763,7 @@
                      </property>
                     </widget>
                    </item>
-                   <item row="4" column="5">
+                   <item row="5" column="5">
                     <widget class="QLineEdit" name="lineEdit_sol_4">
                      <property name="sizePolicy">
                       <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
@@ -2048,7 +1782,7 @@
                      </property>
                     </widget>
                    </item>
-                   <item row="0" column="6">
+                   <item row="1" column="6">
                     <widget class="QLabel" name="label_2">
                      <property name="sizePolicy">
                       <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
@@ -2061,7 +1795,7 @@
                      </property>
                     </widget>
                    </item>
-                   <item row="1" column="6">
+                   <item row="2" column="6">
                     <widget class="QLineEdit" name="lineEdit_vol_1">
                      <property name="sizePolicy">
                       <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
@@ -2080,7 +1814,7 @@
                      </property>
                     </widget>
                    </item>
-                   <item row="2" column="6">
+                   <item row="3" column="6">
                     <widget class="QLineEdit" name="lineEdit_vol_2">
                      <property name="sizePolicy">
                       <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
@@ -2099,7 +1833,7 @@
                      </property>
                     </widget>
                    </item>
-                   <item row="3" column="6">
+                   <item row="4" column="6">
                     <widget class="QLineEdit" name="lineEdit_vol_3">
                      <property name="sizePolicy">
                       <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
@@ -2118,7 +1852,7 @@
                      </property>
                     </widget>
                    </item>
-                   <item row="4" column="6">
+                   <item row="5" column="6">
                     <widget class="QLineEdit" name="lineEdit_vol_4">
                      <property name="sizePolicy">
                       <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
@@ -2134,6 +1868,252 @@
                      </property>
                      <property name="text">
                       <string>None</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="4" column="1">
+                    <widget class="QComboBox" name="comboBox_S3_left">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <item>
+                      <property name="text">
+                       <string>cell_outlet</string>
+                      </property>
+                     </item>
+                     <item>
+                      <property name="text">
+                       <string>not_used</string>
+                      </property>
+                     </item>
+                     <item>
+                      <property name="text">
+                       <string>waste</string>
+                      </property>
+                     </item>
+                     <item>
+                      <property name="text">
+                       <string>resevoir</string>
+                      </property>
+                     </item>
+                     <item>
+                      <property name="text">
+                       <string>cell_inlet</string>
+                      </property>
+                     </item>
+                    </widget>
+                   </item>
+                   <item row="1" column="5">
+                    <widget class="QLabel" name="label_45">
+                     <property name="text">
+                      <string>Solution</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="3" column="5">
+                    <widget class="QLineEdit" name="lineEdit_sol_2">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <property name="maximumSize">
+                      <size>
+                       <width>90</width>
+                       <height>16777215</height>
+                      </size>
+                     </property>
+                     <property name="text">
+                      <string>NaOH</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="2" column="5">
+                    <widget class="QLineEdit" name="lineEdit_sol_1">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <property name="maximumSize">
+                      <size>
+                       <width>90</width>
+                       <height>16777215</height>
+                      </size>
+                     </property>
+                     <property name="text">
+                      <string>NaOH</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="3" column="3">
+                    <widget class="QComboBox" name="comboBox_S2_right">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <item>
+                      <property name="text">
+                       <string>cell_inlet</string>
+                      </property>
+                     </item>
+                     <item>
+                      <property name="text">
+                       <string>not_used</string>
+                      </property>
+                     </item>
+                     <item>
+                      <property name="text">
+                       <string>waste</string>
+                      </property>
+                     </item>
+                     <item>
+                      <property name="text">
+                       <string>resevoir</string>
+                      </property>
+                     </item>
+                     <item>
+                      <property name="text">
+                       <string>cell_outlet</string>
+                      </property>
+                     </item>
+                    </widget>
+                   </item>
+                   <item row="2" column="0">
+                    <widget class="QLabel" name="label_5">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <property name="text">
+                      <string>Syringe_1</string>
+                     </property>
+                     <property name="alignment">
+                      <set>Qt::AlignCenter</set>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="3" column="0">
+                    <widget class="QLabel" name="label_11">
+                     <property name="text">
+                      <string>Syringe_2</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="1" column="3">
+                    <widget class="QLabel" name="label_8">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <property name="text">
+                      <string>right</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="1" column="1">
+                    <widget class="QLabel" name="label_6">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <property name="text">
+                      <string>left</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="3" column="1">
+                    <widget class="QComboBox" name="comboBox_S2_left">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <item>
+                      <property name="text">
+                       <string>resevoir</string>
+                      </property>
+                     </item>
+                     <item>
+                      <property name="text">
+                       <string>not_used</string>
+                      </property>
+                     </item>
+                     <item>
+                      <property name="text">
+                       <string>waste</string>
+                      </property>
+                     </item>
+                     <item>
+                      <property name="text">
+                       <string>cell_inlet</string>
+                      </property>
+                     </item>
+                     <item>
+                      <property name="text">
+                       <string>cell_outlet</string>
+                      </property>
+                     </item>
+                    </widget>
+                   </item>
+                   <item row="0" column="0">
+                    <widget class="QPushButton" name="pushButton_load_config">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <property name="text">
+                      <string>LoadSettings</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="0" column="1">
+                    <widget class="QPushButton" name="pushButton_save_config">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <property name="text">
+                      <string>SaveSettings</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="0" column="2">
+                    <widget class="QPushButton" name="pushButton_apply_settings">
+                     <property name="text">
+                      <string>ApplySettings</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="0" column="5">
+                    <widget class="QPushButton" name="pushButton_detach_mvp">
+                     <property name="text">
+                      <string>MVP &gt;&gt;&gt; Resevoir</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="0" column="6">
+                    <widget class="QPushButton" name="pushButton_attach_mvp">
+                     <property name="text">
+                      <string>MVP &gt;&gt;&gt; Cell</string>
                      </property>
                     </widget>
                    </item>
