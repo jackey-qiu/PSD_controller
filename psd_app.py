@@ -769,18 +769,30 @@ class MyMainWindow(QMainWindow):
         return self.get_pushing_syringe_simple_exchange_mode()
 
     def get_pulling_syringe_simple_exchange_mode(self):
-        if self.widget_psd.mvp_channel not in [1,2]:
-            error_pop_up('MVP not in the right position, should be either 1 or 2!','error')
-            return None 
+        if self.widget_psd.mvp_detachment_status:#temporary solution
+            return self._get_syringe_number_for_simple_exchange(push = False)
         else:
-            return {1:3,2:4}[self.widget_psd.mvp_channel]
+            if self.widget_psd.mvp_channel not in [1,2]:
+                error_pop_up('MVP not in the right position, should be either 1 or 2!','error')
+                return None 
+            else:
+                return {1:3,2:4}[self.widget_psd.mvp_channel]
 
     def get_pushing_syringe_simple_exchange_mode(self):
-        if self.widget_psd.mvp_channel not in [1,2]:
-            error_pop_up('MVP not in the right position, should be either 1 or 2!','error')
-            return None
+        if self.widget_psd.mvp_detachment_status:#temperary solution
+            return self._get_syringe_number_for_simple_exchange(push = True)
         else:
-            return self.widget_psd.mvp_channel 
+            if self.widget_psd.mvp_channel not in [1,2]:
+                error_pop_up('MVP not in the right position, should be either 1 or 2!','error')
+                return None
+            else:
+                return self.widget_psd.mvp_channel 
+
+    def _get_syringe_number_for_simple_exchange(self, push = True):
+        if push:
+            return [2,1][int(self.comboBox_simple_exchange_pair.currentText()=='S1_S3')]
+        else:
+            return [4,3][int(self.comboBox_simple_exchange_pair.currentText()=='S1_S3')]
 
     def update_cell_volume(self):
         self.widget_psd.cell_volume_in_total = self.spinBox_cell_volume.value()
@@ -1269,7 +1281,7 @@ class MyMainWindow(QMainWindow):
 
     @check_any_timer
     def _fill_syringe(self, syringe_no):
-        if self.pump_settings['S{}_mvp'.format(syringe_no)] != 'not_used':
+        if self.pump_settings['S{}_mvp'.format(syringe_no)] != 'not_used' and (not baseOperationMode.mvp_detachment_status):
             exec('self.pushButton_connect_mvp_syringe_{}.click()'.format(syringe_no))
         self.widget_psd.actived_syringe_motion_normal_mode = 'fill'
         exec('self.widget_psd.filling_status_syringe_{} = True'.format(syringe_no))
@@ -1289,7 +1301,7 @@ class MyMainWindow(QMainWindow):
     @check_any_timer
     def _dispense_syringe(self, syringe_no):
         self.textBrowser_error_msg.setText('')
-        if self.pump_settings['S{}_mvp'.format(syringe_no)] != 'not_used':
+        if self.pump_settings['S{}_mvp'.format(syringe_no)] != 'not_used' and (not baseOperationMode.mvp_detachment_status):
             exec('self.pushButton_connect_mvp_syringe_{}.click()'.format(syringe_no))
         self.widget_psd.actived_syringe_motion_normal_mode = 'dispense'
         exec('self.widget_psd.filling_status_syringe_{} = False'.format(syringe_no))

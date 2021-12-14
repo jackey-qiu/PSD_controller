@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1920</width>
-    <height>1027</height>
+    <height>1038</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -751,7 +751,7 @@
                 <enum>QTabWidget::West</enum>
                </property>
                <property name="currentIndex">
-                <number>0</number>
+                <number>1</number>
                </property>
                <property name="elideMode">
                 <enum>Qt::ElideRight</enum>
@@ -2103,18 +2103,39 @@
                      </property>
                     </widget>
                    </item>
-                   <item row="0" column="5">
+                   <item row="0" column="3">
                     <widget class="QPushButton" name="pushButton_detach_mvp">
                      <property name="text">
                       <string>MVP &gt;&gt;&gt; Resevoir</string>
                      </property>
                     </widget>
                    </item>
-                   <item row="0" column="6">
+                   <item row="0" column="4">
                     <widget class="QPushButton" name="pushButton_attach_mvp">
                      <property name="text">
                       <string>MVP &gt;&gt;&gt; Cell</string>
                      </property>
+                    </widget>
+                   </item>
+                   <item row="0" column="5">
+                    <widget class="QLabel" name="label_14">
+                     <property name="text">
+                      <string>Simple exchage Pair</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="0" column="6">
+                    <widget class="QComboBox" name="comboBox_simple_exchange_pair">
+                     <item>
+                      <property name="text">
+                       <string>S1_S3</string>
+                      </property>
+                     </item>
+                     <item>
+                      <property name="text">
+                       <string>S2_S4</string>
+                      </property>
+                     </item>
                     </widget>
                    </item>
                   </layout>
@@ -2328,7 +2349,7 @@
      <x>0</x>
      <y>0</y>
      <width>1920</width>
-     <height>24</height>
+     <height>21</height>
     </rect>
    </property>
   </widget>

@@ -224,6 +224,7 @@ class syringe_widget(QWidget):
             rects_3 = self.draw_syringe(qp,'volume_syringe_3',[20*0 + left_bound_rects_3,5+2],[0,200,0], label = ['S3', 'waste'], volume = self.syringe_size)
             rects_4 = self.draw_syringe(qp,'volume_syringe_4',[26*0 + left_bound_rects_4,5+2],[0,100,250],label=['S4', 'waste'],volume = self.syringe_size)
             self.resevoir_volumn =  getattr(self, f'resevoir_volumn_S{self.mvp_channel}')
+            self.label_resevoir = self.pump_settings[tag_]
         self.draw_valve(qp,rects_1[1],connect_port=self.connect_valve_port[1])
         self.draw_valve(qp,rects_2[1],connect_port=self.connect_valve_port[2])
         self.draw_valve(qp,rects_3[1],connect_port=self.connect_valve_port[3])
