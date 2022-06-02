@@ -1089,6 +1089,11 @@ class MyMainWindow(QMainWindow):
                     # setattr(self.widget_psd,'volume_syringe_{}'.format(i),round(self.server_devices['syringe'][i].volume,1))
                 self.syn_server_and_gui_init(attrs = {'connect_status':{1:'ready',2:'ready',3:'ready',4:'ready','mvp':self.widget_psd.connect_status['mvp']}})
                 self.widget_psd.update()
+            else:
+                for i in range(1,5):
+                    self.widget_psd.connect_status[i] = 'ready'
+                    # setattr(self.widget_psd,'volume_syringe_{}'.format(i),round(self.server_devices['syringe'][i].volume,1))
+                self.widget_psd.update()                
         if self.main_client_cloud!=None:
             if not self.main_client_cloud:
                 self.under_exchange = False
@@ -1192,6 +1197,8 @@ class MyMainWindow(QMainWindow):
             self.init_operation.start_exchange_timer()
 
     def pickup_init_mode(self, kwargs = None):
+        if self.demo:#not implimented in demo
+            return
         if self.main_client_cloud!=None:
             if not self.main_client_cloud:
                 cmd_list_widget = self.make_cmd_list_during_exchange()
@@ -1243,6 +1250,8 @@ class MyMainWindow(QMainWindow):
             self.init_operation.start_exchange_timer()
 
     def dispense_init_mode(self, kwargs = None):
+        if self.demo:#not implimented in demo
+            return
         if self.main_client_cloud!=None:
             if not self.main_client_cloud:
                 cmd_list_widget = self.make_cmd_list_during_exchange()
