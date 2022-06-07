@@ -878,6 +878,25 @@ class advancedRefillingOperationMode(baseOperationMode):
                 max_exchange_amount_from_device_limit = self.server_devices['exchange_pair']['S2_S4'].exchangeableVolume-float(self.settings['leftover_volume_handle']())*1000
                 exchange_amount_final = min([to_exchange_amount, max_exchange_amount_from_device_limit])
                 self.server_devices['exchange_pair']['S2_S4'].exchange(volume = exchange_amount_final,rate = float(self.settings['exchange_speed_handle']())*1000)
+        else:
+            if 1 in self.psd_widget.get_exchange_syringes_advance_exchange_mode():#exchange pair of S1_S3
+                self.settings['syringe{}_status'.format(1)] ='moving'
+                self.settings['syringe{}_status'.format(3)] ='moving'
+                self.psd_widget.connect_status[1] = 'moving'
+                self.psd_widget.connect_status[3] = 'moving'
+                if abs(self.psd_widget.volume_syringe_2-self.psd_widget.syringe_size)>0.01:
+                    self.psd_widget.connect_status[2] = 'moving'
+                if abs(self.psd_widget.volume_syringe_4-self.psd_widget.syringe_size)>0.01:
+                    self.psd_widget.connect_status[4] = 'moving'
+            else:
+                self.settings['syringe{}_status'.format(2)] ='moving'
+                self.settings['syringe{}_status'.format(4)] ='moving'
+                self.psd_widget.connect_status[2] = 'moving'
+                self.psd_widget.connect_status[4] = 'moving'
+                if abs(self.psd_widget.volume_syringe_1-self.psd_widget.syringe_size)>0.01:
+                    self.psd_widget.connect_status[1] = 'moving'
+                if abs(self.psd_widget.volume_syringe_3-self.psd_widget.syringe_size)>0.01:
+                    self.psd_widget.connect_status[3] = 'moving'
         return True
 
     #this will be execuded once only in the lifetime of auto_exchange
