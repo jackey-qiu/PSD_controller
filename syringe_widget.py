@@ -477,7 +477,57 @@ class syringe_widget(QWidget):
         qp.drawPath(path)
         self.cell_rect = [x+l1-(l1-l2)/2-l2,y+(l1-l2)/2,l2,l2]
         qp.drawText(self.cell_rect[0]-15-18,self.cell_rect[1]-35,"cell vol:{:7.1f} ul".format(self.volume_of_electrolyte_in_cell*1000))
+        self._draw_liquid_in_cell(qp=qp, vol = self.volume_of_electrolyte_in_cell*1000, max_vol = 3000, l1 = l1, l2=l2, offset = offset)
         return [x+l1-(l1-l2)/2-l2,y+(l1-l2)/2,l2,l2]
+
+    def _draw_liquid_in_cell(self, qp, vol, max_vol = 3000, l1=80, l2=20, offset = [0,0]):
+        #liquid level height
+        height = vol/max_vol*(l2 + (l1-l2)/2)
+        color = (25, 189, 255)
+        if height < l2:
+            path = QPainterPath()
+            x,y = offset
+            path.moveTo(*offset)
+            path.addRect(x+l1-(l1-l2)/2-l2,y+(l1-l2)/2 + (l2-height),l2,height)
+            qp.setBrush(QColor(*color))
+            qp.drawPath(path)
+        elif l2+(l1-l2)/2 > height > l2:
+            x, y = offset
+            #cal new origin
+            x, y = x + (l1-l2)/2 - (height - l2), y + (l1-l2)/2 - (height - l2)
+            l1 = l2 + (height - l2)*2
+            l2 = l2
+            offset = (x, y)
+            path = QPainterPath()
+            path.moveTo(*offset)
+            path.lineTo(x+l1,y)
+            path.lineTo(x+l1-(l1-l2)/2,y+(l1-l2)/2)
+            path.lineTo(x+l1-(l1-l2)/2-l2,y+(l1-l2)/2)
+            path.lineTo(x,y)
+            path.addRect(x+l1-(l1-l2)/2-l2,y+(l1-l2)/2,l2,l2)
+            qp.setPen(QPen(QColor(79, 106, 25), 1, Qt.SolidLine,
+                                Qt.FlatCap, Qt.MiterJoin))
+            qp.setBrush(QColor(*color))
+            qp.drawPath(path)
+        else:
+            height = l2+(l1-l2)/2
+            x, y = offset
+            #cal new origin
+            x, y = x + (l1-l2)/2 - (height - l2), y + (l1-l2)/2 - (height - l2)
+            l1 = l2 + (height - l2)*2
+            l2 = l2
+            offset = (x, y)
+            path = QPainterPath()
+            path.moveTo(*offset)
+            path.lineTo(x+l1,y)
+            path.lineTo(x+l1-(l1-l2)/2,y+(l1-l2)/2)
+            path.lineTo(x+l1-(l1-l2)/2-l2,y+(l1-l2)/2)
+            path.lineTo(x,y)
+            path.addRect(x+l1-(l1-l2)/2-l2,y+(l1-l2)/2,l2,l2)
+            qp.setPen(QPen(QColor(79, 106, 25), 1, Qt.SolidLine,
+                                Qt.FlatCap, Qt.MiterJoin))
+            qp.setBrush(QColor(125, 0, 0))
+            qp.drawPath(path)
 
     def draw_radio_signal(self,qp,pos,dim=[40,40],start_angle=50,num_arcs = 4,vertical_spacing =10, msg='error'):
         color = 'white'
@@ -574,6 +624,7 @@ class syringe_widget(QWidget):
 
         coord_center = [dim[0]+dim[2]/2,dim[1]+dim[3]/2]
         qp.setPen(QPen(Qt.blue,  2, Qt.SolidLine))
+        qp.setBrush(QColor(122, 163, 39))
         # qp.drawRect(*dim)
         return_coord_channel = None
         return_coord_cell = None
