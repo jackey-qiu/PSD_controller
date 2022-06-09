@@ -737,6 +737,9 @@ class advancedRefillingOperationMode(baseOperationMode):
         #timer to do droplet adjustment for syringe 4, make miniscus smaller
         self.timer_droplet_adjustment_S4 = self.settings['timer_droplet_adjustment_S4']
         self.timer_droplet_adjustment_S4.timeout.connect(lambda:self.update_widget_droplet_adjustment(4))
+        #timer to check the liquid level to trigger an operation to adjust the level to desired values
+        self.timer_check_liquid_level = QTimer()
+        self.timer_check_liquid_level.timeout.connect(self.check_liquid_level)
 
         self.check_settings()
         if 'valve_handle' in self.settings:
@@ -750,6 +753,28 @@ class advancedRefillingOperationMode(baseOperationMode):
         self.times_prepresssure_S2 = 0
         self.prepressure_S1_ready = False
         self.prepressure_S2_ready = False
+
+    #implement the liquid level checking
+    #for HM cell, we need a image processing algorithm to detect the droplet edge
+    #The algorithm should consider the possible asymetrical droplete shape as well
+    #as the image quality changing under different light conditions
+    #Best way is to use pre-trained deep learning model for that purpose
+    def check_liquid_level(self):
+        return
+        #TODO:
+        #detect the droplet edge
+        #reset the number of current in liquid_level.txt
+        with open('liquid_level.txt','r') as f:
+            lines = f.readlines()
+            min_level = float(lines[0].rstrip().rsplit()[1])
+            max_level = float(lines[1].rstrip().rsplit()[1])
+            current_level = float(lines[2].rstrip().rsplit()[1])
+            if min_level<current_level<max_level:
+                print('alles gut!')
+            elif current_level>max_level:
+                print('removing liquid')
+            elif current_level<min_level:
+                print("putting in some liquid")
 
     def syn_server_and_gui_init(self,attrs):
         if self.demo:
@@ -1002,6 +1027,7 @@ class advancedRefillingOperationMode(baseOperationMode):
                 self.start_exchange_server_device()
                 time.sleep(0.5)
                 self.timer_motion.start(self.timeout)
+                self.timer_check_liquid_level.start(2000)
                 self.init_motion_stage = False
                 self.syn_server_and_gui_init(attrs = {'init_motion_stage':False})
             else:
@@ -1056,6 +1082,7 @@ class advancedRefillingOperationMode(baseOperationMode):
             self.onetime =  onetime
             if self.init_motion_resume():#resume the exchange
                 self.timer_motion.start(self.timeout) #slot func is start_motion
+                self.timer_check_liquid_level.start(2000)
 
     def start_motion(self):
         self.settings['volume_record_handle'](round(self.exchange_amount_already*1000,0))
@@ -1070,12 +1097,14 @@ class advancedRefillingOperationMode(baseOperationMode):
                 if not self.demo:
                     self.server_devices['client'].stop()
                 self.timer_motion.stop()
+                self.timer_check_liquid_level.stop()
                 self.settings['set_under_exchange_to_false']()
                 return
             if self.onetime:
                 if not self.demo:
                     self.server_devices['client'].stop()
                 self.timer_motion.stop()
+                self.timer_check_liquid_level.stop()
                 return
             self.times_prepresssure_S1 = 0
             self.times_prepresssure_S2 = 0
@@ -1087,6 +1116,7 @@ class advancedRefillingOperationMode(baseOperationMode):
                 self.server_devices['client'].stop()
                 if self.check_device_status()=='error':
                     self.timer_motion.stop()
+                    self.timer_check_liquid_level.stop()
                     error_pop_up('Error: Something is wrong with the pump! The exchange is stopped!')
                     return
             else:
@@ -1109,6 +1139,7 @@ class advancedRefillingOperationMode(baseOperationMode):
                 setattr(self.psd_widget, 'filling_status_syringe_{}'.format(2), True)#update the filling status to true (means connect to resevoir)
             self.server_devices['client'].stop()
             self.timer_motion.stop()
+            self.timer_check_liquid_level.stop()
             gui_ready = False
             try:
                 self.pre_pressure(syringe_index = 1, volume = self._volume(), speed = self._rate(), pull = False, valve = 'right')
@@ -1123,6 +1154,7 @@ class advancedRefillingOperationMode(baseOperationMode):
                 setattr(self.psd_widget, 'filling_status_syringe_{}'.format(1), True)#update the filling status to true (means connect to resevoir)
             self.server_devices['client'].stop()
             self.timer_motion.stop()
+            self.timer_check_liquid_level.stop()
             gui_ready = False
             try:
                 self.pre_pressure(syringe_index = 2, volume = self._volume(), speed = self._rate(), pull = False, valve = 'right')
@@ -1144,6 +1176,7 @@ class advancedRefillingOperationMode(baseOperationMode):
                 setattr(self.psd_widget, 'filling_status_syringe_{}'.format(_valve_no), True)#update the filling status to true (means connect to resevoir)
             self.server_devices['client'].stop()
             self.timer_motion.stop()
+            self.timer_check_liquid_level.stop()
             gui_ready = False
             try:
                 self.pre_pressure(syringe_index = 3, volume = self._volume(), speed = self._rate(), pull = True, valve = 'left', filling_status= True)
@@ -1164,6 +1197,7 @@ class advancedRefillingOperationMode(baseOperationMode):
                 setattr(self.psd_widget, 'filling_status_syringe_{}'.format(_valve_no), True)#update the filling status to true (means connect to resevoir)
             self.server_devices['client'].stop()
             self.timer_motion.stop()
+            self.timer_check_liquid_level.stop()
             gui_ready = False
             try:
                 self.pre_pressure(syringe_index = 4, volume = self._volume(), speed = self._rate(), pull = True, valve = 'left', filling_status = True)
@@ -1207,6 +1241,7 @@ class advancedRefillingOperationMode(baseOperationMode):
             if not self.demo:
                 self.server_devices['client'].stop()
             self.timer_motion.stop()
+            self.timer_check_liquid_level.stop()
             self.set_status_to_ready()
             gui_ready = True
         return gui_ready
