@@ -493,18 +493,23 @@ class syringe_widget(QWidget):
             qp.drawPath(path)
         elif l2+(l1-l2)/2 > height > l2:
             x, y = offset
+            path = QPainterPath()
+            path.moveTo(*offset)
+            #draw the retengle first
+            path.addRect(x+l1-(l1-l2)/2-l2,y+(l1-l2)/2,l2,l2)
+
             #cal new origin
             x, y = x + (l1-l2)/2 - (height - l2), y + (l1-l2)/2 - (height - l2)
             l1 = l2 + (height - l2)*2
             l2 = l2
             offset = (x, y)
-            path = QPainterPath()
+            # path = QPainterPath()
             path.moveTo(*offset)
             path.lineTo(x+l1,y)
             path.lineTo(x+l1-(l1-l2)/2,y+(l1-l2)/2)
             path.lineTo(x+l1-(l1-l2)/2-l2,y+(l1-l2)/2)
             path.lineTo(x,y)
-            path.addRect(x+l1-(l1-l2)/2-l2,y+(l1-l2)/2,l2,l2)
+            # path.addRect(x+l1-(l1-l2)/2-l2,y+(l1-l2)/2,l2,l2)
             qp.setPen(QPen(QColor(79, 106, 25), 1, Qt.SolidLine,
                                 Qt.FlatCap, Qt.MiterJoin))
             qp.setBrush(QColor(*color))
