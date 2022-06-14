@@ -137,7 +137,7 @@ class MyMainWindow(QMainWindow):
 
         ##timmer to syn gui meta status to client config
         self.timer_syn_server_and_gui = QTimer(self)
-        # self.timer_syn_server_and_gui.timeout.connect(self.syn_server_and_gui)
+        self.timer_syn_server_and_gui.timeout.connect(self.syn_server_and_gui)
 
         #webcam timer
         self.timer_webcam = QTimer(self)
@@ -245,6 +245,8 @@ class MyMainWindow(QMainWindow):
                         'resume_advance_exchange':self.advanced_exchange_operation.resume
                         }
             self.syn_server_and_gui_init(gui_info)
+            if self.widget_psd.update_widget_from_config:
+                self.widget_psd.update_widget_from_config = False
         else:#pull gui info from server config
             configuration = self.client.configuration['psd_widget']
             self.widget_psd.volume_syringe_1 = float(self.server_devices['syringe'][1].volume/1000)
@@ -263,6 +265,8 @@ class MyMainWindow(QMainWindow):
             self.widget_psd.filling_status_syringe_3 = configuration.get('filling_status')[3]
             self.widget_psd.filling_status_syringe_4 = configuration.get('filling_status')[4]
             self.advanced_exchange_operation.resume = configuration.get('resume_advance_exchange')
+            if not self.widget_psd.update_widget_from_config:
+                self.widget_psd.update_widget_from_config = True
             self.widget_psd.update()
 
     def start_mongo_client_cloud(self):
@@ -1651,9 +1655,6 @@ class StartPumpClientDialog(QDialog):
         self.parent.create_pump_client(config_file = self.lineEdit_config_path.text(), device_name = 'exp/ec/pump1', config_use = True)
         self.parent.timer_syn_server_and_gui.start(100)
 
-    def load_file_without_config(self):
-        self.parent.create_pump_client(config_file = self.lineEdit_config_path.text(), device_name = self.lineEdit_device_name.text(), config_use = False)
-
     def generate_server_cmd(self):
         if len(self.lineEdit_config_path.text())==0:
             return
@@ -1663,9 +1664,13 @@ class StartPumpClientDialog(QDialog):
         self.lineEdit_server_cmd.setText(bashCommand)
 
     def create_client_without_config(self):
-        cmd = '{}:{}{}#dbase=no'.format(self.lineEdit_ip.text(),self.lineEdit_port.text(),self.lineEdit_device_name.text())
+        cmd = '{}:{}/{}#dbase=no'.format(self.lineEdit_ip.text(),self.lineEdit_port.text(),self.lineEdit_device_name.text())
+        cmd_db = 'tango://{}:{}/{}'.format(self.lineEdit_ip.text(),self.lineEdit_port.text(),self.lineEdit_device_name.text())
         try:
-            self.parent.client = psd.connect(cmd)
+            try:
+                self.parent.client = psd.connect(cmd)
+            except:
+                self.parent.client = psd.connect(cmd_db)
             self.parent.init_server_devices()
             self.parent.set_up_operations()
             self.parent.timer_syn_server_and_gui.start(100)

@@ -10,6 +10,7 @@ font_size = 10.5
 class syringe_widget(QWidget):
     def __init__(self,parent=None):
         super().__init__(parent)
+        self.update_widget_from_config = False
         self.global_offset_h = 0
         self.global_offset_v = 0
         self.mvp_detachment_status = False
@@ -318,7 +319,8 @@ class syringe_widget(QWidget):
             each_line = lines[i]
             for ii in range(len(each_line)-1):
                 qp.drawLine(*(each_line[ii]+each_line[ii+1]))
-        self.line_style=self.line_style*-1
+        if not self.update_widget_from_config:
+            self.line_style=self.line_style*-1
         
         #Not showing the cell in the clean_mode
         #redraw cell and mvp valve to make crossed lines shown underneath
