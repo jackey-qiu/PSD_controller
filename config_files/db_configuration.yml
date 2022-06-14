@@ -1,6 +1,6 @@
 server:
-  tangoname: exp/ec/pump1
-  database: False # indicate whether Tango database is available
+  tangoname: test/PumpServer/1
+  database: True # indicate whether Tango database is available
   serialport: COM5
   host: localhost #IP address or hostname; only required if no Tango database is set up
   port: 50005 # only required if no Tango database is set up 
