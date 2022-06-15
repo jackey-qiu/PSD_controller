@@ -1078,9 +1078,9 @@ class MyMainWindow(QMainWindow):
             pass
 
     def stop_all_motion(self):
-        def _stop_all_signal_emit_to_client():
+        def _stop_all_signal_emit_to_client(signal = True):
             config = self.client.configuration
-            config['psd_widget']['stop_all'] = True
+            config['psd_widget']['stop_all'] = signal
             self.client.configuration = config
 
         def _action():
@@ -1116,11 +1116,14 @@ class MyMainWindow(QMainWindow):
                 self.under_exchange = False
                 self.send_cmd_to_cloud('self.stop_all_motion()')
             else:
-                _stop_all_signal_emit_to_client()
+                _stop_all_signal_emit_to_client(True)
                 _action()
+                _stop_all_signal_emit_to_client(False)
         else:
-            _stop_all_signal_emit_to_client()
+            _stop_all_signal_emit_to_client(True)
             _action()
+            _stop_all_signal_emit_to_client(False)
+
 
     def update_to_autorefilling_mode(self):
         self.widget_psd.operation_mode = 'auto_refilling'
