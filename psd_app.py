@@ -231,6 +231,8 @@ class MyMainWindow(QMainWindow):
                 running = True
                 break
         if running:#update gui info in the server config
+            if self.client.configuration['psd_widget']['stop_all']:
+                self.stop_all_motion()
             gui_info = {
                         'cell_vol':str(round(self.widget_psd.volume_of_electrolyte_in_cell,3)),
                         'mvp_valve': self.widget_psd.mvp_channel,
@@ -242,7 +244,7 @@ class MyMainWindow(QMainWindow):
                                           2:self.widget_psd.filling_status_syringe_2,
                                           3:self.widget_psd.filling_status_syringe_3,
                                           4:self.widget_psd.filling_status_syringe_4},
-                        'resume_advance_exchange':self.advanced_exchange_operation.resume
+                        'resume_advance_exchange':self.advanced_exchange_operation.resume,
                         }
             self.syn_server_and_gui_init(gui_info)
             if self.widget_psd.update_widget_from_config:
@@ -976,6 +978,12 @@ class MyMainWindow(QMainWindow):
 
     def start_exchange(self):
         # self.init_start()
+        def _stop_all_signal_emit_to_client():
+            config = self.client.configuration
+            config['psd_widget']['stop_all'] = False
+            self.client.configuration = config
+
+        _stop_all_signal_emit_to_client()
         if self.comboBox_exchange_mode.currentText() == 'Continuous':
             if self.main_client_cloud!=None:
                 if not self.main_client_cloud:
@@ -1070,6 +1078,11 @@ class MyMainWindow(QMainWindow):
             pass
 
     def stop_all_motion(self):
+        def _stop_all_signal_emit_to_client():
+            config = self.client.configuration
+            config['psd_widget']['stop_all'] = True
+            self.client.configuration = config
+
         def _action():
             self.under_exchange = False
             for each in self.timers:
@@ -1103,8 +1116,10 @@ class MyMainWindow(QMainWindow):
                 self.under_exchange = False
                 self.send_cmd_to_cloud('self.stop_all_motion()')
             else:
+                _stop_all_signal_emit_to_client()
                 _action()
         else:
+            _stop_all_signal_emit_to_client()
             _action()
 
     def update_to_autorefilling_mode(self):
@@ -1681,7 +1696,7 @@ class StartPumpClientDialog(QDialog):
         if device_type == 'syringe':
             valve = getattr(self,'comboBox_val_s{}'.format(device_id)).currentText()
             syringe = getattr(self.parent,'syringe_server_S{}'.format(device_id))
-            syringe.initSyringe(valve, 200)
+            syringe.initSyringe(valve, 350)
             # exec("self.parent.widget_psd.connect_status[device_id] = syringe.status['syringe'].__str__()")
             connect_status = self.parent.widget_psd.connect_status
             connect_status[device_id] = syringe.status['syringe'].__str__()

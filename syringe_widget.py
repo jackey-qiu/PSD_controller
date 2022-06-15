@@ -313,7 +313,7 @@ class syringe_widget(QWidget):
                 lines.append(self.cal_line_coords(rect, connection_rect,rect_direction, connection_direction, ext1, ext2, height))
         if self.mvp_detachment_status:
             lines.append(self.cal_line_coords(rects_resevoir[0], mvp_connect_rect_channel,'up', 'up', 0, 0, 10))
-        pen = QPen([Qt.red,Qt.blue][0], 2, line_styles[int(self.line_style==1)])
+        pen = QPen([Qt.red,Qt.magenta][int(self.update_widget_from_config)], 2, line_styles[int(self.line_style==1)])
         qp.setPen(pen)
         for i in range(len(lines)):
             each_line = lines[i]

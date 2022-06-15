@@ -159,6 +159,7 @@ psd_widget:
   #  2: 'up'
   #  3: 'up'
   #  4: 'up'
+  stop_all: False
   cell_vol: 0
   mvp_valve: 1
   resevoir_vol: 250
