@@ -1044,11 +1044,15 @@ class MyMainWindow(QMainWindow):
         return True
 
     def viewCam(self):
-        # read image in BGR format
-        ret, image = self.cap.read()
-        self.image = image
-        # convert image to RGB format
-        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        if int(self.lineEdit_camera_index.text())<0:
+            image = self.client.webCamImg
+        else:
+            # read image in BGR format
+            ret, image = self.cap.read()
+            # convert image to RGB format
+            image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+            self.image = image
+            self.client.webCamImg = image 
         # get image infos
         height, width, channel = image.shape
         step = channel * width
@@ -1059,6 +1063,11 @@ class MyMainWindow(QMainWindow):
 
     # start/stop webcam
     def start_webcam(self):
+        #pull image from db if the index is not valid
+        if int(self.lineEdit_camera_index.text())<0:
+            self.timer_webcam.start(200)
+            return
+
         self.cap = cv2.VideoCapture(int(self.lineEdit_camera_index.text()))
         # self.cap = cv2.VideoCapture(int(self.lineEdit_camera_index.text()),cv2.CAP_DSHOW)
         if not self.cap.isOpened():
