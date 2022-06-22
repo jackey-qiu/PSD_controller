@@ -982,8 +982,8 @@ class MyMainWindow(QMainWindow):
             config = self.client.configuration
             config['psd_widget']['stop_all'] = False
             self.client.configuration = config
-
-        _stop_all_signal_emit_to_client()
+        if not self.demo:
+            _stop_all_signal_emit_to_client()
         if self.comboBox_exchange_mode.currentText() == 'Continuous':
             if self.main_client_cloud!=None:
                 if not self.main_client_cloud:
@@ -1044,7 +1044,7 @@ class MyMainWindow(QMainWindow):
         return True
 
     def viewCam(self):
-        if int(self.lineEdit_camera_index.text())<0:
+        if int(self.lineEdit_camera_index.text())<0 and not self.demo:
             image = self.client.webCamImg
         else:
             # read image in BGR format
@@ -1052,7 +1052,8 @@ class MyMainWindow(QMainWindow):
             # convert image to RGB format
             image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
             self.image = image
-            self.client.webCamImg = image 
+            if not self.demo:
+                self.client.webCamImg = image 
         # get image infos
         height, width, channel = image.shape
         step = channel * width
@@ -1129,9 +1130,12 @@ class MyMainWindow(QMainWindow):
                 _action()
                 _stop_all_signal_emit_to_client(False)
         else:
-            _stop_all_signal_emit_to_client(True)
-            _action()
-            _stop_all_signal_emit_to_client(False)
+            if self.demo:
+                _action()
+            else:
+                _stop_all_signal_emit_to_client(True)
+                _action()
+                _stop_all_signal_emit_to_client(False)
 
 
     def update_to_autorefilling_mode(self):
