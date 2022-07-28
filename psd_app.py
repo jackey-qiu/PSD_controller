@@ -1514,6 +1514,8 @@ class ResetResevoirWaste(QDialog):
                 self.parent.pump_settings[tag] = eval(getattr(self,tag).text())
             self.parent.pump_settings[tag2]= getattr(self,tag2).text()
         self.parent.widget_psd.pump_settings = self.parent.pump_settings
+        self.parent.widget_psd.waste_volumn_total = eval(self.lineEdit_max_vol.text())
+        self.parent.widget_psd.resevoir_volumn_total = eval(self.lineEdit_max_vol.text())
         self.parent.widget_psd.set_resevoir_volumes()
         self.parent.widget_psd.waste_volumn = eval(self.lineEdit_waste_vol.text())
         self.parent.widget_psd.update()
